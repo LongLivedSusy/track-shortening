@@ -4,8 +4,11 @@ import sys
 from DataFormats.FWLite import Events, Handle
 from optparse import OptionParser
 
-gROOT.SetBatch()        # don't pop up canvases
-gROOT.SetStyle('Plain') # white background
+# inspect RECO and reRECO collections
+# comments @ Viktor Kutzner
+
+gROOT.SetBatch()        
+gROOT.SetStyle('Plain') 
 
 parser = OptionParser()
 parser.add_option("--inputfile", dest = "inputfile", default = "")
@@ -48,21 +51,6 @@ for i, event in enumerate(events):
             continue
         if not muon.isIsolationValid():
             continue
-
-        #numer_of_tracks_in_cone = 0
-        #for track in tracks:
-        #            
-        #    tvec = TLorentzVector()
-        #    tvec.SetPtEtaPhiM(track.pt(), track.eta(), track.phi(), 0.0)
-        #   
-        #    mvec = TLorentzVector()
-        #    mvec.SetPtEtaPhiM(muon.pt(), muon.eta(), muon.phi(), muon.mass())
-        #
-        #    if tvec.DeltaR(mvec)<0.4:
-        #        numer_of_tracks_in_cone += 1
-        #
-        #if numer_of_tracks_in_cone != 1:
-        #    continue
         
         for track in tracks:
                     
