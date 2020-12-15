@@ -72,8 +72,6 @@ if step_reco:
 if step_rereco:
     example_command = 'cd CMSSW_8_0_21/src; eval `scramv1 runtime -sh`; cmsDriver.py  --python_filename SUS-RunIISummer16DR80Premix-00036_2b_$NUM_cfg.py --eventcontent RECOSIM --datatier RECOSIM --process reRECO --fileout file:$OUTFILE --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 --step RECO --filein file:$INFILE --era Run2_2016 --runUnscheduled --no_exec --mc -n $NEV; cmsRun -e -j SUS-RunIISummer16DR80Premix-00036_report.xml SUS-RunIISummer16DR80Premix-00036_2b_$NUM_cfg.py; cd -'
     
-    #cmsDriver.py  --python_filename reRECO_Summer16.py --eventcontent RECOSIM --datatier RECOSIM --process reRECO --fileout file:$OUTFILE --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 --step RECO --filein file:$INFILE --era Run2_2016 --runUnscheduled --no_exec --mc -n -1
-    
     outdir = "Summer16_reRECO"
     os.system("mkdir -p %s" % outdir)
     
