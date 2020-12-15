@@ -2,6 +2,11 @@
 
 Original author: Alexandra Tews, adapted for Disappearing Track analysis by Viktor Kutzner
 
+## Setup
+
+* clone in parallel to analysis repo
+* needs SL6 for now, run on naf-cms11 or using `singularity`
+
 ## Steps
 
 * generate RECO files for MC with `submit_mcgen_Summer16.py`
