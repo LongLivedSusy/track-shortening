@@ -63,14 +63,14 @@ for i, event in enumerate(events):
             # muon matched to track:
             if tvec.DeltaR(mvec)<0.01:
 
-                #HitCategory { TRACK_HITS = 0, MISSING_INNER_HITS = 1, MISSING_OUTER_HITS = 2 }
-
                 # a long track muon:
                 if track.hitPattern().trackerLayersWithMeasurement() > 10 and \
-                   track.hitPattern().trackerLayersWithoutMeasurement(0) == 0 and \
-                   track.hitPattern().trackerLayersWithoutMeasurement(1) == 0 and \
                    track.dxy() < 0.02 and \
                    track.dz() < 0.5:
+                   
+                    #HitCategory { TRACK_HITS = 0, MISSING_INNER_HITS = 1, MISSING_OUTER_HITS = 2 }
+                    #if  track.hitPattern().trackerLayersWithoutMeasurement(0) > 0 or track.hitPattern().trackerLayersWithoutMeasurement(1) > 0:
+                    #    continue
                                         
                     # check if matched to rereco track:                   
                     minDR = 9999

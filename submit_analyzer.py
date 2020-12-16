@@ -30,7 +30,7 @@ def submit(period):
     ]
 
     GridEngineTools.runParallel(commands, "multi")
-    os.system("hadd -f histograms_%s.root histograms_*root && rm histograms_*root" % period)
+    os.system("hadd -f histograms_%s.root histograms_*root && rm histograms_?.root && rm histograms_??.root" % period)
 
 
 def plot(period):
@@ -62,9 +62,10 @@ def plot(period):
     # draw efficiency:
     canvas = shared_utils.mkcanvas()
     legend = shared_utils.mklegend(x1=0.4, y1=0.17, x2=0.9, y2=0.4)
-    legend.SetHeader("2016 SingleMuon Data")
+    legend.SetHeader(period)
     legend.SetTextSize(0.04)
-    h_efficiency.Draw("hist")
+    h_efficiency.Draw("hist e")
+    legend.AddEntry(h_efficiency, "reconstruction efficiency")
     h_efficiency.SetTitle(";remaining layers;efficiency")
     h_efficiency.GetXaxis().SetRangeUser(0,11)
     h_efficiency.GetYaxis().SetRangeUser(0,1)
@@ -78,7 +79,7 @@ def plot(period):
     legend.SetHeader(period)
     legend.SetTextSize(0.04)
 
-    h_tracks_reco.Draw("hist")
+    h_tracks_reco.Draw("hist e")
     h_tracks_reco.SetTitle(";remaining layers;tracks")
     h_tracks_reco.GetXaxis().SetRangeUser(0,11)
     h_tracks_rereco.Draw("same hist")
@@ -92,7 +93,12 @@ def plot(period):
     # draw 2D plot:
     canvas = shared_utils.mkcanvas()
     h_layers2D.Draw("colz")
+    shared_utils.stamp()
     canvas.Print("plot_layers2D_%s.pdf" % period)  
     
+os.system("rm histograms_*root")
 submit("Run2016")
 plot("Run2016")
+os.system("rm histograms_*root")
+submit("Summer16")
+plot("Summer16")
