@@ -45,6 +45,14 @@
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
 #include "./DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
+#include "FWCore/Framework/interface/EventSetupRecordImplementation.h"
+#include "FWCore/Framework/interface/DependentRecordImplementation.h"
+#include "Geometry/Records/interface/HcalRecNumberingRecord.h"
+#include "CondFormats/AlignmentRecord/interface/HcalAlignmentRcd.h"
+#include "CondFormats/AlignmentRecord/interface/HcalAlignmentErrorRcd.h"
+#include "CondFormats/AlignmentRecord/interface/HcalAlignmentErrorExtendedRcd.h"
+#include "Geometry/Records/interface/PHcalRcd.h"
+#include "CondFormats/AlignmentRecord/interface/GlobalPositionRcd.h"
 
 //
 // class declaration
@@ -128,7 +136,7 @@ private:
 IsoTrackProducer::IsoTrackProducer(const edm::ParameterSet& iConfig) 
 {   
   //register your product    
-  produces<std::vector<TLorentzVector> > ("tracks");
+  //produces<std::vector<TLorentzVector> > ("tracks");
   produces<std::vector<double> >         ("tracks@dxyVtx");
   produces<std::vector<double> >         ("tracks@dzVtx");
   produces<std::vector<int> >            ("tracks@nMissingOuterHits");
@@ -345,7 +353,7 @@ void IsoTrackProducer::produce(edm::StreamID, edm::Event& iEvent, const edm::Eve
   const reco::Vertex vtx = vtx_h->at(0);
 
   // register output:
-  std::unique_ptr<std::vector<TLorentzVector> > tracks(new std::vector<TLorentzVector>);
+  //std::unique_ptr<std::vector<TLorentzVector> > tracks(new std::vector<TLorentzVector>);
 
   std::unique_ptr<std::vector<double> > selectedTracks_dxyVtx(new std::vector<double>);
   std::unique_ptr<std::vector<double> > selectedTracks_dzVtx(new std::vector<double>);
@@ -397,9 +405,9 @@ void IsoTrackProducer::produce(edm::StreamID, edm::Event& iEvent, const edm::Eve
 
     bool passExo16044Kinematics = track.pt() > 55 && std::abs(track.eta()) < 2.1;
 
-    // vertex consistency:
+    //// vertex consistency:
     bool vertex_match = std::abs(track.dxy(vtx.position())) < maxDxy && std::abs(track.dz(vtx.position())) < maxDz;
-    if (!(vertex_match)) continue;
+    //if (!(vertex_match)) continue;
 
     //This completes the loose candidate selection.
 
@@ -413,8 +421,8 @@ void IsoTrackProducer::produce(edm::StreamID, edm::Event& iEvent, const edm::Eve
     if (track.pt()>50) miniConeDr = 10.0/track.pt();
     else if (track.pt()>200) miniConeDr = 0.05;
     for (const auto& othertrack : *selectedTracks){
-        if (!(std::abs(othertrack.dxy(vtx.position()))<0.03 && std::abs(othertrack.dz(vtx.position()))<0.05)) continue;
-        if (deltaR(track, othertrack) < 0.00001) continue;
+        //if (!(std::abs(othertrack.dxy(vtx.position()))<0.03 && std::abs(othertrack.dz(vtx.position()))<0.05)) continue;
+        //if (deltaR(track, othertrack) < 0.00001) continue;
         if (deltaR(track, othertrack) < coneRelIsoDR) conePtSum_rel += othertrack.pt();
         if (deltaR(track, othertrack) < miniConeDr) conePtSum_mini += othertrack.pt();
     }
@@ -424,7 +432,7 @@ void IsoTrackProducer::produce(edm::StreamID, edm::Event& iEvent, const edm::Eve
     }
     relIso = conePtSum_rel / track.pt();
     miniIso = conePtSum_mini / track.pt();
-    if (!(relIso<0.2)) continue;
+    //if (!(relIso<0.2)) continue;
 
     selectedTracks_trkRelIso->push_back(relIso);
     selectedTracks_trkMiniRelIso->push_back(miniIso);
@@ -468,7 +476,7 @@ void IsoTrackProducer::produce(edm::StreamID, edm::Event& iEvent, const edm::Eve
     //now fill the products depending only on track object
     TLorentzVector tlv;
     tlv.SetPxPyPzE(track.px(),track.py(),track.pz(),track.pt()*cosh(track.eta()));
-    tracks->push_back(tlv);
+    //tracks->push_back(tlv);
     selectedTracks_dxyVtx->push_back(std::abs(track.dxy(vtx.position())));
     selectedTracks_dzVtx->push_back(std::abs(track.dz(vtx.position())));
     reco::HitPattern hitpattern = track.hitPattern();
@@ -570,7 +578,7 @@ void IsoTrackProducer::produce(edm::StreamID, edm::Event& iEvent, const edm::Eve
   }
 
   // save track collection in event:
-  iEvent.put(std::move(tracks),                                 "tracks");
+  //iEvent.put(std::move(tracks),                                 "tracks");
   iEvent.put(std::move(selectedTracks_dxyVtx),                          "tracks@dxyVtx");
   iEvent.put(std::move(selectedTracks_dzVtx),                           "tracks@dzVtx");
   iEvent.put(std::move(selectedTracks_pixelLayersWithMeasurement),      "tracks@pixelLayersWithMeasurement");

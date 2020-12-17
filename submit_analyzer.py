@@ -79,7 +79,7 @@ def plot(period):
     legend.SetHeader(period)
     legend.SetTextSize(0.04)
 
-    h_tracks_reco.Draw("hist e")
+    h_tracks_reco.Draw("hist")
     h_tracks_reco.SetTitle(";remaining layers;tracks")
     h_tracks_reco.GetXaxis().SetRangeUser(0,11)
     h_tracks_rereco.Draw("same hist")

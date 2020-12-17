@@ -1,5 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 from FWCore.ParameterSet.VarParsing import VarParsing
+from Configuration.AlCa.autoCond import autoCond
+
 # adds isolated track properties
 
 options = VarParsing('analysis')
@@ -26,6 +28,18 @@ process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
 process.load('Configuration.StandardSequences.GeometryRecoDB_cff')
 process.load('Configuration.StandardSequences.MagneticField_cff')
+
+
+process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
+from Configuration.AlCa.GlobalTag import GlobalTag
+
+if "Run2016" in options.inputFiles[0]:
+    process.GlobalTag = GlobalTag(process.GlobalTag, '80X_dataRun2_Prompt_v14', '')
+elif "Summer16" in options.inputFiles[0]:
+    process.GlobalTag = GlobalTag(process.GlobalTag, '80X_mcRun2_asymptotic_2016_TrancheIV_v8', '')
+else:
+    print "Where is the global tag?"
+    quit()
 
 process.isotrackproducer = cms.EDProducer("IsoTrackProducer",
                                     selectedTracks = cms.InputTag("generalTracks"),
