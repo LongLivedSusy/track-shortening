@@ -7,8 +7,8 @@ import os
 
 period              = "Summer16"
 #period              = "Run2016"
-step_clustersurgeon = 0
-step_reco           = 0
+step_clustersurgeon = 1
+step_reco           = 1
 step_isoproducer    = 1
 runmode             = "grid"
 
@@ -25,14 +25,14 @@ if step_clustersurgeon:
         "cd ~/dust/shorttrack/track-shortening/CMSSW_8_0_22/src/; eval `scramv1 runtime -sh`; cd shorttrack/TrackRefitting/; cmsRun python/ClusterSurgeon.py inputFiles=file:///nfs/dust/cms/user/kutznerv/store/data/Run2016H/SingleMuon/RAW-RECO/ZMu-PromptReco-v3/000/284/037/00000/120F91C9-F69F-E611-8164-02163E0125BE.root outputFile=/nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/rCluster_Run2016_allSteps_1.root",
         "cd ~/dust/shorttrack/track-shortening/CMSSW_8_0_22/src/; eval `scramv1 runtime -sh`; cd shorttrack/TrackRefitting/; cmsRun python/ClusterSurgeon.py inputFiles=file:///nfs/dust/cms/user/kutznerv/store/data/Run2016H/SingleMuon/RAW-RECO/ZMu-PromptReco-v3/000/284/037/00000/5AA45327-B89F-E611-8CD1-02163E01392B.root outputFile=/nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/rCluster_Run2016_allSteps_2.root",
         ]
-    commands["Summer16"] = [   
+    commands["Summer16"] = [
         "cd ~/dust/shorttrack/track-shortening/CMSSW_8_0_21/src/; eval `scramv1 runtime -sh`; cd shorttrack/TrackRefitting/; cmsRun python/ClusterSurgeon.py inputFiles=file:///nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/Summer16_RECO/020E9AFE-C78E-E511-8A53-F01FAFD1C83F.root outputFile=/nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/rCluster_Summer16_allSteps_1.root",
         "cd ~/dust/shorttrack/track-shortening/CMSSW_8_0_21/src/; eval `scramv1 runtime -sh`; cd shorttrack/TrackRefitting/; cmsRun python/ClusterSurgeon.py inputFiles=file:///nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/Summer16_RECO/0C9A1EE9-C78E-E511-AADF-F01FAFE5CEFA.root outputFile=/nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/rCluster_Summer16_allSteps_2.root",
-        "cd ~/dust/shorttrack/track-shortening/CMSSW_8_0_21/src/; eval `scramv1 runtime -sh`; cd shorttrack/TrackRefitting/; cmsRun python/ClusterSurgeon.py inputFiles=file:///nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/Summer16_RECO/1E8C10A5-E88E-E511-B54A-F01FAFD9D090.root outputFile=/nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/rCluster_Summer16_allSteps_3.root",
-        "cd ~/dust/shorttrack/track-shortening/CMSSW_8_0_21/src/; eval `scramv1 runtime -sh`; cd shorttrack/TrackRefitting/; cmsRun python/ClusterSurgeon.py inputFiles=file:///nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/Summer16_RECO/24BAB5FD-E38E-E511-9CDD-F01FAFD9027E.root outputFile=/nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/rCluster_Summer16_allSteps_4.root",
-        "cd ~/dust/shorttrack/track-shortening/CMSSW_8_0_21/src/; eval `scramv1 runtime -sh`; cd shorttrack/TrackRefitting/; cmsRun python/ClusterSurgeon.py inputFiles=file:///nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/Summer16_RECO/447850F8-E38E-E511-AF09-F01FAFD9027E.root outputFile=/nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/rCluster_Summer16_allSteps_5.root",
-        "cd ~/dust/shorttrack/track-shortening/CMSSW_8_0_21/src/; eval `scramv1 runtime -sh`; cd shorttrack/TrackRefitting/; cmsRun python/ClusterSurgeon.py inputFiles=file:///nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/Summer16_RECO/B2DB96FE-E38E-E511-9739-F01FAFE0F396.root outputFile=/nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/rCluster_Summer16_allSteps_6.root",
-        "cd ~/dust/shorttrack/track-shortening/CMSSW_8_0_21/src/; eval `scramv1 runtime -sh`; cd shorttrack/TrackRefitting/; cmsRun python/ClusterSurgeon.py inputFiles=file:///nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/Summer16_RECO/CC8A54FA-E38E-E511-8641-F01FAFD9C64C.root outputFile=/nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/rCluster_Summer16_allSteps_7.root",
+        #"cd ~/dust/shorttrack/track-shortening/CMSSW_8_0_21/src/; eval `scramv1 runtime -sh`; cd shorttrack/TrackRefitting/; cmsRun python/ClusterSurgeon.py inputFiles=file:///nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/Summer16_RECO/1E8C10A5-E88E-E511-B54A-F01FAFD9D090.root outputFile=/nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/rCluster_Summer16_allSteps_3.root",
+        #"cd ~/dust/shorttrack/track-shortening/CMSSW_8_0_21/src/; eval `scramv1 runtime -sh`; cd shorttrack/TrackRefitting/; cmsRun python/ClusterSurgeon.py inputFiles=file:///nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/Summer16_RECO/24BAB5FD-E38E-E511-9CDD-F01FAFD9027E.root outputFile=/nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/rCluster_Summer16_allSteps_4.root",
+        #"cd ~/dust/shorttrack/track-shortening/CMSSW_8_0_21/src/; eval `scramv1 runtime -sh`; cd shorttrack/TrackRefitting/; cmsRun python/ClusterSurgeon.py inputFiles=file:///nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/Summer16_RECO/447850F8-E38E-E511-AF09-F01FAFD9027E.root outputFile=/nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/rCluster_Summer16_allSteps_5.root",
+        #"cd ~/dust/shorttrack/track-shortening/CMSSW_8_0_21/src/; eval `scramv1 runtime -sh`; cd shorttrack/TrackRefitting/; cmsRun python/ClusterSurgeon.py inputFiles=file:///nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/Summer16_RECO/B2DB96FE-E38E-E511-9739-F01FAFE0F396.root outputFile=/nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/rCluster_Summer16_allSteps_6.root",
+        #"cd ~/dust/shorttrack/track-shortening/CMSSW_8_0_21/src/; eval `scramv1 runtime -sh`; cd shorttrack/TrackRefitting/; cmsRun python/ClusterSurgeon.py inputFiles=file:///nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/Summer16_RECO/CC8A54FA-E38E-E511-8641-F01FAFD9C64C.root outputFile=/nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/rCluster_Summer16_allSteps_7.root",
     ]
 
     GridEngineTools.runParallel(commands[period], runmode, use_sl6=True, confirm=False)

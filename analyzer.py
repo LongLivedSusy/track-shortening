@@ -3,6 +3,8 @@ from ROOT import *
 import sys
 from DataFormats.FWLite import Events, Handle
 from optparse import OptionParser
+from array import array
+import re, array
 
 # inspect RECO and reRECO collections
 # comments @ Viktor Kutzner
@@ -35,12 +37,35 @@ isotrk_trkRelIso_handle = Handle("vector<double>")
 isotrk_passPFCandVeto_handle = Handle("vector<bool>")
 isotrk_deDxHarmonic2_handle = Handle("vector<double>")
 
-
 # histograms
 h_tracks_reco = TH1F("h_tracks_reco", "", 21, 0, 21)
 h_tracks_rereco = TH1F("h_tracks_rereco", "", 21, 0, 21)
 h_tracks_tagged = TH1F("h_tracks_tagged", "", 21, 0, 21)
 h_layers2D = TH2F("h_layers2D", ";targeted number of remaining layers; layers with meas. of matched track", 20, 0, 20, 20, 0, 20)
+
+# load BDTs
+TMVA.Tools.Instance()
+weights_short = "../analysis/disappearing-track-tag/2016-short-tracks-nov20-noEdep/dataset/weights/TMVAClassification_BDT.weights.xml"
+reader_short = TMVA.Reader( "!Color:!Silent" )
+var_dxyVtx_short = array.array('f',[0]) ; reader_short.AddVariable("tracks_dxyVtx", var_dxyVtx_short)
+var_dzVtx_short = array.array('f',[0]) ; reader_short.AddVariable("tracks_dzVtx", var_dzVtx_short)
+var_trkRelIso_short = array.array('f',[0]) ; reader_short.AddVariable("tracks_trkRelIso", var_trkRelIso_short)
+var_nValidPixelHits_short = array.array('f',[0]) ; reader_short.AddVariable("tracks_nValidPixelHits", var_nValidPixelHits_short)
+var_ptErrOverPt2_short = array.array('f',[0]) ; reader_short.AddVariable("tracks_ptErrOverPt2", var_ptErrOverPt2_short)
+var_chi2perNdof_short = array.array('f',[0]) ; reader_short.AddVariable("tracks_chi2perNdof", var_chi2perNdof_short)
+reader_short.BookMVA("BDT", weights_short) 
+
+weights_long = "../analysis/disappearing-track-tag/2016-long-tracks-nov20-noEdep/dataset/weights/TMVAClassification_BDT.weights.xml"
+reader_long = TMVA.Reader( "!Color:!Silent" )
+var_dxyVtx_long = array.array('f',[0]) ; reader_long.AddVariable("tracks_dxyVtx", var_dxyVtx_long)
+var_dzVtx_long = array.array('f',[0]) ; reader_long.AddVariable("tracks_dzVtx", var_dzVtx_long)
+var_trkRelIso_long = array.array('f',[0]) ; reader_long.AddVariable("tracks_trkRelIso", var_trkRelIso_long)
+var_nValidPixelHits_long = array.array('f',[0]) ; reader_long.AddVariable("tracks_nValidPixelHits", var_nValidPixelHits_long)
+var_nValidTrackerHits_long = array.array('f',[0]) ; reader_long.AddVariable("tracks_nValidTrackerHits", var_nValidTrackerHits_long)
+var_nMissingOuterHits_long = array.array('f',[0]) ; reader_long.AddVariable("tracks_nMissingOuterHits", var_nMissingOuterHits_long)
+var_ptErrOverPt2_long = array.array('f',[0]) ; reader_long.AddVariable("tracks_ptErrOverPt2", var_ptErrOverPt2_long)
+var_chi2perNdof_long = array.array('f',[0]) ; reader_long.AddVariable("tracks_chi2perNdof", var_chi2perNdof_long)
+reader_long.BookMVA("BDT", weights_long)
 
 # loop over events
 for i_event, event in enumerate(events):
@@ -84,7 +109,7 @@ for i_event, event in enumerate(events):
             continue
         
         for track in tracks:
-                    
+                                        
             tvec = TLorentzVector()
             tvec.SetPtEtaPhiM(track.pt(), track.eta(), track.phi(), 0.0)
             
@@ -117,7 +142,6 @@ for i_event, event in enumerate(events):
                             h_tracks_rereco.Fill(layers_remaining)
                         
                             # evaluate tag:
-                            # without lepton/pion/jet vetos
                         
                             if track_rereco.pt()>15 and abs(track_rereco.eta())<2.4:
 
@@ -137,10 +161,11 @@ for i_event, event in enumerate(events):
                                     track_is_pixel_track = False
                                     
                                 track_p = track_rereco.p()
+                                track_eta = track_rereco.eta()
                                 track_pt = track_rereco.pt()
                                 track_matchedCaloEnergy = isotrk_matchedCaloEnergy[isotrack_index]
-                                track_trackQualityHighPurity = isotrk_trackQualityHighPurity[isotrack_index]
-                                track_ptErrOverPt2 = track_pt / isotrk_ptError[isotrack_index]**2
+                                track_trackQualityHighPurity = bool(isotrk_trackQualityHighPurity[isotrack_index])
+                                track_ptErrOverPt2 = isotrk_ptError[isotrack_index] / track_pt**2
                                 track_dxyVtx = track_rereco.dxy()
                                 track_dzVtx = track_rereco.dz()
                                 track_trkRelIso = isotrk_trkRelIso[isotrack_index]
@@ -148,12 +173,90 @@ for i_event, event in enumerate(events):
                                 track_nValidPixelHits = track_rereco.hitPattern().numberOfValidPixelHits()
                                 track_nMissingInnerHits = track_rereco.hitPattern().trackerLayersWithoutMeasurement(1)
                                 track_nMissingOuterHits = track_rereco.hitPattern().trackerLayersWithoutMeasurement(2)
-                                track_passPFCandVeto = isotrk_passPFCandVeto[isotrack_index]
+                                track_passPFCandVeto = bool(isotrk_passPFCandVeto[isotrack_index])
                                 track_deDxHarmonic2pixel = isotrk_deDxHarmonic2[isotrack_index]
-                                                                                                                                
-                                if track_matchedCaloEnergy < 10:
+                            
+                                track_passleptonveto = 1
+                                track_passpionveto = 1
+                                track_passjetveto = 1
+                            
+                                is_tagged = False
+                                
+                                if track_is_pixel_track:
+                                    var_dxyVtx_short[0] = track_dxyVtx
+                                    var_dzVtx_short[0] = track_dzVtx
+                                    var_trkRelIso_short[0] = track_trkRelIso
+                                    var_nValidPixelHits_short[0] = track_nValidPixelHits
+                                    var_ptErrOverPt2_short[0] = track_ptErrOverPt2
+                                    var_chi2perNdof_short[0] = track_chi2perNdof
+                                    track_mva = reader_short.EvaluateMVA("BDT")
+                                    
+                                    #if track_pt>15 and \
+                                    #   track_trackQualityHighPurity==1 and \
+                                    #   abs(track_eta)<2.4 and \
+                                    #   track_ptErrOverPt2<10 and \
+                                    #   track_dzVtx<0.1 and \
+                                    #   track_trkRelIso<0.2 and \
+                                    #   track_trackerLayersWithMeasurement>=2 and \
+                                    #   track_nValidTrackerHits>=2 and \
+                                    #   track_nMissingInnerHits==0 and \
+                                    #   track_nValidPixelHits>=2 and \
+                                    #   track_passPFCandVeto==1 and \
+                                    #   track_passleptonveto==1 and \
+                                    #   track_passpionveto==1 and \
+                                    #   track_passjetveto==1 and \
+                                    #   track_nMissingOuterHits>=0 and \
+                                    #   track_matchedCaloEnergy/track_p<0.2 and \
+                                    #   track_mva>0:
+                                    #   is_tagged = True
+                                    
+                                    if track_pt>15 and \
+                                       track_matchedCaloEnergy/track_p<0.2 and \
+                                       track_mva>0:
+                                       is_tagged = True
+                                                                        
+                                else:
+                                    var_dxyVtx_long[0] = track_dxyVtx
+                                    var_dzVtx_long[0] = track_dzVtx
+                                    var_trkRelIso_long[0] = track_trkRelIso
+                                    var_nValidPixelHits_long[0] = track_nValidPixelHits
+                                    var_nValidTrackerHits_long[0] = track_nValidTrackerHits
+                                    var_nMissingOuterHits_long[0] = track_nMissingOuterHits
+                                    var_ptErrOverPt2_long[0] = track_ptErrOverPt2
+                                    var_chi2perNdof_long[0] = track_chi2perNdof
+                                    track_mva = reader_long.EvaluateMVA("BDT")  
+                                    
+                                    #if track_pt>30 and \
+                                    #   track_trackQualityHighPurity==1 and \
+                                    #   abs(track_eta)<2.4 and \
+                                    #   track_ptErrOverPt2<10 and \
+                                    #   track_dzVtx<0.1 and \
+                                    #   track_trkRelIso<0.2 and \
+                                    #   track_trackerLayersWithMeasurement>=2 and \
+                                    #   track_nValidTrackerHits>=2 and \
+                                    #   track_nMissingInnerHits==0 and \
+                                    #   track_nValidPixelHits>=2 and \
+                                    #   track_passPFCandVeto==1 and \
+                                    #   track_passleptonveto==1 and \
+                                    #   track_passpionveto==1 and \
+                                    #   track_passjetveto==1 and \
+                                    #   track_nMissingOuterHits>=2 and \
+                                    #   track_matchedCaloEnergy/track_p<0.2 and \
+                                    #   track_mva>0:
+                                    #   is_tagged = True
+                                     
+                                    if track_pt>30 and \
+                                       track_matchedCaloEnergy/track_p<0.2 and \
+                                       track_mva>0.05:
+                                       is_tagged = True
+                                      
+                                #print track_dxyVtx, track_dzVtx, track_trkRelIso, track_nValidPixelHits, track_ptErrOverPt2, track_ptErrOverPt2, track_chi2perNdof, track_mva 
+                                #print track_pt, track_trackQualityHighPurity, track_eta, track_trackerLayersWithMeasurement, track_nValidTrackerHits, track_nMissingInnerHits, track_passPFCandVeto, track_nMissingOuterHits, track_matchedCaloEnergy, track_p
+                                
+                                if is_tagged:
+                                    print "is_tagged"
                                     h_tracks_tagged.Fill(layers_remaining)
-                        
+                                
                     break
     
 # make a canvas, draw, and save it
