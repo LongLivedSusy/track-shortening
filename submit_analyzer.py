@@ -53,7 +53,7 @@ def submit(period):
     ]
 
     GridEngineTools.runParallel(commands, "multi")
-    os.system("hadd -f histograms_%s.root histograms_*root && rm histograms_?.root && rm histograms_??.root" % period)
+    os.system("hadd -f histograms_%s.root histograms_%s_?.root histograms_%s_??.root && rm histograms_%s_?.root && rm histograms_%s_??.root" % (period, period, period, period, period))
 
 
 def plot(period):
@@ -66,12 +66,14 @@ def plot(period):
     fin = TFile("histograms_%s.root" % period, "open")
     h_tracks_reco = fin.Get("h_tracks_reco")
     h_tracks_rereco = fin.Get("h_tracks_rereco")
+    h_tracks_preselection = fin.Get("h_tracks_preselection")
     h_tracks_tagged = fin.Get("h_tracks_tagged")
     h_layers2D = fin.Get("h_layers2D")
     h_tracks_reco.SetDirectory(0)
     h_tracks_rereco.SetDirectory(0)
     h_layers2D.SetDirectory(0)
     h_tracks_tagged.SetDirectory(0)
+    h_tracks_preselection.SetDirectory(0)
     fin.Close()
 
     shared_utils.histoStyler(h_tracks_reco)
@@ -110,11 +112,16 @@ def plot(period):
     h_tracks_reco.GetXaxis().SetRangeUser(0,11)
     h_tracks_rereco.Draw("same hist")
     h_tracks_rereco.SetLineStyle(2)
+    #h_tracks_preselection.Draw("same hist")
+    #h_tracks_preselection.SetLineStyle(2)
+    #h_tracks_preselection.SetLineStyle(2)
+    #h_tracks_preselection.SetLineColor(kBlue)
     h_tracks_tagged.Draw("same hist")
     h_tracks_tagged.SetLineStyle(2)
     h_tracks_tagged.SetLineColor(kRed)
     legend.AddEntry(h_tracks_reco, "tracks matched to muons")
     legend.AddEntry(h_tracks_rereco, "shortenend tracks")
+    #legend.AddEntry(h_tracks_preselection, "shortenend & preselected tracks")
     legend.AddEntry(h_tracks_tagged, "shortenend & tagged tracks")
     shared_utils.stamp()
     legend.Draw()
@@ -126,9 +133,7 @@ def plot(period):
     shared_utils.stamp()
     canvas.Print("plot_layers2D_%s.pdf" % period)  
     
-#os.system("rm histograms_*root")
-#submit("Run2016")
+submit("Run2016")
 plot("Run2016")
-#os.system("rm histograms_*root")
 #submit("Summer16")
 #plot("Summer16")

@@ -7,10 +7,10 @@ import os
 
 period              = "Summer16"
 #period              = "Run2016"
-step_clustersurgeon = 1
-step_reco           = 1
+step_clustersurgeon = 0
+step_reco           = 0
 step_isoproducer    = 1
-runmode             = "grid"
+runmode             = "multi"
 
 # set up CMSSW:
 if not os.path.exists("CMSSW_8_0_22/src/shorttrack"):
