@@ -2,7 +2,7 @@
 import FWCore.ParameterSet.Config as cms
 from FWCore.ParameterSet.VarParsing import VarParsing
 import multiprocessing
-process = cms.Process("reRECO")
+import glob
 
 # full reconstruction sequence without very early local reconstruction
 # modification: uses 'rCluster' modules as input Cluster for track reconstruction (instead of SiPixel-/ SiStripCluster) 
@@ -24,13 +24,16 @@ options.register ('outputFileName',
 				  VarParsing.multiplicity.singleton,
 				  VarParsing.varType.string,
 				  "Output file for edmFile")
-				  
 options.register ('step',
 				  '4',
 				  VarParsing.multiplicity.singleton,
 				  VarParsing.varType.string,
 				  "Shortening step to be processed")	
-
+options.register ('skipEvents',
+				  0,
+				  VarParsing.multiplicity.singleton,
+				  VarParsing.varType.int,
+				  "skipEvents")	
 options.register ('MuonSeeds',
 				  1,
 				  VarParsing.multiplicity.singleton,
@@ -38,22 +41,30 @@ options.register ('MuonSeeds',
 				  "Use of Muon seeded iterations")					  			  
 options.parseArguments()				  
 
-
 # TODO: add rCluster to output to keep
 myCollection = "rCluster"+options.step
 hitsRemain = options.step 
 if myCollection == "rClusterAll": 
 	myCollection = "rCluster" 
-# if rCluster this is "All"
 process = cms.Process("reRECO")
 
-process.source = cms.Source("PoolSource",
-    #fileNames = cms.untracked.vstring('file:test.root'),
-    #fileNames = cms.untracked.vstring('file:rCluster_allSteps.root'),
-    #fileNames = cms.untracked.vstring('file:/pnfs/desy.de/cms/tier2/store/user/altews/SingleMuon/testRCluster_Run2016F_2018_09_28/180928_093210/0000/rCluster_allSteps_11.root'),
-    fileNames = cms.untracked.vstring(options.inputFiles),
-    secondaryFileNames = cms.untracked.vstring()
-)
+if "*" in options.inputFiles[0]:
+    filenames = glob.glob(options.inputFiles[0].replace("file://", ""))
+    for i in range(len(filenames)):
+        filenames[i] = "file://" + filenames[i]
+    options.inputFiles = filenames
+
+    process.source = cms.Source("PoolSource",
+    	skipEvents=cms.untracked.uint32(options.skipEvents),
+        fileNames = cms.untracked.vstring(filenames),
+        secondaryFileNames = cms.untracked.vstring()
+    )
+else:
+    process.source = cms.Source("PoolSource",
+    	skipEvents=cms.untracked.uint32(options.skipEvents),
+        fileNames = cms.untracked.vstring(options.inputFiles),
+        secondaryFileNames = cms.untracked.vstring()
+    )
 
 process.AODEventContent = cms.PSet(
     compressionAlgorithm = cms.untracked.string('LZMA'),
@@ -15889,7 +15900,7 @@ process.lowPtTripletStepTrajectoryFilter = cms.PSet(
 )
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(-1)
+    input = cms.untracked.int32(options.maxEvents)
 )
 
 process.mipVariable = cms.PSet(
@@ -42235,7 +42246,18 @@ process.RECOSIMoutput = cms.OutputModule("PoolOutputModule",
     eventAutoFlushCompressedSize = cms.untracked.int32(5242880),
     fileName = cms.untracked.string (options.outputFileName+'_'+hitsRemain+'.root'),
     outputCommands = cms.untracked.vstring( (
-        'keep *',
+        'drop *',
+        'keep *_*_*_HITREMOVER',
+        'keep *_ak4PFJetsCHS_*_*',
+        'keep *_reduced*RecHits*_*_*',
+        'keep *_muons_*_*',
+        'keep *_pfIsolatedMuonsEI_*_*',
+        'keep *_particleFlow_*_*',
+        'keep *_offlinePrimaryVertices_*_*',
+        'keep *_dedxHarmonic2_*_*',
+        'keep *_generalTracks_*_*',
+        'keep *_gedGsfElectrons_*_*',
+        'keep *_ak4CaloJets_*_*',
     ) ),
     splitLevel = cms.untracked.int32(0)
 )

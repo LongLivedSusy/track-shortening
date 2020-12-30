@@ -18,7 +18,7 @@ parser.add_option("--inputfile", dest = "inputfile", default = "")
 
 events = Events(options.inputfile)
 
-layers_remaining = int(options.inputfile.split(".root")[0].split("_")[-1])
+layers_remaining = int(options.inputfile.split("_")[-1].replace(".root", ""))
 print "remaining layers:", layers_remaining
 
 if "Summer16" in options.inputfile.split(".root")[0]:
@@ -29,12 +29,11 @@ else:
     period = "unset"
 
 # create handle outside of loop
-#muons_handle  = Handle("std::vector<reco::Muon>")
-#muons_handle  = Handle("edm::ValueMap<edm::Ptr<reco::PFCandidate>>")
-muons_handle  = Handle("std::vector<reco::PFCandidate>")
-tracks_handle  = Handle("std::vector<reco::Track>")
-muons_rereco_handle  = Handle("std::vector<reco::Muon>")
-tracks_rereco_handle  = Handle("std::vector<reco::Track>")
+muons_handle = Handle("std::vector<reco::Muon>")
+pfcands_handle = Handle("std::vector<reco::PFCandidate>")
+tracks_handle = Handle("std::vector<reco::Track>")
+muons_rereco_handle = Handle("std::vector<reco::Muon>")
+tracks_rereco_handle = Handle("std::vector<reco::Track>")
 
 # handles for isotrk producer
 isotrk_matchedCaloEnergy_handle = Handle("vector<double>")
@@ -45,6 +44,8 @@ isotrk_ptError_handle = Handle("vector<double>")
 isotrk_trkRelIso_handle = Handle("vector<double>")
 isotrk_passPFCandVeto_handle = Handle("vector<bool>")
 isotrk_deDxHarmonic2_handle = Handle("vector<double>")
+isotrk_dxyVtx_handle = Handle("vector<double>")
+isotrk_dzVtx_handle = Handle("vector<double>")
 
 # histograms
 h_tracks_reco = TH1F("h_tracks_reco", "", 21, 0, 21)
@@ -53,7 +54,9 @@ h_tracks_preselection = TH1F("h_tracks_preselection", "", 21, 0, 21)
 h_tracks_tagged = TH1F("h_tracks_tagged", "", 21, 0, 21)
 h_tracks_preselectedandtagged = TH1F("h_tracks_preselectedandtagged", "", 21, 0, 21)
 h_layers2D = TH2F("h_layers2D", ";targeted number of remaining layers; layers with meas. of matched track", 20, 0, 20, 20, 0, 20)
-h_trkRelIso = TH1F("h_trkRelIso", "", 100, 0, 2)
+h_shortbdt2D = TH2F("h_shortbdt2D", ";BDT score; layers with meas. of matched track", 20, -1, 1, 20, 0, 20)
+h_longbdt2D = TH2F("h_longbdt2D", ";BDT score; layers with meas. of matched track", 20, -1, 1, 20, 0, 20)
+h_trkRelIso = TH1F("h_trkRelIso", "", 100, 0, 0.2)
 
 # load BDTs
 TMVA.Tools.Instance()
@@ -65,7 +68,7 @@ var_trkRelIso_short = array.array('f',[0]) ; reader_short.AddVariable("tracks_tr
 var_nValidPixelHits_short = array.array('f',[0]) ; reader_short.AddVariable("tracks_nValidPixelHits", var_nValidPixelHits_short)
 var_ptErrOverPt2_short = array.array('f',[0]) ; reader_short.AddVariable("tracks_ptErrOverPt2", var_ptErrOverPt2_short)
 var_chi2perNdof_short = array.array('f',[0]) ; reader_short.AddVariable("tracks_chi2perNdof", var_chi2perNdof_short)
-reader_short.BookMVA("BDT", weights_short) 
+reader_short.BookMVA("BDT", weights_short)
 
 weights_long = "../analysis/disappearing-track-tag/2016-long-tracks-nov20-noEdep/dataset/weights/TMVAClassification_BDT.weights.xml"
 reader_long = TMVA.Reader( "!Color:!Silent" )
@@ -83,12 +86,12 @@ reader_long.BookMVA("BDT", weights_long)
 for i_event, event in enumerate(events):
         
     # RECO collections:
-    #event.getByLabel("muons", "", "RECO", muons_handle)
-    #vector<reco::PFCandidate>             "pfIsolatedMuonsEI"         ""                "RECO"
-    event.getByLabel("pfIsolatedMuonsEI", "", "RECO", muons_handle)
+    event.getByLabel("muons", "", "RECO", muons_handle)
     muons = muons_handle.product()
     event.getByLabel("rCluster%s" % layers_remaining, "", "HITREMOVER", tracks_handle)
     tracks = tracks_handle.product()
+    event.getByLabel("particleFlow", "", "RECO", pfcands_handle)
+    pfcands = pfcands_handle.product()
     
     # reRECO collections:
     event.getByLabel("muons", "", "reRECO", muons_rereco_handle)
@@ -113,12 +116,32 @@ for i_event, event in enumerate(events):
     isotrk_passPFCandVeto = isotrk_passPFCandVeto_handle.product()
     event.getByLabel("isotrackproducer", "tracks@deDxHarmonic2", "ISOTRACK", isotrk_deDxHarmonic2_handle)
     isotrk_deDxHarmonic2 = isotrk_deDxHarmonic2_handle.product()
-    
+    event.getByLabel("isotrackproducer", "tracks@dxyVtx", "ISOTRACK", isotrk_dxyVtx_handle)
+    isotrk_dxyVtx = isotrk_dxyVtx_handle.product()
+    event.getByLabel("isotrackproducer", "tracks@dzVtx", "ISOTRACK", isotrk_dzVtx_handle)
+    isotrk_dzVtx = isotrk_dzVtx_handle.product()
     
     for muon in muons:
         
-        if muon.pt()<30:
-            continue
+        if muon.pt()<30: continue
+        
+        # PFCand veto:
+        inside_cone = False
+        for pfcand in pfcands:
+                                        
+            pfvec = TLorentzVector()
+            pfvec.SetPtEtaPhiM(pfcand.pt(), pfcand.eta(), pfcand.phi(), pfcand.mass())
+            
+            mvec = TLorentzVector()
+            mvec.SetPtEtaPhiM(muon.pt(), muon.eta(), muon.phi(), muon.mass())
+
+            # muon matched to pfcand:
+            if pfvec.DeltaR(mvec)>0.02 and pfvec.DeltaR(mvec)<0.1:
+                inside_cone = True
+                print "inside_cone"
+                break
+        
+        if inside_cone: continue
         
         for track in tracks:
                                         
@@ -133,18 +156,9 @@ for i_event, event in enumerate(events):
 
                 # a long track muon:
                 if track.hitPattern().trackerLayersWithMeasurement() > 10 and \
-                   track.dxy() < 0.02 and \
+                   track.dxy() < 0.2 and \
                    track.dz() < 0.5:
 
-                    if track.pt()<15:
-                        continue
-
-                    print "matched track"
-                   
-                    #HitCategory { TRACK_HITS = 0, MISSING_INNER_HITS = 1, MISSING_OUTER_HITS = 2 }
-                    #if  track.hitPattern().trackerLayersWithoutMeasurement(0) > 0 or track.hitPattern().trackerLayersWithoutMeasurement(1) > 0:
-                    #    continue
-                    
                     h_tracks_reco.Fill(layers_remaining)
                     
                     for track_rereco in tracks_rereco:
@@ -159,15 +173,18 @@ for i_event, event in enumerate(events):
                                 h_layers2D.Fill(layers_remaining, track_rereco.hitPattern().trackerLayersWithMeasurement())
                                 h_tracks_rereco.Fill(layers_remaining)
                                                 
-                                # evaluate tag:
-                                
                                 # matching to isotracks collection...
-                                track_chi2perNdof = 1.0*track_rereco.chi2()/track_rereco.ndof()
+                                if track_rereco.ndof()>0:
+                                    track_chi2perNdof = 1.0*track_rereco.chi2()/track_rereco.ndof()
+                                else:
+                                    track_chi2perNdof = 0
+                                
                                 isotrack_index = 0
                                 for j, j_isotrk_chi2perNdof in enumerate(isotrk_chi2perNdof):
                                     if j_isotrk_chi2perNdof == track_chi2perNdof:
                                         isotrack_index = j
 
+                                # get all necessary tag variables:
                                 track_trackerLayersWithMeasurement = track_rereco.hitPattern().trackerLayersWithMeasurement() 
                                 track_pixelLayersWithMeasurement = track_rereco.hitPattern().pixelLayersWithMeasurement() 
                                 
@@ -181,9 +198,12 @@ for i_event, event in enumerate(events):
                                 track_pt = track_rereco.pt()
                                 track_matchedCaloEnergy = isotrk_matchedCaloEnergy[isotrack_index]
                                 track_trackQualityHighPurity = bool(isotrk_trackQualityHighPurity[isotrack_index])
-                                track_ptErrOverPt2 = isotrk_ptError[isotrack_index] / track_pt**2
-                                track_dxyVtx = track_rereco.dxy()
-                                track_dzVtx = track_rereco.dz()
+                                if track_pt>0:
+                                    track_ptErrOverPt2 = isotrk_ptError[isotrack_index] / track_pt**2
+                                else:
+                                    track_ptErrOverPt2 = 0
+                                track_dxyVtx = isotrk_dxyVtx[isotrack_index]
+                                track_dzVtx = isotrk_dzVtx[isotrack_index]
                                 track_trkRelIso = isotrk_trkRelIso[isotrack_index]
                                 track_nValidTrackerHits = track_rereco.hitPattern().numberOfValidTrackerHits()
                                 track_nValidPixelHits = track_rereco.hitPattern().numberOfValidPixelHits()
@@ -191,11 +211,31 @@ for i_event, event in enumerate(events):
                                 track_nMissingOuterHits = track_rereco.hitPattern().trackerLayersWithoutMeasurement(2)
                                 track_passPFCandVeto = bool(isotrk_passPFCandVeto[isotrack_index])
                                 track_deDxHarmonic2pixel = isotrk_deDxHarmonic2[isotrack_index]
-                            
+                                
+                                # ignore for now
                                 track_passleptonveto = 1
                                 track_passpionveto = 1
                                 track_passjetveto = 1
                                 
+                                # reset this as the muon will always cause the veto to fail:
+                                track_passPFCandVeto = 1
+                                
+                                # redo relIso, but without the muon:
+                                conePtSum_rel = 0
+                                for othertrack in tracks_rereco:
+                                    if othertrack.pt()>15 and abs(othertrack.eta())<2.4: #and abs(othertrack.dxy())<0.03 and abs(othertrack.dz())<0.05
+                                        othertrackvec = TLorentzVector()
+                                        othertrackvec.SetPtEtaPhiM(othertrack.pt(), othertrack.eta(), othertrack.phi(), 0.0)
+                                        deltaR = othertrackvec.DeltaR(trerecovec)
+                                        if deltaR<0.00001:
+                                            continue
+                                        if deltaR<0.3:
+                                            conePtSum_rel += othertrack.pt()
+                                if track_rereco.pt()>0:
+                                    track_trkRelIso = conePtSum_rel / track_rereco.pt()
+                                else:
+                                    track_trkRelIso = 0
+                                    
                                 # fill var histograms:
                                 h_trkRelIso.Fill(track_trkRelIso)
                                 
@@ -207,7 +247,7 @@ for i_event, event in enumerate(events):
                                    track_trackQualityHighPurity==1 and \
                                    abs(track_eta)<2.4 and \
                                    track_ptErrOverPt2<10 and \
-                                   track_dzVtx<0.1 and \
+                                   abs(track_dzVtx)<0.1 and \
                                    track_trkRelIso<0.2 and \
                                    track_trackerLayersWithMeasurement>=2 and \
                                    track_nValidTrackerHits>=2 and \
@@ -225,7 +265,7 @@ for i_event, event in enumerate(events):
                                    track_trackQualityHighPurity==1 and \
                                    abs(track_eta)<2.4 and \
                                    track_ptErrOverPt2<10 and \
-                                   track_dzVtx<0.1 and \
+                                   abs(track_dzVtx)<0.1 and \
                                    track_trkRelIso<0.2 and \
                                    track_trackerLayersWithMeasurement>=2 and \
                                    track_nValidTrackerHits>=2 and \
@@ -235,7 +275,7 @@ for i_event, event in enumerate(events):
                                    track_passleptonveto==1 and \
                                    track_passpionveto==1 and \
                                    track_passjetveto==1 and \
-                                   track_nMissingOuterHits>=0:
+                                   track_nMissingOuterHits>=2:
                                    is_preselected = True
                                 
                                 if track_is_pixel_track:
@@ -247,8 +287,11 @@ for i_event, event in enumerate(events):
                                     var_chi2perNdof_short[0] = track_chi2perNdof
                                     track_mva = reader_short.EvaluateMVA("BDT")
                                     
-                                    if track_pt>15 and track_matchedCaloEnergy/track_p<0.2 and track_mva>0:
+                                    if track_p>0 and track_matchedCaloEnergy/track_p<0.2 and track_mva>0:
                                        is_tagged = True
+                                       
+                                    h_shortbdt2D.Fill(track_mva, track_rereco.hitPattern().trackerLayersWithMeasurement())
+                                      
                                                                                                             
                                 else:
                                     var_dxyVtx_long[0] = track_dxyVtx
@@ -261,11 +304,36 @@ for i_event, event in enumerate(events):
                                     var_chi2perNdof_long[0] = track_chi2perNdof
                                     track_mva = reader_long.EvaluateMVA("BDT")  
                                     
-                                    if track_pt>30 and track_matchedCaloEnergy/track_p<0.2 and track_mva>0.05:
+                                    if track_p>0 and track_matchedCaloEnergy/track_p<0.2 and track_mva>0.05:
                                        is_tagged = True
-                                                                                                                 
-                                #print track_dxyVtx, track_dzVtx, track_trkRelIso, track_nValidPixelHits, track_ptErrOverPt2, track_ptErrOverPt2, track_chi2perNdof, track_mva 
-                                #print track_pt, track_trackQualityHighPurity, track_eta, track_trackerLayersWithMeasurement, track_nValidTrackerHits, track_nMissingInnerHits, track_passPFCandVeto, track_nMissingOuterHits, track_matchedCaloEnergy, track_p
+                                       
+                                    h_longbdt2D.Fill(track_mva, track_rereco.hitPattern().trackerLayersWithMeasurement())
+
+                                if not is_preselected:
+                                    variables = ["track_is_pixel_track",
+                                                 "track_dxyVtx",
+                                                 "track_dzVtx",
+                                                 "track_trkRelIso",
+                                                 "track_nValidPixelHits",
+                                                 "track_ptErrOverPt2",
+                                                 "track_ptErrOverPt2",
+                                                 "track_chi2perNdof",
+                                                 "track_mva",
+                                                 "track_pt",
+                                                 "track_trackQualityHighPurity",
+                                                 "track_eta",
+                                                 "track_trackerLayersWithMeasurement",
+                                                 "track_nValidTrackerHits",
+                                                 "track_nMissingInnerHits",
+                                                 "track_passPFCandVeto",
+                                                 "track_nMissingOuterHits",
+                                                 "track_matchedCaloEnergy",
+                                                 "track_p"]
+                                    
+                                    print "Failed prelection"            
+                                    for variable in variables:
+                                        print "%s = %s " % (variable, eval(variable))
+                                    print "============"
                                 
                                 if is_tagged:
                                     h_tracks_tagged.Fill(layers_remaining)
@@ -285,4 +353,6 @@ h_tracks_preselection.Write()
 h_tracks_preselectedandtagged.Write()
 h_trkRelIso.Write()
 h_layers2D.Write()
+h_shortbdt2D.Write()
+h_longbdt2D.Write()
 outfile.Close()

@@ -119,7 +119,9 @@ process.rCluster0.layersRemaining=cms.uint32(0)
 process.out = cms.OutputModule("PoolOutputModule", 
     fileName = cms.untracked.string(options.outputFile),
     outputCommands = cms.untracked.vstring(
-        'keep *',
+        'drop *',
+        'keep *_*_*_RECO',
+        'keep *_*_*_HITREMOVER',
         ),
     SelectEvents = cms.untracked.PSet(SelectEvents = cms.vstring("p"))
  )
