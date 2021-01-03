@@ -8,7 +8,8 @@ options.parseArguments()
 process = cms.Process("HITREMOVER")
 process.load("FWCore.MessageService.MessageLogger_cfi")
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
-process.options  = cms.untracked.PSet( wantSummary = cms.untracked.bool(True))
+process.options  = cms.untracked.PSet( wantSummary = cms.untracked.bool(True),
+                                       SkipEvent = cms.untracked.vstring('ProductNotFound') )
 
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(options.inputFiles)
@@ -37,6 +38,13 @@ elif "Summer16" in options.inputFiles[0]:
 else:
     print "Where is the global tag?"
     quit()
+    
+process.goodMuons = cms.EDFilter("GoodRecoMuonsFilter",
+    muonlabel = cms.InputTag("muons"),
+    minPt = cms.double(15),
+    maxAbsEta = cms.double(2.4),
+    filter = cms.bool(True)
+)
                                          
 process.rCluster = cms.EDProducer("RClusterProducer",
                                       allTracks = cms.InputTag("generalTracks"), 
@@ -126,5 +134,5 @@ process.out = cms.OutputModule("PoolOutputModule",
     SelectEvents = cms.untracked.PSet(SelectEvents = cms.vstring("p"))
  )
 
-process.p = cms.Path(process.rCluster*process.rCluster20*process.rCluster19*process.rCluster18*process.rCluster17*process.rCluster16*process.rCluster15*process.rCluster14*process.rCluster13*process.rCluster12*process.rCluster11*process.rCluster10*process.rCluster9*process.rCluster8*process.rCluster7*process.rCluster6*process.rCluster5*process.rCluster4*process.rCluster3*process.rCluster2*process.rCluster1*process.rCluster0)
+process.p = cms.Path(process.goodMuons*process.rCluster*process.rCluster20*process.rCluster19*process.rCluster18*process.rCluster17*process.rCluster16*process.rCluster15*process.rCluster14*process.rCluster13*process.rCluster12*process.rCluster11*process.rCluster10*process.rCluster9*process.rCluster8*process.rCluster7*process.rCluster6*process.rCluster5*process.rCluster4*process.rCluster3*process.rCluster2*process.rCluster1*process.rCluster0)
 process.e = cms.EndPath(process.out)

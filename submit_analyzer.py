@@ -24,7 +24,7 @@ def plot(period):
     # get histos:
     fin = TFile("histograms_%s.root" % period, "open")
     hists = {}
-    for label in ["h_tracks_reco", "h_tracks_rereco", "h_tracks_preselection", "h_tracks_tagged", "h_layers2D", "h_shortbdt2D", "h_longbdt2D", "h_trkRelIso"]:
+    for label in ["h_tracks_reco", "h_tracks_rereco", "h_tracks_preselection", "h_tracks_tagged", "h_layers2D", "h_shortbdt2D", "h_longbdt2D", "h_trkRelIso", "h_muonPt"]:
         hists[label] = fin.Get(label)
         hists[label].SetDirectory(0)
         hists[label].SetLineWidth(2)
@@ -84,7 +84,7 @@ def plot(period):
     canvas.Print("plots/plot_absval_%s.pdf" % period)  
 
     # draw other plots:
-    for label in ["h_layers2D", "h_shortbdt2D", "h_longbdt2D", "h_trkRelIso"]:
+    for label in ["h_layers2D", "h_shortbdt2D", "h_longbdt2D", "h_trkRelIso", "h_muonPt"]:
         canvas = shared_utils.mkcanvas()
         if "2D" in label:
             hists[label].Draw("colz")
@@ -98,7 +98,13 @@ def plot(period):
             hists[label].GetZaxis().SetTitleOffset(1.0)
             hists[label].GetZaxis().SetTitle("Events")
         else:
-            hists[label].Draw("hist")        
+            canvas.SetLogy(True)
+            
+            hists[label].Scale(1.0/hists[label].Integral())
+            hists[label].GetYaxis().SetRangeUser(1e-4,1e1)
+            hists[label].Draw("hist e")
+            hists[label].SetTitle(";%s;normalized events" % label)
+                        
         shared_utils.stamp()
         canvas.Print("plots/plot_%s_%s.pdf" % (label.replace("h_", ""), period))  
 

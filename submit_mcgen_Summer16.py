@@ -7,8 +7,8 @@ import glob
 # comments @ Viktor Kutzner
 
 # select steps:
-step_gensim = 1
-step_digi   = 1
+step_gensim = 0
+step_digi   = 0
 step_reco   = 1
 step_rereco = 0
 step_aod    = 0
@@ -33,10 +33,12 @@ if step_gensim:
     for i, infile in enumerate(glob.glob("/afs/desy.de/user/k/kutznerv/dust/store/mc/RunIIWinter15wmLHE/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/LHE/MCRUN2_71_V1_ext1-v1/30000/*root")):
         outfile = "../../" + outdir + "/" + infile.split("/")[-1]
         if not overwrite and os.path.exists(outdir + "/" + infile.split("/")[-1]): continue
-        this_command = example_command.replace("$INFILE", infile).replace("$OUTFILE", outfile).replace("$NEV", "-1").replace("$NUM", str(i))
+        this_command = example_command.replace("$INFILE", infile).replace("$OUTFILE", outfile).replace("$NEV", "1000").replace("$NUM", str(i))
         commands.append(this_command)
     
-    GridEngineTools.runParallel(commands, runmode, confirm=False, use_sl6=True)
+    os.system("rm -rf condor")
+    status = GridEngineTools.runParallel(commands, runmode, confirm=False, use_sl6=True)
+    if status != 0: quit(str(status))
 
 
 # generate Summer16 DIGI:
@@ -51,10 +53,12 @@ if step_digi:
     for i, infile in enumerate(glob.glob("/nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/Summer16_GENSIM/*root")):
         outfile = "../../" + outdir + "/" + infile.split("/")[-1]
         if not overwrite and os.path.exists(outdir + "/" + infile.split("/")[-1]): continue
-        this_command = example_command.replace("$INFILE", infile).replace("$OUTFILE", outfile).replace("$NEV", "-1").replace("$NUM", str(i))
+        this_command = example_command.replace("$INFILE", infile).replace("$OUTFILE", outfile).replace("$NEV", "1000").replace("$NUM", str(i))
         commands.append(this_command)
         
-    GridEngineTools.runParallel(commands, runmode, confirm=False, use_sl6=True)
+    os.system("rm -rf condor")
+    status = GridEngineTools.runParallel(commands, runmode, confirm=False, use_sl6=True)
+    if status != 0: quit(str(status))
 
 # generate Summer16 RECO:
 # recipe from https://cms-pdmv.cern.ch/mcm/public/restapi/requests/get_test/SUS-RunIISummer16DR80Premix-00036
@@ -68,10 +72,12 @@ if step_reco:
     for i, infile in enumerate(glob.glob("/nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/Summer16_DIGI/*root")):
         outfile = "../../" + outdir + "/" + infile.split("/")[-1]
         if not overwrite and os.path.exists(outdir + "/" + infile.split("/")[-1]): continue
-        this_command = example_command.replace("$INFILE", infile).replace("$OUTFILE", outfile).replace("$NEV", "-1").replace("$NUM", str(i))
+        this_command = example_command.replace("$INFILE", infile).replace("$OUTFILE", outfile).replace("$NEV", "1000").replace("$NUM", str(i))
         commands.append(this_command)
 
-    GridEngineTools.runParallel(commands, runmode, confirm=False, use_sl6=True)
+    os.system("rm -rf condor")
+    status = GridEngineTools.runParallel(commands, runmode, confirm=False, use_sl6=True)
+    if status != 0: quit(str(status))
 
 
 ## generate Summer16 reRECO:

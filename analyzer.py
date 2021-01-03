@@ -57,6 +57,7 @@ h_layers2D = TH2F("h_layers2D", ";targeted number of remaining layers; layers wi
 h_shortbdt2D = TH2F("h_shortbdt2D", ";BDT score; layers with meas. of matched track", 20, -1, 1, 20, 0, 20)
 h_longbdt2D = TH2F("h_longbdt2D", ";BDT score; layers with meas. of matched track", 20, -1, 1, 20, 0, 20)
 h_trkRelIso = TH1F("h_trkRelIso", "", 100, 0, 0.2)
+h_muonPt = TH1F("h_muonPt", "", 20, 0, 500)
 
 # load BDTs
 TMVA.Tools.Instance()
@@ -123,25 +124,19 @@ for i_event, event in enumerate(events):
     
     for muon in muons:
         
-        if muon.pt()<30: continue
+        if muon.pt()<15: continue
         
-        # PFCand veto:
-        inside_cone = False
+        # PFCand isolation:
+        summed_pt = 0
         for pfcand in pfcands:
-                                        
             pfvec = TLorentzVector()
             pfvec.SetPtEtaPhiM(pfcand.pt(), pfcand.eta(), pfcand.phi(), pfcand.mass())
-            
             mvec = TLorentzVector()
             mvec.SetPtEtaPhiM(muon.pt(), muon.eta(), muon.phi(), muon.mass())
-
-            # muon matched to pfcand:
-            if pfvec.DeltaR(mvec)>0.02 and pfvec.DeltaR(mvec)<0.1:
-                inside_cone = True
-                print "inside_cone"
-                break
-        
-        if inside_cone: continue
+            if pfvec.DeltaR(mvec)>0.02 and pfvec.DeltaR(mvec)<0.3:
+                summed_pt += pfcand.pt()
+        if summed_pt/muon.pt()>0.2:
+            continue
         
         for track in tracks:
                                         
@@ -160,6 +155,7 @@ for i_event, event in enumerate(events):
                    track.dz() < 0.5:
 
                     h_tracks_reco.Fill(layers_remaining)
+                    h_muonPt.Fill(muon.pt())
                     
                     for track_rereco in tracks_rereco:
                         trerecovec = TLorentzVector()
@@ -355,4 +351,5 @@ h_trkRelIso.Write()
 h_layers2D.Write()
 h_shortbdt2D.Write()
 h_longbdt2D.Write()
+h_muonPt.Write()
 outfile.Close()
