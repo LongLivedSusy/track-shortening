@@ -11,6 +11,11 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Utilities/interface/StreamID.h"
 #include "DataFormats/MuonReco/interface/Muon.h"
+#include "DataFormats/TrackReco/interface/Track.h"
+#include "DataFormats/TrackReco/interface/TrackBase.h"
+#include "DataFormats/TrackReco/interface/TrackExtra.h"
+#include "DataFormats/TrackReco/interface/TrackFwd.h"
+#include <TLorentzVector.h>
 
 
 class GoodRecoMuonsFilter : public edm::stream::EDFilter<> {
@@ -26,6 +31,7 @@ class GoodRecoMuonsFilter : public edm::stream::EDFilter<> {
       virtual void endStream() override;
 
       edm::EDGetTokenT<std::vector<reco::Muon>> muonsToken; 
+      edm::EDGetTokenT<std::vector<reco::Track>> tracksToken;
       float minpt_;
       float maxabseta_;
 };
@@ -33,6 +39,7 @@ class GoodRecoMuonsFilter : public edm::stream::EDFilter<> {
 GoodRecoMuonsFilter::GoodRecoMuonsFilter(const edm::ParameterSet& iConfig)
 {
     muonsToken = consumes<std::vector<reco::Muon>>(iConfig.getParameter<edm::InputTag>("muonlabel"));
+    tracksToken = consumes<reco::TrackCollection>(iConfig.getParameter<edm::InputTag>("trackslabel"));
     minpt_     = iConfig.getParameter<double>("minPt");
     maxabseta_ = iConfig.getParameter<double>("maxAbsEta");
 }
@@ -50,11 +57,27 @@ GoodRecoMuonsFilter::filter(edm::Event& iEvent, const edm::EventSetup& iSetup)
    Handle<std::vector<reco::Muon>> muons;
    iEvent.getByToken( muonsToken, muons);
       
+   Handle<reco::TrackCollection> tracks;
+   iEvent.getByToken(tracksToken, tracks);
+  
+	
    bool result = false;
    for( const auto& muon : *muons){
        if ((muon.pt() > minpt_) && (abs(muon.eta()) < maxabseta_)) {
-	   	   result = true;
-		   break;
+	   	   
+		   // track matching:
+	       for( const auto& track : *tracks){
+			   TLorentzVector pTrack (track.px(), track.py(), track.pz(), track.pt());
+			   TLorentzVector pMuon (muon.px(), muon.py(), muon.pz(), muon.pt());
+			   Double_t dr = pTrack.DeltaR(pMuon);
+			   if (dr<0.01) {
+		   		   reco::HitPattern hitpattern = track.hitPattern();
+ 				   if (hitpattern.trackerLayersWithMeasurement()>10) {
+					   result = true;
+				   	   break;
+				   }
+			   }
+		   }
 	   }
    }
    

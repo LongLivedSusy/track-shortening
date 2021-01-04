@@ -13,7 +13,7 @@ def submit(period):
     
     commands = []
     for i in range(1, 21):
-        commands.append("cd ~/cmssw/CMSSW_9_2_7_patch1/src/; eval `scramv1 runtime -sh`; cd -; python analyzer.py --inputfile %s_ISOTRACKS/*_%s.root" % (period, i))
+        commands.append("cd ~/cmssw/CMSSW_9_2_7_patch1/src/; eval `scramv1 runtime -sh`; cd -; python analyzer.py --inputfile %s_ISOTRACKS*/*_%s.root" % (period, i))
 
     GridEngineTools.runParallel(commands, "multi")
     os.system("hadd -f histograms_%s.root histograms_%s_?.root histograms_%s_??.root && rm histograms_%s_?.root && rm histograms_%s_??.root" % (period, period, period, period, period))
