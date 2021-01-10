@@ -36,8 +36,8 @@ if step_gensim:
         this_command = example_command.replace("$INFILE", infile).replace("$OUTFILE", outfile).replace("$NEV", "1000").replace("$NUM", str(i))
         commands.append(this_command)
     
-    os.system("rm -rf condor")
-    status = GridEngineTools.runParallel(commands, runmode, confirm=False, use_sl6=True)
+    os.system("rm condor.mcgen/*")
+    status = GridEngineTools.runParallel(commands, condorDir="condor.mcgen", runmode, confirm=False, use_sl6=True)
     if status != 0: quit(str(status))
 
 
@@ -56,8 +56,8 @@ if step_digi:
         this_command = example_command.replace("$INFILE", infile).replace("$OUTFILE", outfile).replace("$NEV", "1000").replace("$NUM", str(i))
         commands.append(this_command)
         
-    os.system("rm -rf condor")
-    status = GridEngineTools.runParallel(commands, runmode, confirm=False, use_sl6=True)
+    os.system("rm condor.mcgen/*")
+    status = GridEngineTools.runParallel(commands, condorDir="condor.mcgen", runmode, confirm=False, use_sl6=True)
     if status != 0: quit(str(status))
 
 # generate Summer16 RECO:
@@ -75,8 +75,8 @@ if step_reco:
         this_command = example_command.replace("$INFILE", infile).replace("$OUTFILE", outfile).replace("$NEV", "1000").replace("$NUM", str(i))
         commands.append(this_command)
 
-    os.system("rm -rf condor")
-    status = GridEngineTools.runParallel(commands, runmode, confirm=False, use_sl6=True)
+    os.system("rm condor.mcgen/*")
+    status = GridEngineTools.runParallel(commands, condorDir="condor.mcgen", runmode, confirm=False, use_sl6=True)
     if status != 0: quit(str(status))
 
 
