@@ -43,7 +43,7 @@ process.goodMuons = cms.EDFilter("GoodRecoMuonsFilter",
     trackslabel = cms.InputTag("generalTracks"),
     muonlabel = cms.InputTag("muons"),
     minPt = cms.double(15),
-    maxAbsEta = cms.double(2.4),
+    maxAbsEta = cms.double(2.2),
     filter = cms.bool(True)
 )
                                          
