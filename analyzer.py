@@ -14,7 +14,7 @@ gROOT.SetStyle('Plain')
 
 parser = OptionParser()
 parser.add_option("--low_pt", dest = "low_pt_threshold", default = 15)
-parser.add_option("--high_pt", dest = "high_pt_threshold", default = 9999)
+parser.add_option("--high_pt", dest = "high_pt_threshold", default = 99999)
 parser.add_option("--suffix", dest = "suffix", default = "")
 (options, args) = parser.parse_args()
 
@@ -170,7 +170,7 @@ for i_event, event in enumerate(events):
     
     for muon in muons:
                 
-        if not muon.pt()>15:
+        if not (muon.pt()>15 and abs(muon.eta())<2.2):
             continue
         
         # PFCand isolation:
@@ -220,7 +220,7 @@ for i_event, event in enumerate(events):
                                 deltaR = tvec.DeltaR(trerecovec)
                                 if deltaR < 0.01:
 
-                                    if track_rereco.pt()>options.low_pt_threshold and track_rereco.pt()>options.high_pt_threshold and abs(track_rereco.eta())<2.2:
+                                    if track_rereco.pt()>options.low_pt_threshold and track_rereco.pt()<=options.high_pt_threshold and abs(track_rereco.eta())<2.2:
                                                                                                                         
                                         histos["h_layers2D"].Fill(layers_remaining, track_rereco.hitPattern().trackerLayersWithMeasurement())
                                         histos["h_ptratio2D"].Fill(track.pt(), track_rereco.pt())
