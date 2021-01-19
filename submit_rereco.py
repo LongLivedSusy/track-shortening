@@ -13,10 +13,10 @@ parser.add_option("--period", dest = "period", default = "Run2016")
 
 period              = options.period
 step_clustersurgeon = 1
-step_reco           = 1
-step_isoproducer    = 1
+step_reco           = 0
+step_isoproducer    = 0
 runmode             = "grid"
-confirm             = False
+confirm             = True
 
 def runSL6(command):
     singularity_wrapper = "singularity exec --contain --bind /afs:/afs --bind /nfs:/nfs --bind /pnfs:/pnfs --bind /cvmfs:/cvmfs --bind /var/lib/condor:/var/lib/condor --bind /tmp:/tmp --pwd . ~/dust/slc6_latest.sif sh -c 'source /cvmfs/cms.cern.ch/cmsset_default.sh; $CMD'"

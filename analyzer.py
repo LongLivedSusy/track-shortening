@@ -128,10 +128,10 @@ def cutflow_fill(layers_remaining):
 
 # loop over events
 for i_event, event in enumerate(events):
-    
+        
     if (i_event+1) % 10 == 0:
         print "event %s / %s (layers_remaining=%s)" % (i_event+1, events.size(), layers_remaining)
-    
+            
     # RECO collections:
     event.getByLabel("muons", "", "RECO", muons_handle)
     muons = muons_handle.product()
@@ -147,29 +147,29 @@ for i_event, event in enumerate(events):
     tracks_rereco = tracks_rereco_handle.product()
 
     # isotrk collections:
-    event.getByLabel("isotrackproducer", "tracks@matchedCaloEnergy", "ISOTRACK", isotrk_matchedCaloEnergy_handle)
+    event.getByLabel("isotrackproducer", "tracks@matchedCaloEnergy", "reRECO", isotrk_matchedCaloEnergy_handle)
     isotrk_matchedCaloEnergy = isotrk_matchedCaloEnergy_handle.product()
-    event.getByLabel("isotrackproducer", "tracks@trackerLayersWithMeasurement", "ISOTRACK", isotrk_trackerLayersWithMeasurement_handle)
+    event.getByLabel("isotrackproducer", "tracks@trackerLayersWithMeasurement", "reRECO", isotrk_trackerLayersWithMeasurement_handle)
     isotrk_trackerLayersWithMeasurement = isotrk_trackerLayersWithMeasurement_handle.product()
-    event.getByLabel("isotrackproducer", "tracks@chi2perNdof", "ISOTRACK", isotrk_chi2perNdof_handle)
+    event.getByLabel("isotrackproducer", "tracks@chi2perNdof", "reRECO", isotrk_chi2perNdof_handle)
     isotrk_chi2perNdof = isotrk_chi2perNdof_handle.product()
-    event.getByLabel("isotrackproducer", "tracks@trackQualityHighPurity", "ISOTRACK", isotrk_trackQualityHighPurity_handle)
+    event.getByLabel("isotrackproducer", "tracks@trackQualityHighPurity", "reRECO", isotrk_trackQualityHighPurity_handle)
     isotrk_trackQualityHighPurity = isotrk_trackQualityHighPurity_handle.product()
-    event.getByLabel("isotrackproducer", "tracks@ptError", "ISOTRACK", isotrk_ptError_handle)
+    event.getByLabel("isotrackproducer", "tracks@ptError", "reRECO", isotrk_ptError_handle)
     isotrk_ptError = isotrk_ptError_handle.product()
-    event.getByLabel("isotrackproducer", "tracks@trkRelIso", "ISOTRACK", isotrk_trkRelIso_handle)
+    event.getByLabel("isotrackproducer", "tracks@trkRelIso", "reRECO", isotrk_trkRelIso_handle)
     isotrk_trkRelIso = isotrk_trkRelIso_handle.product()
-    event.getByLabel("isotrackproducer", "tracks@passPFCandVeto", "ISOTRACK", isotrk_passPFCandVeto_handle)
+    event.getByLabel("isotrackproducer", "tracks@passPFCandVeto", "reRECO", isotrk_passPFCandVeto_handle)
     isotrk_passPFCandVeto = isotrk_passPFCandVeto_handle.product()
-    event.getByLabel("isotrackproducer", "tracks@deDxHarmonic2", "ISOTRACK", isotrk_deDxHarmonic2_handle)
+    event.getByLabel("isotrackproducer", "tracks@deDxHarmonic2", "reRECO", isotrk_deDxHarmonic2_handle)
     isotrk_deDxHarmonic2 = isotrk_deDxHarmonic2_handle.product()
-    event.getByLabel("isotrackproducer", "tracks@dxyVtx", "ISOTRACK", isotrk_dxyVtx_handle)
+    event.getByLabel("isotrackproducer", "tracks@dxyVtx", "reRECO", isotrk_dxyVtx_handle)
     isotrk_dxyVtx = isotrk_dxyVtx_handle.product()
-    event.getByLabel("isotrackproducer", "tracks@dzVtx", "ISOTRACK", isotrk_dzVtx_handle)
+    event.getByLabel("isotrackproducer", "tracks@dzVtx", "reRECO", isotrk_dzVtx_handle)
     isotrk_dzVtx = isotrk_dzVtx_handle.product()
     
     for muon in muons:
-                
+                                
         if not (muon.pt()>15 and abs(muon.eta())<2.2):
             continue
         

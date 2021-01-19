@@ -401,7 +401,7 @@ void IsoTrackProducer::produce(edm::StreamID, edm::Event& iEvent, const edm::Eve
 
     // track kinematics:
     bool trackKinematics = ((track.pt() > minTrackPt) && (std::abs(track.eta())) < maxTrackEta);
-    //if (!(trackKinematics)) continue;
+    if (!(trackKinematics)) continue;
 
     bool passExo16044Kinematics = track.pt() > 55 && std::abs(track.eta()) < 2.1;
 
