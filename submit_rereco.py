@@ -13,10 +13,9 @@ parser.add_option("--period", dest = "period", default = "Run2016")
 
 period              = options.period
 step_clustersurgeon = 1
-step_reco           = 0
-step_isoproducer    = 0
+step_reco           = 1
 runmode             = "grid"
-confirm             = True
+confirm             = 0
 
 def runSL6(command):
     singularity_wrapper = "singularity exec --contain --bind /afs:/afs --bind /nfs:/nfs --bind /pnfs:/pnfs --bind /cvmfs:/cvmfs --bind /var/lib/condor:/var/lib/condor --bind /tmp:/tmp --pwd . ~/dust/slc6_latest.sif sh -c 'source /cvmfs/cms.cern.ch/cmsset_default.sh; $CMD'"
@@ -28,36 +27,34 @@ if period == "Run2016":
     inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2016H/SingleMuon/RAW-RECO/ZMu-PromptReco*/*/*/*/*/*.root"
 elif period == "Run2016B":
     cmssw = "CMSSW_8_0_29"
-    #80X_dataRun2_2016LegacyRepro_v4
     inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2016B/SingleMuon/RAW-RECO/ZMu-07Aug17_ver2-v1/*/*root"
 elif period == "Run2016E":
     cmssw = "CMSSW_8_0_29"
-    #80X_dataRun2_2016LegacyRepro_v4
     inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2016E/SingleMuon/RAW-RECO/ZMu-07Aug17-v1/*/*root"
 elif period == "Run2016H":
     cmssw = "CMSSW_8_0_29"
-    #80X_dataRun2_2016LegacyRepro_v4
     inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2016H/SingleMuon/RAW-RECO/ZMu-07Aug17-v1/*/*root"    
 elif period == "Run2017B":
     cmssw = "CMSSW_9_4_0"
-    #94X_dataRun2_ReReco17_forValidation
     inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2017B/SingleMuon/RAW-RECO/ZMu-17Nov2017-v1/6000*/*root"    
 elif period == "Run2017F":
     cmssw = "CMSSW_9_4_0"
-    #94X_dataRun2_ReReco17_forValidation
     inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2017F/SingleMuon/RAW-RECO/ZMu-17Nov2017-v1/60000/*root"    
 elif period == "Run2018A":
     cmssw = "CMSSW_10_2_4_patch1"
-    #102X_dataRun2_Sep2018Rereco_v1
     inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2018A/SingleMuon/RAW-RECO/ZMu-17Sep2018-v2/10000*/*root"    
 elif period == "Run2018D":
     cmssw = "CMSSW_10_2_5_patch1"
-    #102X_dataRun2_Prompt_v11
     inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2018D/SingleMuon/RAW-RECO/ZMu-PromptReco-v2/000/321/2*/*/*root"    
 elif period == "Summer16":
     cmssw = "CMSSW_8_0_21"
     inputpath = "/nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/Summer16_RECO/*root"
-
+elif period == "Fall17":
+    cmssw = "CMSSW_9_4_0" #TODO: _patch1
+    inputpath = "/nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/Fall17_RECO/*root"
+else:
+    quit("which period?")
+    
 # set up CMSSW:
 if not os.path.exists("%s/src/shorttrack" % cmssw):
     runSL6("export SCRAM_ARCH=slc6_amd64_gcc530; scramv1 project CMSSW %s; cd %s/src; eval `scramv1 runtime -sh`; ln -s ../../shorttrack shorttrack; cd shorttrack; chmod +x ./setup.sh; ./setup.sh; cd ..; scram b -j10" % (cmssw, cmssw))
@@ -83,20 +80,6 @@ if step_reco:
             commands.append("cd ~/dust/shorttrack/track-shortening/%s/src/; eval `scramv1 runtime -sh`; cd shorttrack/TrackRefitting/; cmsRun python/reRECO_%s.py inputFiles=file://../../%s outputFileName=../../%s step=%s MuonSeeds=1" % (cmssw, period, i_file, o_file, step))
 
     os.system("mkdir -p /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/%s_RERECO" % period)
-    os.system("rm condor.%s/*" % period)
-    status = GridEngineTools.runParallel(commands, runmode, condorDir="condor.%s" % period, confirm=confirm, use_sl6=True)
-    #if status != 0: quit(str(status))
-
-
-# do rereco with modified hit collections:
-if step_isoproducer:
-    
-    commands = []
-    for i_file in glob.glob("%s_RERECO/*root" % period):
-        o_file = i_file.replace("RERECO", "ISOTRACKS").replace(".root", "")
-        commands.append("cd ~/dust/shorttrack/track-shortening/%s/src/; eval `scramv1 runtime -sh`; cmsRun shorttrack/DisappearingTrack/python/isotrackproducer_cfi.py inputFiles=file://../../%s outputFile=../../%s" % (cmssw, i_file, o_file))
-    
-    os.system("mkdir -p /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/%s_ISOTRACKS" % period)
     os.system("rm condor.%s/*" % period)
     status = GridEngineTools.runParallel(commands, runmode, condorDir="condor.%s" % period, confirm=confirm, use_sl6=True)
     #if status != 0: quit(str(status))

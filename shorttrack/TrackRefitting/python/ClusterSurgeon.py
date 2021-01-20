@@ -42,6 +42,8 @@ elif "Run2018" in options.inputFiles[0]:
     process.GlobalTag = GlobalTag(process.GlobalTag, '102X_dataRun2_Sep2018Rereco_v1', '')
 elif "Summer16" in options.inputFiles[0]:
     process.GlobalTag = GlobalTag(process.GlobalTag, '80X_mcRun2_asymptotic_2016_TrancheIV_v8', '')
+elif "Fall17" in options.inputFiles[0]:
+    process.GlobalTag = GlobalTag(process.GlobalTag, '94X_mc2017_realistic_v10', '')
 else:
     print "Where is the global tag?"
     quit()

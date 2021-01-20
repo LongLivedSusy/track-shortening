@@ -16064,7 +16064,7 @@ process.lowPtTripletStepTrajectoryFilter = cms.PSet(
 )
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(20)
+    input = cms.untracked.int32(-1)
 )
 
 process.mipVariable = cms.PSet(
