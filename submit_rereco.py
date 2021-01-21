@@ -12,7 +12,7 @@ parser.add_option("--period", dest = "period", default = "Run2016")
 # comments @ Viktor Kutzner
 
 period              = options.period
-step_clustersurgeon = 1
+step_clustersurgeon = 0
 step_reco           = 1
 runmode             = "grid"
 confirm             = 0

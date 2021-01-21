@@ -14,8 +14,9 @@ gROOT.SetStyle('Plain')
 
 parser = OptionParser()
 parser.add_option("--low_pt", dest = "low_pt_threshold", default = 15)
-parser.add_option("--high_pt", dest = "high_pt_threshold", default = 99999)
+parser.add_option("--high_pt", dest = "high_pt_threshold", default = 999999)
 parser.add_option("--suffix", dest = "suffix", default = "")
+parser.add_option("--nev", dest = "nev", default = -1)
 (options, args) = parser.parse_args()
 
 events = Events(args)
@@ -23,12 +24,24 @@ events = Events(args)
 layers_remaining = int(args[0].split("_")[-1].replace(".root", ""))
 print "remaining layers:", layers_remaining
 
-if "Summer16" in args[0].split(".root")[0]:
-    period = "Summer16"
-elif "Run2016" in args[0].split(".root")[0]:
-    period = "Run2016"
-else:
+period = ""
+for i_period in ["SummerOld16", "Summer16", "Fall17", "Run2016B", "Run2016H", "Run2016PromptH", "Run2017B", "Run2017F", "Run2018A", "Run2018D"]:
+    if i_period in args[0].split(".root")[0]:
+        period = i_period
+        break
+if period == "":
     quit("No run period")
+
+# test for invalid files:
+sane_files = []
+for arg in args:
+    test = TFile(arg)
+    if not (test.IsZombie() or test.TestBit(TFile.kRecovered)):
+        sane_files.append(arg)
+    else:
+        print "delete file: %s" % arg
+    test.Close()
+args = sane_files
 
 # create handle outside of loop
 muons_handle = Handle("std::vector<reco::Muon>")
@@ -63,7 +76,7 @@ histos["h_layers2D"]                         = TH2F("h_layers2D", ";targeted num
 histos["h_ptratio2D"]                        = TH2F("h_ptratio2D", ";p_{T} of #mu-matched track (GeV); p_{T} of shortened track (GeV);Tracks", 20, 0, 300, 20, 0, 300)
 histos["h_shortbdt2D"]                       = TH2F("h_shortbdt2D", ";BDT score; layers with meas. of matched track;Tracks", 20, -1, 1, 20, 0, 20)
 histos["h_longbdt2D"]                        = TH2F("h_longbdt2D", ";BDT score; layers with meas. of matched track;Tracks", 20, -1, 1, 20, 0, 20)
-histos["h_chi2ndof2D"]                       = TH2F("h_chi2ndof2D", ";shortened track p_{T} (GeV); layers with meas. of matched track; #chi^{2}/ndof;Tracks", 15, 0, 300, 20, 0, 20)
+histos["h_chi2ndof2D"]                       = TH2F("h_chi2ndof2D", ";layers with meas. of matched track;shortened track p_{T} (GeV); <#chi^{2}/ndof>", 20, 0, 20, 20, 0, 300)
 histos["h_muonPt"]                           = TH1F("h_muonPt", "", 20, 0, 200)
 histos["h_muonEta"]                          = TH1F("h_muonEta", "", 20, 0, 3.2)
 histos["h_pfIso"]                            = TH1F("h_pfIso", "", 25, 0, 1)
@@ -123,14 +136,23 @@ def cutflow_fill(layers_remaining):
     if cutflow_counter>=0:
         for i in range(cutflow_counter + 1):
             histos["cutflow"].Fill(i)
-            histos["cutflow_layer%s" % layers_remaining].Fill(i)
+    
+            if layers_remaining in range(3,9):
+                histos["cutflow_layer%s" % layers_remaining].Fill(i)
 
 
 # loop over events
 for i_event, event in enumerate(events):
         
-    if (i_event+1) % 10 == 0:
-        print "event %s / %s (layers_remaining=%s)" % (i_event+1, events.size(), layers_remaining)
+    if (i_event+1) % 100 == 0:
+        print "%s, event %s / %s (layers_remaining=%s)" % (period, i_event+1, events.size(), layers_remaining)
+        if int(options.nev)>0 and i_event>int(options.nev): break
+    
+    # FIXME
+    if period == "SummerOld16" or period == "Run2016PromptH":
+        isotrack_producerlabel = "ISOTRACK"
+    else:
+        isotrack_producerlabel = "reRECO"
             
     # RECO collections:
     event.getByLabel("muons", "", "RECO", muons_handle)
@@ -147,30 +169,31 @@ for i_event, event in enumerate(events):
     tracks_rereco = tracks_rereco_handle.product()
 
     # isotrk collections:
-    event.getByLabel("isotrackproducer", "tracks@matchedCaloEnergy", "reRECO", isotrk_matchedCaloEnergy_handle)
+    event.getByLabel("isotrackproducer", "tracks@matchedCaloEnergy", isotrack_producerlabel, isotrk_matchedCaloEnergy_handle)
     isotrk_matchedCaloEnergy = isotrk_matchedCaloEnergy_handle.product()
-    event.getByLabel("isotrackproducer", "tracks@trackerLayersWithMeasurement", "reRECO", isotrk_trackerLayersWithMeasurement_handle)
+    event.getByLabel("isotrackproducer", "tracks@trackerLayersWithMeasurement", isotrack_producerlabel, isotrk_trackerLayersWithMeasurement_handle)
     isotrk_trackerLayersWithMeasurement = isotrk_trackerLayersWithMeasurement_handle.product()
-    event.getByLabel("isotrackproducer", "tracks@chi2perNdof", "reRECO", isotrk_chi2perNdof_handle)
+    event.getByLabel("isotrackproducer", "tracks@chi2perNdof", isotrack_producerlabel, isotrk_chi2perNdof_handle)
     isotrk_chi2perNdof = isotrk_chi2perNdof_handle.product()
-    event.getByLabel("isotrackproducer", "tracks@trackQualityHighPurity", "reRECO", isotrk_trackQualityHighPurity_handle)
+    event.getByLabel("isotrackproducer", "tracks@trackQualityHighPurity", isotrack_producerlabel, isotrk_trackQualityHighPurity_handle)
     isotrk_trackQualityHighPurity = isotrk_trackQualityHighPurity_handle.product()
-    event.getByLabel("isotrackproducer", "tracks@ptError", "reRECO", isotrk_ptError_handle)
+    event.getByLabel("isotrackproducer", "tracks@ptError", isotrack_producerlabel, isotrk_ptError_handle)
     isotrk_ptError = isotrk_ptError_handle.product()
-    event.getByLabel("isotrackproducer", "tracks@trkRelIso", "reRECO", isotrk_trkRelIso_handle)
+    event.getByLabel("isotrackproducer", "tracks@trkRelIso", isotrack_producerlabel, isotrk_trkRelIso_handle)
     isotrk_trkRelIso = isotrk_trkRelIso_handle.product()
-    event.getByLabel("isotrackproducer", "tracks@passPFCandVeto", "reRECO", isotrk_passPFCandVeto_handle)
+    event.getByLabel("isotrackproducer", "tracks@passPFCandVeto", isotrack_producerlabel, isotrk_passPFCandVeto_handle)
     isotrk_passPFCandVeto = isotrk_passPFCandVeto_handle.product()
-    event.getByLabel("isotrackproducer", "tracks@deDxHarmonic2", "reRECO", isotrk_deDxHarmonic2_handle)
+    event.getByLabel("isotrackproducer", "tracks@deDxHarmonic2", isotrack_producerlabel, isotrk_deDxHarmonic2_handle)
     isotrk_deDxHarmonic2 = isotrk_deDxHarmonic2_handle.product()
-    event.getByLabel("isotrackproducer", "tracks@dxyVtx", "reRECO", isotrk_dxyVtx_handle)
+    event.getByLabel("isotrackproducer", "tracks@dxyVtx", isotrack_producerlabel, isotrk_dxyVtx_handle)
     isotrk_dxyVtx = isotrk_dxyVtx_handle.product()
-    event.getByLabel("isotrackproducer", "tracks@dzVtx", "reRECO", isotrk_dzVtx_handle)
+    event.getByLabel("isotrackproducer", "tracks@dzVtx", isotrack_producerlabel, isotrk_dzVtx_handle)
     isotrk_dzVtx = isotrk_dzVtx_handle.product()
     
     for muon in muons:
                                 
-        if not (muon.pt()>15 and abs(muon.eta())<2.2):
+        #if not (muon.pt()>15 and abs(muon.eta())<2.4):
+        if not muon.pt()>15:
             continue
         
         # PFCand isolation:
@@ -201,10 +224,11 @@ for i_event, event in enumerate(events):
                 # a long track muon:
                 if track.hitPattern().trackerLayersWithMeasurement() > 10:
                     if track.dxy() < 0.2:
-                        if track.dz() < 0.1:
+                        #if track.dz() < 0.1:
+                        if track.dz() < 0.5:
 
-                            if not abs(track.eta())<2.2:
-                                continue
+                            #if not abs(track.eta())<2.4:
+                            #    continue
 
                             if not ((track.hitPattern().trackerLayersWithMeasurement() == 3 and track.pt()>15) or (track.hitPattern().trackerLayersWithMeasurement() > 3 and track.pt()>40)):
                                 continue
@@ -220,7 +244,8 @@ for i_event, event in enumerate(events):
                                 deltaR = tvec.DeltaR(trerecovec)
                                 if deltaR < 0.01:
 
-                                    if track_rereco.pt()>options.low_pt_threshold and track_rereco.pt()<=options.high_pt_threshold and abs(track_rereco.eta())<2.2:
+                                    #if track_rereco.pt()>int(options.low_pt_threshold) and track_rereco.pt()<=int(options.high_pt_threshold) and abs(track_rereco.eta())<2.4:
+                                    if track_rereco.pt()>int(options.low_pt_threshold) and track_rereco.pt()<=int(options.high_pt_threshold):
                                                                                                                         
                                         histos["h_layers2D"].Fill(layers_remaining, track_rereco.hitPattern().trackerLayersWithMeasurement())
                                         histos["h_ptratio2D"].Fill(track.pt(), track_rereco.pt())
@@ -233,7 +258,6 @@ for i_event, event in enumerate(events):
                                         
                                         cutflow_counter = 0
                                                                                                 
-                                        # matching to isotracks collection...
                                         if track_rereco.ndof()>0:
                                             track_chi2perNdof = 1.0*track_rereco.chi2()/track_rereco.ndof()
                                         else:
@@ -241,10 +265,15 @@ for i_event, event in enumerate(events):
                                         
                                         histos["h_chi2ndof2D"].Fill(layers_remaining, track_rereco.pt(), track_chi2perNdof)
                                         
-                                        isotrack_index = 0
+                                        # matching to isotracks collection...
+                                        isotrack_index = -1
                                         for j, j_isotrk_chi2perNdof in enumerate(isotrk_chi2perNdof):
                                             if j_isotrk_chi2perNdof == track_chi2perNdof:
                                                 isotrack_index = j
+                            
+                                        if isotrack_index == -1:
+                                            print "isotrack matching failed"
+                                            continue
                             
                                         # get all necessary tag variables:
                                         track_trackerLayersWithMeasurement = track_rereco.hitPattern().trackerLayersWithMeasurement() 
@@ -285,7 +314,7 @@ for i_event, event in enumerate(events):
                                         # redo relIso, but without the muon:
                                         conePtSum_rel = 0
                                         for othertrack in tracks_rereco:
-                                            #if othertrack.pt()>15 and abs(othertrack.eta())<2.2:
+                                            #if othertrack.pt()>15 and abs(othertrack.eta())<2.4:
                                             othertrackvec = TLorentzVector()
                                             othertrackvec.SetPtEtaPhiM(othertrack.pt(), othertrack.eta(), othertrack.phi(), 0.0)
                                             deltaR = othertrackvec.DeltaR(trerecovec)
@@ -303,7 +332,7 @@ for i_event, event in enumerate(events):
                                         
                                         if track_trackQualityHighPurity==1:
                                             cutflow_counter += 1
-                                            if abs(track_eta)<2.2:
+                                            if abs(track_eta)<2.4:
                                                 cutflow_counter += 1
                                                 if track_ptErrOverPt2<10:
                                                     cutflow_counter += 1
@@ -368,7 +397,7 @@ for i_event, event in enumerate(events):
                                                     is_tagged = True
                                                     histos["h_longbdt2D"].Fill(track_mva, track_rereco.hitPattern().trackerLayersWithMeasurement())
                             
-                                        cutflow_fill(layers_remaining)            
+                                        cutflow_fill(layers_remaining)      
                                         
                                         # fill var histograms:
                                         for label in histos:
@@ -392,6 +421,7 @@ for i_event, event in enumerate(events):
                         
 # make a canvas, draw, and save it
 outfile = TFile("histograms%s_%s_%s.root" % (options.suffix, period, layers_remaining), "recreate")
+histos["h_chi2ndof2D"].Scale(1.0/histos["h_chi2ndof2D"].GetEntries())
 for label in histos:
     histos[label].Write()
 outfile.Close()

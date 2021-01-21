@@ -151,20 +151,20 @@ def plot(period, suffix):
             canvas.Print("plots%s/trackShortening_%s_%s.pdf" % (suffix, label.replace("h_", ""), period))  
 
 
-def scalefactors(suffix):
-
+def scalefactors(dataperiod, mcperiod, suffix, extralabel):
+    
     # get histos:
     hists_data = {}
     hists_mc = {}
     for label in histolabels:
-        fin = TFile("histograms%s_Run2016.root" % suffix, "open")
+        fin = TFile("histograms%s_%s.root" % (suffix, dataperiod), "open")
         hists_data[label] = fin.Get(label)
         hists_data[label].SetDirectory(0)
         hists_data[label].SetLineWidth(2)
         shared_utils.histoStyler(hists_data[label])
         fin.Close()
         
-        fin = TFile("histograms%s_Summer16.root" % suffix, "open")
+        fin = TFile("histograms%s_%s.root" % (suffix, mcperiod), "open")
         hists_mc[label] = fin.Get(label)
         hists_mc[label].SetDirectory(0)
         hists_mc[label].SetLineWidth(2)
@@ -252,7 +252,7 @@ def scalefactors(suffix):
     hists_data["h_recoscalefactor"].SetTitle(";remaining layers;scale factor")
     hists_data["h_recoscalefactor"].GetYaxis().SetRangeUser(0,2.5)
     shared_utils.stamp()
-    canvas.Print("plots%s/trackShortening_scalefactor.pdf" % suffix)
+    canvas.Print("plots%s/trackShortening_scalefactor%s.pdf" % (suffix, extralabel))
     
     # fit:
     hists_data["h_scalefactor"].Draw("hist e")
@@ -289,7 +289,7 @@ def scalefactors(suffix):
     #ErrorHistogram2.SetFillColor(kGray+1)
     #ErrorHistogram2.Draw('e2 sames')
     shared_utils.stamp()
-    canvas.Print("plots%s/trackShortening_scalefactor_fit.pdf" % suffix)
+    canvas.Print("plots%s/trackShortening_scalefactor_fit%s.pdf" % (suffix, extralabel))
     
     
     # draw pt:
@@ -345,8 +345,16 @@ def scalefactors(suffix):
             else:
                 hists_data[variable].SetTitle(";%s;normalized number of events" % vartext)
             
+            if "track_" in variable or "h_muonPt" in variable or "h_pfIso" in variable:
+                legend = shared_utils.mklegend(x1=0.55, y1=0.7, x2=0.9, y2=0.9)
+                legend.AddEntry(hists_data[variable], "SingleMuon Data")
+                legend.AddEntry(hists_mc[variable], "DYJetsToLL MC")
+                if "_layer" in variable:
+                    legend.SetHeader("%s layers" % variable.split("_layer")[-1])
+                legend.Draw()
+            
             # if track variable, let's include the signal too!
-            if "track_" in variable:
+            if False and "track_" in variable:
                 folder = "/nfs/dust/cms/user/kutznerv/shorttrack/analysis/ntupleanalyzer/skim_64_p15OptionalJetVeto_merged"
                 input_files = glob.glob(folder + "/RunIISummer16MiniAODv3.SMS-T1qqqq*root")
                 base_cut = "tracks_chiCandGenMatchingDR<0.01 && signal_gluino_mass==2000 && signal_lsp_mass==1975 && tracks_nMissingMiddleHits==0"
@@ -364,6 +372,7 @@ def scalefactors(suffix):
                 if h_signal.Integral()>0:
                     h_signal.Scale(1.0/h_signal.Integral())
                 h_signal.Draw("hist e same")
+                legend.AddEntry(h_signal, "Signal")
                 
                 # get mean
                 if "track_chi2perNdof" in variable:
@@ -377,36 +386,6 @@ def scalefactors(suffix):
                     latex.DrawLatex(.4,.25,"<#chi^{2}/ndof>_{MC}=%.2f" % mc_mean)
                 
             shared_utils.stamp()
-            
-            #if "h_ptratio_layer3" in variable:
-            #                    
-            #    legend = shared_utils.mklegend(x1=0.55, y1=0.7, x2=0.9, y2=0.9)
-            #    legend.AddEntry(hists_data[variable], "SingleMuon Data")
-            #    legend.AddEntry(hists_mc[variable], "DYJetsToLL MC")
-            #    legend.AddEntry(hists_data["h_ptratio_layer3"], "3 layers")
-            #    colors = [kRed, kBlue, kTeal, kGreen]
-            #    for i_layer in [4,5,10]:
-            #        color = colors.pop(0)
-            #        hists_mc["h_ptratio_layer%s" % i_layer].SetLineColor(color)
-            #        hists_data["h_ptratio_layer%s" % i_layer].SetMarkerColor(color)
-            #        hists_data["h_ptratio_layer%s" % i_layer].Scale(1.0/hists_data["h_ptratio_layer%s" % i_layer].Integral())
-            #        hists_mc["h_ptratio_layer%s" % i_layer].Scale(1.0/hists_mc["h_ptratio_layer%s" % i_layer].Integral())
-            #        
-            #        hists_mc["h_ptratio_layer%s" % i_layer].Draw("hist e same")
-            #        hists_data["h_ptratio_layer%s" % i_layer].SetMarkerStyle(20)
-            #        hists_data["h_ptratio_layer%s" % i_layer].Draw("p same")
-            #        legend.AddEntry(hists_mc["h_ptratio_layer%s" % i_layer], "%s layers" % i_layer)
-                    
-            
-            if "track_" in variable or "h_muonPt" in variable or "h_pfIso" in variable:
-                legend = shared_utils.mklegend(x1=0.55, y1=0.7, x2=0.9, y2=0.9)
-                legend.AddEntry(hists_data[variable], "SingleMuon Data")
-                legend.AddEntry(hists_mc[variable], "DYJetsToLL MC")
-                if "track_" in variable:
-                    legend.AddEntry(h_signal, "Signal")
-                if "_layer" in variable:
-                    legend.SetHeader("%s layers" % variable.split("_layer")[-1])
-                legend.Draw()
                 
             if "h_ptratio_layer" in variable:
                 legend = shared_utils.mklegend(x1=0.5, y1=0.7, x2=0.9, y2=0.9)
@@ -463,17 +442,19 @@ def scalefactors(suffix):
                 hists_data[variable].GetYaxis().SetRangeUser(0,1)
                 hists_data[variable].SetTitle(";;fraction of remaining shortened tracks")
             
-            canvas.Print("plots%s/trackShortening_%s.pdf" % (suffix, variable.replace("h_", "")))
+            canvas.Print("plots%s/trackShortening_%s%s.pdf" % (suffix, variable.replace("h_", ""), extralabel))
 
 
-def doplots():        
+def doplots(periods = ["Run2016H", "Run2016B", "Run2017B", "Run2017F", "Summer16", "Fall17"], suffixes = [""]):        
 
-    for suffix in ["", "low", "high"]:
-        for period in ["Summer16", "Run2016"]: 
+    for suffix in suffixes:
+        for period in periods: 
             plot(period, suffix)
-        scalefactors(suffix)
-        
-        
+    
+    #scalefactors("Run2016H", "Summer16", "", "_16H")
+    #scalefactors("Run2016B", "Summer16", "", "_16B")
+    scalefactors("SummerOld16", "Run2016PromptH", "", "_old")
+    
 if __name__ == "__main__":
 
     doplots()
