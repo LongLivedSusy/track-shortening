@@ -23,30 +23,31 @@ histolabels = [
                 "h_muonPt",                          
                 "h_muonEta",                         
                 "h_pfIso",                           
-                "track_is_pixel_track",              
-                "track_dxyVtx",                      
-                "track_dzVtx",                                     
-                "track_trkRelIso",                   
-                "track_nValidPixelHits",             
-                "track_nValidTrackerHits",           
-                "track_trackerLayersWithMeasurement",
-                "track_ptErrOverPt2",                
-                "track_chi2perNdof",                 
-                "track_mva",                         
-                "track_pt",                          
-                "track_trackQualityHighPurity",      
-                "track_nMissingInnerHits",           
-                "track_passPFCandVeto",              
-                "track_nMissingOuterHits",           
-                "track_matchedCaloEnergy",           
-                "track_p",         
+                #"track_is_pixel_track",              
+                #"track_dxyVtx",                      
+                #"track_dzVtx",                                     
+                #"track_trkRelIso",                   
+                #"track_nValidPixelHits",             
+                #"track_nValidTrackerHits",           
+                #"track_trackerLayersWithMeasurement",
+                #"track_ptErrOverPt2",                
+                #"track_chi2perNdof",                 
+                #"track_mva",                         
+                #"track_pt",                          
+                #"track_trackQualityHighPurity",      
+                #"track_nMissingInnerHits",           
+                #"track_passPFCandVeto",              
+                #"track_nMissingOuterHits",           
+                #"track_matchedCaloEnergy",           
+                #"track_p",         
                 "cutflow",
-                "h_ptratio_layer3",
-                "h_ptratio_layer4",
-                "h_ptratio_layer5",
-                "h_ptratio_layer6",
-                "h_ptratio_layer7",
-                "h_ptratio_layer8",
+                "h_ptratio",
+                #"h_ptratio_layer3",
+                #"h_ptratio_layer4",
+                #"h_ptratio_layer5",
+                #"h_ptratio_layer6",
+                #"h_ptratio_layer7",
+                #"h_ptratio_layer8",
                 "h_ptratio2D",
                 "h_chi2ndof2D",
               ]
@@ -445,15 +446,20 @@ def scalefactors(dataperiod, mcperiod, suffix, extralabel):
             canvas.Print("plots%s/trackShortening_%s%s.pdf" % (suffix, variable.replace("h_", ""), extralabel))
 
 
-def doplots(periods = ["Run2016H", "Run2016B", "Run2017B", "Run2017F", "Summer16", "Fall17"], suffixes = [""]):        
+def doplots(periods = ["Summer16", "Fall17"], suffixes = [""]):        
+
+
+    #"Run2016H", "Run2016B", "Run2017B", "Run2017F", 
 
     for suffix in suffixes:
         for period in periods: 
             plot(period, suffix)
     
-    #scalefactors("Run2016H", "Summer16", "", "_16H")
-    #scalefactors("Run2016B", "Summer16", "", "_16B")
-    scalefactors("SummerOld16", "Run2016PromptH", "", "_old")
+    if False:
+        scalefactors("Run2016B", "Summer16", "", "_2016B")
+        scalefactors("Run2016H", "Summer16", "", "_2016H")
+        scalefactors("Run2017B", "Fall17", "", "_2017B")
+        scalefactors("Run2017F", "Fall17", "", "_2017F")
     
 if __name__ == "__main__":
 
