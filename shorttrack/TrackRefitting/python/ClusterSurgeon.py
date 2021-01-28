@@ -3,7 +3,7 @@ from FWCore.ParameterSet.VarParsing import VarParsing
 # searches for muon tracks with sufficient number of hits and removes the corresponding cluster of all but N inner hits of that tracks.
 
 options = VarParsing('analysis')
-options.parseArguments()
+options.parseArguments()				  
 
 process = cms.Process("HITREMOVER")
 process.load("FWCore.MessageService.MessageLogger_cfi")
@@ -14,6 +14,12 @@ process.options  = cms.untracked.PSet( wantSummary = cms.untracked.bool(True),
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(options.inputFiles)
 )
+
+if "UL/" in options.outputFile:
+    ultralegacy = True
+    print "Processing ultralegacy..."
+else:
+    ultralegacy = False
 
 process.load('Configuration.StandardSequences.Services_cff')
 process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
@@ -31,7 +37,9 @@ process.load('Configuration.StandardSequences.MagneticField_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 from Configuration.AlCa.GlobalTag import GlobalTag
 
-if "Run2016" in options.inputFiles[0]:
+if ultralegacy:
+    process.GlobalTag = GlobalTag(process.GlobalTag, '106X_dataRun2_v20', '')
+elif "Run2016" in options.inputFiles[0]:
     #process.GlobalTag = GlobalTag(process.GlobalTag, '80X_dataRun2_Prompt_v14', '')
     process.GlobalTag = GlobalTag(process.GlobalTag, '80X_dataRun2_2016LegacyRepro_v4', '')
 elif "Run2017" in options.inputFiles[0]:
@@ -141,11 +149,6 @@ process.out = cms.OutputModule("PoolOutputModule",
         ),
     SelectEvents = cms.untracked.PSet(SelectEvents = cms.vstring("p"))
  )
-
-#        'drop *',
-#        'keep *_*_*_RECO',
-#        'keep *_*_*_HITREMOVER',
-
 
 process.p = cms.Path(process.goodMuons*process.rCluster*process.rCluster20*process.rCluster19*process.rCluster18*process.rCluster17*process.rCluster16*process.rCluster15*process.rCluster14*process.rCluster13*process.rCluster12*process.rCluster11*process.rCluster10*process.rCluster9*process.rCluster8*process.rCluster7*process.rCluster6*process.rCluster5*process.rCluster4*process.rCluster3*process.rCluster2*process.rCluster1*process.rCluster0)
 process.e = cms.EndPath(process.out)
