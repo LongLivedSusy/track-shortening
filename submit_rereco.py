@@ -104,7 +104,13 @@ else:
     
 # set up CMSSW:
 if not os.path.exists("%s/src/shorttrack" % cmssw):
-    runSL6("export SCRAM_ARCH=slc6_amd64_gcc530; scramv1 project CMSSW %s; cd %s/src; eval `scramv1 runtime -sh`; ln -s ../../shorttrack shorttrack; cd shorttrack; chmod +x ./setup.sh; ./setup.sh; cd ..; scram b -j10" % (cmssw, cmssw))
+    if use_sl6:
+        runSL6("export SCRAM_ARCH=slc6_amd64_gcc530; scramv1 project CMSSW %s; cd %s/src; eval `scramv1 runtime -sh`; ln -s ../../shorttrack shorttrack; cd shorttrack; chmod +x ./setup.sh; ./setup.sh; cd ..; scram b -j10" % (cmssw, cmssw))
+    else:
+        if cmssw == "CMSSW_10_6_2":
+            os.system("export SCRAM_ARCH=slc7_amd64_gcc820; scramv1 project CMSSW %s; cd %s/src; eval `scramv1 runtime -sh`; cp -r ../../shorttrack shorttrack; cp ../../CMSSW_10_6_2_support/src/shorttrack/TrackRefitting/plugins/RClusterProducer.cc shorttrack/TrackRefitting/plugins/; cd shorttrack; chmod +x ./setup.sh; ./setup.sh; cd ..; scram b -j10" % (cmssw, cmssw))
+        else:
+            os.system("export SCRAM_ARCH=slc7_amd64_gcc820; scramv1 project CMSSW %s; cd %s/src; eval `scramv1 runtime -sh`; ln -s ../../shorttrack shorttrack; cd shorttrack; chmod +x ./setup.sh; ./setup.sh; cd ..; scram b -j10" % (cmssw, cmssw))
 
 # modify hit collections:
 if step_clustersurgeon:
