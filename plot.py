@@ -12,16 +12,24 @@ TH1D.SetDefaultSumw2()
 histolabels = [
                 "h_tracks_reco",                     
                 "h_tracks_rereco",                   
-                "h_tracks_reco_rebinned",                     
-                "h_tracks_rereco_rebinned",                   
                 "h_tracks_preselection",             
                 "h_tracks_tagged",                   
                 "h_tracks_tagged_rebinned",                   
+                "h_tracks_reco_rebinned",                     
+                "h_tracks_rereco_rebinned",                   
+                "h_tracks_tagged_short",                   
+                "h_tracks_reco_short",                     
+                "h_tracks_rereco_short",                   
+                "h_tracks_tagged_long",                   
+                "h_tracks_reco_long",                     
+                "h_tracks_rereco_long",                   
                 "h_layers2D",                        
                 "h_shortbdt2D",                      
                 "h_longbdt2D",                       
                 "h_muonPt",                          
                 "h_muonEta",                         
+                "h_muonPtCand",                          
+                "h_muonEtaCand",                         
                 "h_pfIso",                           
                 #"track_is_pixel_track",              
                 #"track_dxyVtx",                      
@@ -42,19 +50,13 @@ histolabels = [
                 #"track_p",         
                 "cutflow",
                 "h_ptratio",
-                #"h_ptratio_layer3",
-                #"h_ptratio_layer4",
-                #"h_ptratio_layer5",
-                #"h_ptratio_layer6",
-                #"h_ptratio_layer7",
-                #"h_ptratio_layer8",
                 "h_ptratio2D",
                 "h_chi2ndof2D",
               ]
               
 # add layer-dependent track variable histograms:
 for label in list(histolabels):
-    if "track_" in label:
+    if "track_" in label or "h_ptratio" in label:
         for i in range(3,9):
             histolabels.append(label + "_layer%s" % i)
 
@@ -66,7 +68,7 @@ def plot(period, suffix):
     os.system("mkdir -p plots%s" % suffix)
 
     # get histos:
-    fin = TFile("histograms%s_%s.root" % (suffix, period), "open")
+    fin = TFile("histograms/histograms%s_%s.root" % (suffix, period), "open")
     hists = {}
     for label in histolabels:
         hists[label] = fin.Get(label)
@@ -152,150 +154,357 @@ def plot(period, suffix):
             canvas.Print("plots%s/trackShortening_%s_%s.pdf" % (suffix, label.replace("h_", ""), period))  
 
 
+def allperiods(suffix = ""):
+        
+    #extra = "_short"
+    #extra = "_long"
+    extra = ""
+        
+    periods = [
+                "Summer16",
+                "Fall17",
+                "Run2016B",
+                "Run2016C",
+                "Run2016D",
+                "Run2016E",
+                "Run2016F",
+                "Run2016G",
+                "Run2016H",
+                "Run2017B",
+                "Run2017C",
+                "Run2017D",
+                "Run2017E",
+                "Run2017F",
+                "Run2018A",
+                "Run2018B",
+                "Run2018C",
+                "Run2018D",
+              ]
+    
+    # get histos:
+    hists = {}
+    for period in periods:
+        hists[period] = {}
+        for label in histolabels:
+            fin = TFile("histograms/histograms%s_%s.root" % (suffix, period), "open")
+            hists[period][label] = fin.Get(label)
+            hists[period][label].SetDirectory(0)
+            hists[period][label].SetLineWidth(2)
+            shared_utils.histoStyler(hists[period][label])
+            fin.Close()
+            
+    for period in periods:
+        
+        if "Run" not in period:
+            continue
+        
+        if "Run2016" in period:
+            mcperiod = "Summer16"
+        else:
+            mcperiod = "Fall17"
+        
+        print period
+        
+        # tagging:
+        
+        hists[period]["h_tagefficiency"] = hists[period]["h_tracks_tagged" + extra].Clone()
+        hists[period]["h_tagefficiency"].SetName("h_tagefficiency")
+        hists[period]["h_tagefficiency"].SetLineWidth(2)
+        hists[period]["h_tagefficiency"].Divide(hists[period]["h_tracks_rereco" + extra])
+        
+        hists[mcperiod]["h_tagefficiency"] = hists[mcperiod]["h_tracks_tagged" + extra].Clone()
+        hists[mcperiod]["h_tagefficiency"].SetName("h_tagefficiency")
+        hists[mcperiod]["h_tagefficiency"].SetLineWidth(2)
+        hists[mcperiod]["h_tagefficiency"].Divide(hists[mcperiod]["h_tracks_rereco" + extra])
+        
+        hists[period]["h_tagscalefactor"] = hists[period]["h_tagefficiency"].Clone()
+        hists[period]["h_tagscalefactor"].SetName("h_tagscalefactor")
+        hists[period]["h_tagscalefactor"].SetLineWidth(2)
+        hists[period]["h_tagscalefactor"].Divide(hists[mcperiod]["h_tagefficiency"])
+        
+        # reconstruction:
+        
+        hists[period]["h_recoefficiency"] = hists[period]["h_tracks_reco" + extra].Clone()
+        hists[period]["h_recoefficiency"].SetName("h_recoefficiency")
+        hists[period]["h_recoefficiency"].SetLineWidth(2)
+        hists[period]["h_recoefficiency"].Divide(hists[period]["h_tracks_rereco" + extra])
+        
+        hists[mcperiod]["h_recoefficiency"] = hists[mcperiod]["h_tracks_reco" + extra].Clone()
+        hists[mcperiod]["h_recoefficiency"].SetName("h_recoefficiency")
+        hists[mcperiod]["h_recoefficiency"].SetLineWidth(2)
+        hists[mcperiod]["h_recoefficiency"].Divide(hists[mcperiod]["h_tracks_rereco" + extra])
+        
+        hists[period]["h_recoscalefactor"] = hists[period]["h_recoefficiency"].Clone()
+        hists[period]["h_recoscalefactor"].SetName("h_recoscalefactor")
+        hists[period]["h_recoscalefactor"].SetLineWidth(2)
+        hists[period]["h_recoscalefactor"].Divide(hists[mcperiod]["h_recoefficiency"])
+        
+        # global scale factor
+        
+        hists[period]["h_scalefactor"] = hists[period]["h_tagscalefactor"].Clone()
+        hists[period]["h_scalefactor"].SetName("h_scalefactor")
+        hists[period]["h_scalefactor"].SetLineWidth(2)
+        hists[period]["h_scalefactor"].Multiply(hists[period]["h_recoefficiency"])
+        
+    # draw:
+    
+    colors = [kBlack, kRed, kRed-6, kPink-2, kMagenta, kViolet, kBlue, kAzure+9, kCyan, kTeal-1, kGreen, kGreen+2, kSpring+9, kYellow-3, kOrange, kOrange-8]
+    
+    for year in ["Run", "2016", "2017", "2018"]:    
+
+        canvas = shared_utils.mkcanvas()
+        legend = shared_utils.mklegend(x1=0.3, y1=0.2, x2=0.6, y2=0.35)
+        for i, period in enumerate(periods):
+            
+            if year not in period: continue
+            
+            if i == 0:
+                hists[period]["h_scalefactor"].Draw("hist e")
+            else:
+                hists[period]["h_scalefactor"].Draw("hist e same")
+            hists[period]["h_scalefactor"].GetXaxis().SetRangeUser(3,21)
+            hists[period]["h_scalefactor"].GetYaxis().SetRangeUser(0,2)
+            hists[period]["h_scalefactor"].SetTitle(";remaining layers;scale factor")
+            legend.AddEntry(hists[period]["h_scalefactor"], period)
+            hists[period]["h_scalefactor"].SetLineColor(colors.pop(0))
+            
+        legend.Draw()
+        shared_utils.stamp()
+        canvas.Print("plots%s/trackShortening_allSF_%s%s.pdf" % (suffix, year, extra))
+
+        if year == "Run":
+            colors = [kBlack, kRed, kRed-6, kPink-2, kMagenta, kViolet, kBlue, kAzure+9, kCyan, kTeal-1, kGreen, kGreen+2, kSpring+9, kYellow-3, kOrange, kOrange-8]
+            
+    
+
 def scalefactors(dataperiod, mcperiod, suffix, extralabel):
     
     # get histos:
     hists_data = {}
     hists_mc = {}
     for label in histolabels:
-        fin = TFile("histograms%s_%s.root" % (suffix, dataperiod), "open")
+        fin = TFile("histograms/histograms%s_%s.root" % (suffix, dataperiod), "open")
         hists_data[label] = fin.Get(label)
         hists_data[label].SetDirectory(0)
         hists_data[label].SetLineWidth(2)
         shared_utils.histoStyler(hists_data[label])
         fin.Close()
         
-        fin = TFile("histograms%s_%s.root" % (suffix, mcperiod), "open")
+        fin = TFile("histograms/histograms%s_%s.root" % (suffix, mcperiod), "open")
         hists_mc[label] = fin.Get(label)
         hists_mc[label].SetDirectory(0)
         hists_mc[label].SetLineWidth(2)
         shared_utils.histoStyler(hists_mc[label])
         fin.Close()
     
-    # taging SF:
+    if False:
+    
+        # taging SF:
+            
+        hists_data["h_tagefficiency"] = hists_data["h_tracks_tagged"].Clone()
+        hists_data["h_tagefficiency"].SetName("h_tagefficiency")
+        hists_data["h_tagefficiency"].SetLineWidth(2)
+        hists_data["h_tagefficiency"].Divide(hists_data["h_tracks_rereco"])
         
-    hists_data["h_tagefficiency"] = hists_data["h_tracks_tagged"].Clone()
-    hists_data["h_tagefficiency"].SetName("h_tagefficiency")
-    hists_data["h_tagefficiency"].SetLineWidth(2)
-    hists_data["h_tagefficiency"].Divide(hists_data["h_tracks_rereco"])
-    
-    hists_mc["h_tagefficiency"] = hists_mc["h_tracks_tagged"].Clone()
-    hists_mc["h_tagefficiency"].SetName("h_tagefficiency")
-    hists_mc["h_tagefficiency"].SetLineWidth(2)
-    hists_mc["h_tagefficiency"].Divide(hists_mc["h_tracks_rereco"])
-
-    hists_data["h_tagscalefactor"] = hists_data["h_tagefficiency"].Clone()
-    hists_data["h_tagscalefactor"].SetName("h_tagscalefactor")
-    hists_data["h_tagscalefactor"].SetLineWidth(2)
-    hists_data["h_tagscalefactor"].Divide(hists_mc["h_tagefficiency"])
-    
-    # RECO SF:
-
-    hists_data["h_recoefficiency"] = hists_data["h_tracks_reco"].Clone()
-    hists_data["h_recoefficiency"].SetName("h_recoefficiency")
-    hists_data["h_recoefficiency"].SetLineWidth(2)
-    hists_data["h_recoefficiency"].Divide(hists_data["h_tracks_rereco"])
-    
-    hists_mc["h_recoefficiency"] = hists_mc["h_tracks_reco"].Clone()
-    hists_mc["h_recoefficiency"].SetName("h_recoefficiency")
-    hists_mc["h_recoefficiency"].SetLineWidth(2)
-    hists_mc["h_recoefficiency"].Divide(hists_mc["h_tracks_rereco"])
-
-    hists_data["h_recoscalefactor"] = hists_data["h_recoefficiency"].Clone()
-    hists_data["h_recoscalefactor"].SetName("h_recoscalefactor")
-    hists_data["h_recoscalefactor"].SetLineWidth(2)
-    hists_data["h_recoscalefactor"].Divide(hists_mc["h_recoefficiency"])
-    
-    hists_data["h_scalefactor"] = hists_data["h_tagscalefactor"].Clone()
-    hists_data["h_scalefactor"].SetName("h_scalefactor")
-    hists_data["h_scalefactor"].SetLineWidth(2)
-    hists_data["h_scalefactor"].Multiply(hists_data["h_recoefficiency"])
-    
-    #hists_data["h_tagefficiency_rebinned"] = hists_data["h_tracks_tagged_rebinned"].Clone()
-    #hists_data["h_tagefficiency_rebinned"].SetName("h_tagefficiency_rebinned")
-    #hists_data["h_tagefficiency_rebinned"].SetLineWidth(2)
-    #hists_data["h_tagefficiency_rebinned"].Divide(hists_data["h_tracks_rereco_rebinned"])
-    #
-    #hists_mc["h_tagefficiency_rebinned"] = hists_mc["h_tracks_tagged_rebinned"].Clone()
-    #hists_mc["h_tagefficiency_rebinned"].SetName("h_tagefficiency_rebinned")
-    #hists_mc["h_tagefficiency_rebinned"].SetLineWidth(2)
-    #hists_mc["h_tagefficiency_rebinned"].Divide(hists_mc["h_tracks_rereco_rebinned"])
-    #
-    #hists_data["h_scalefactor_rebinned"] = hists_data["h_tagefficiency_rebinned"].Clone()
-    #hists_data["h_scalefactor_rebinned"].SetName("h_scalefactor_rebinned")
-    #hists_data["h_scalefactor_rebinned"].SetLineWidth(2)
-    #hists_data["h_scalefactor_rebinned"].Divide(hists_mc["h_tagefficiency_rebinned"])
-    
-    # draw scale factor:
-    canvas = shared_utils.mkcanvas()
-    hists_data["h_recoscalefactor"].SetLineColor(kTeal) 
-    hists_data["h_recoscalefactor"].Draw("hist e")
-    hists_data["h_tagscalefactor"].SetLineColor(kBlack)
-    hists_data["h_tagscalefactor"].SetLineStyle(2)
-    hists_data["h_tagscalefactor"].Draw("hist e same")
-    hists_data["h_scalefactor"].SetLineColor(kBlack)
-    hists_data["h_scalefactor"].Draw("hist e same")
-    
-    legend = shared_utils.mklegend(x1=0.3, y1=0.2, x2=0.6, y2=0.35)
-    legend.AddEntry(hists_data["h_recoscalefactor"], "SF_{reco}")
-    legend.AddEntry(hists_data["h_tagscalefactor"], "SF_{tagging}")
-    legend.AddEntry(hists_data["h_scalefactor"], "SF_{reco} * SF_{tagging}")
-    legend.Draw()
-    
-    #hists_data["h_scalefactor_rebinned"].SetLineColor(kRed)
-    #hists_data["h_scalefactor_rebinned"].Draw("hist e same")
-    
-    #ErrorHistogram = hists_data["h_scalefactorg"].Clone('ErrorHistogram')
-    #ErrorHistogram.SetFillStyle(3244)
-    #ErrorHistogram.SetFillColor(kGray+1)
-    #ErrorHistogram.Draw('e2 sames')
-    
-    hists_data["h_recoscalefactor"].SetTitle(";remaining layers;scale factor")
-    hists_data["h_recoscalefactor"].GetYaxis().SetRangeUser(0,2.5)
-    shared_utils.stamp()
-    canvas.Print("plots%s/trackShortening_scalefactor%s.pdf" % (suffix, extralabel))
-    
-    # fit:
-    hists_data["h_scalefactor"].Draw("hist e")
-    hists_data["h_scalefactor"].SetTitle(";remaining layers;scale factor")
-    g1 = TF1( 'g1', '[0]',  3,  4 )
-    g2 = TF1( 'g2', '[0]+[1]*x',  4,  15 )
-    hists_data["h_scalefactor"].Fit(g1, "", "same", 3, 4)
-    g1.Draw("same E3")
-    grint1 = hists_data["h_scalefactor"].Clone()
-    TVirtualFitter.GetFitter().GetConfidenceIntervals(grint1)
-    grint1.SetFillStyle(3244)
-    grint1.SetFillColor(kGray+1)
-    #grint1.Draw("e2 sames")
-    
-    hists_data["h_scalefactor"].Fit(g2, "", "same", 4, 15)    
-    g2.Draw("same E3")
-    grint2 = hists_data["h_scalefactor"].Clone()
-    TVirtualFitter.GetFitter().GetConfidenceIntervals(grint2)
-    grint2.SetFillStyle(3244)
-    grint2.SetFillColor(kGray+1)
-    grint2.Draw("e2 sames")
-
-    ##grint = TGraphErrors(11)
-    #for i in range(0, 11):
-    #   grint.SetPoint(i, hists_data["h_scalefactor"].GetBinContent(i+4), 0)
-    
-    #ErrorHistogram1 = g1.Clone('ErrorHistogram')
-    #ErrorHistogram1.SetFillStyle(3244)
-    #ErrorHistogram1.SetFillColor(kGray+1)
-    #ErrorHistogram1.Draw('e2 sames')
-    #
-    #ErrorHistogram2 = g2.Clone('ErrorHistogram')
-    #ErrorHistogram2.SetFillStyle(3244)
-    #ErrorHistogram2.SetFillColor(kGray+1)
-    #ErrorHistogram2.Draw('e2 sames')
-    shared_utils.stamp()
-    canvas.Print("plots%s/trackShortening_scalefactor_fit%s.pdf" % (suffix, extralabel))
-    
+        hists_mc["h_tagefficiency"] = hists_mc["h_tracks_tagged"].Clone()
+        hists_mc["h_tagefficiency"].SetName("h_tagefficiency")
+        hists_mc["h_tagefficiency"].SetLineWidth(2)
+        hists_mc["h_tagefficiency"].Divide(hists_mc["h_tracks_rereco"])
+        
+        hists_data["h_tagscalefactor"] = hists_data["h_tagefficiency"].Clone()
+        hists_data["h_tagscalefactor"].SetName("h_tagscalefactor")
+        hists_data["h_tagscalefactor"].SetLineWidth(2)
+        hists_data["h_tagscalefactor"].Divide(hists_mc["h_tagefficiency"])
+        
+        hists_data["h_tagefficiency_short"] = hists_data["h_tracks_tagged_short"].Clone()
+        hists_data["h_tagefficiency_short"].SetName("h_tagefficiency_short")
+        hists_data["h_tagefficiency_short"].SetLineWidth(2)
+        hists_data["h_tagefficiency_short"].Divide(hists_data["h_tracks_rereco_short"])
+        
+        hists_mc["h_tagefficiency_short"] = hists_mc["h_tracks_tagged_short"].Clone()
+        hists_mc["h_tagefficiency_short"].SetName("h_tagefficiency_short")
+        hists_mc["h_tagefficiency_short"].SetLineWidth(2)
+        hists_mc["h_tagefficiency_short"].Divide(hists_mc["h_tracks_rereco_short"])
+        
+        hists_data["h_tagscalefactor_short"] = hists_data["h_tagefficiency_short"].Clone()
+        hists_data["h_tagscalefactor_short"].SetName("h_tagscalefactor_short")
+        hists_data["h_tagscalefactor_short"].SetLineWidth(2)
+        hists_data["h_tagscalefactor_short"].Divide(hists_mc["h_tagefficiency_short"])
+        
+        hists_data["h_tagefficiency_long"] = hists_data["h_tracks_tagged_long"].Clone()
+        hists_data["h_tagefficiency_long"].SetName("h_tagefficiency_long")
+        hists_data["h_tagefficiency_long"].SetLineWidth(2)
+        hists_data["h_tagefficiency_long"].Divide(hists_data["h_tracks_rereco_long"])
+        
+        hists_mc["h_tagefficiency_long"] = hists_mc["h_tracks_tagged_long"].Clone()
+        hists_mc["h_tagefficiency_long"].SetName("h_tagefficiency_long")
+        hists_mc["h_tagefficiency_long"].SetLineWidth(2)
+        hists_mc["h_tagefficiency_long"].Divide(hists_mc["h_tracks_rereco_long"])
+        
+        hists_data["h_tagscalefactor_long"] = hists_data["h_tagefficiency_long"].Clone()
+        hists_data["h_tagscalefactor_long"].SetName("h_tagscalefactor_long")
+        hists_data["h_tagscalefactor_long"].SetLineWidth(2)
+        hists_data["h_tagscalefactor_long"].Divide(hists_mc["h_tagefficiency_long"])
+        
+        # RECO SF:
+        
+        hists_data["h_recoefficiency"] = hists_data["h_tracks_reco"].Clone()
+        hists_data["h_recoefficiency"].SetName("h_recoefficiency")
+        hists_data["h_recoefficiency"].SetLineWidth(2)
+        hists_data["h_recoefficiency"].Divide(hists_data["h_tracks_rereco"])
+        
+        hists_mc["h_recoefficiency"] = hists_mc["h_tracks_reco"].Clone()
+        hists_mc["h_recoefficiency"].SetName("h_recoefficiency")
+        hists_mc["h_recoefficiency"].SetLineWidth(2)
+        hists_mc["h_recoefficiency"].Divide(hists_mc["h_tracks_rereco"])
+        
+        hists_data["h_recoscalefactor"] = hists_data["h_recoefficiency"].Clone()
+        hists_data["h_recoscalefactor"].SetName("h_recoscalefactor")
+        hists_data["h_recoscalefactor"].SetLineWidth(2)
+        hists_data["h_recoscalefactor"].Divide(hists_mc["h_recoefficiency"])
+        
+        hists_data["h_scalefactor"] = hists_data["h_tagscalefactor"].Clone()
+        hists_data["h_scalefactor"].SetName("h_scalefactor")
+        hists_data["h_scalefactor"].SetLineWidth(2)
+        hists_data["h_scalefactor"].Multiply(hists_data["h_recoefficiency"])
+        
+        hists_data["h_recoefficiency_short"] = hists_data["h_tracks_reco_short"].Clone()
+        hists_data["h_recoefficiency_short"].SetName("h_recoefficiency_short")
+        hists_data["h_recoefficiency_short"].SetLineWidth(2)
+        hists_data["h_recoefficiency_short"].Divide(hists_data["h_tracks_rereco_short"])
+        
+        hists_mc["h_recoefficiency_short"] = hists_mc["h_tracks_reco_short"].Clone()
+        hists_mc["h_recoefficiency_short"].SetName("h_recoefficiency_short")
+        hists_mc["h_recoefficiency_short"].SetLineWidth(2)
+        hists_mc["h_recoefficiency_short"].Divide(hists_mc["h_tracks_rereco_short"])
+        
+        hists_data["h_recoscalefactor_short"] = hists_data["h_recoefficiency_short"].Clone()
+        hists_data["h_recoscalefactor_short"].SetName("h_recoscalefactor_short")
+        hists_data["h_recoscalefactor_short"].SetLineWidth(2)
+        hists_data["h_recoscalefactor_short"].Divide(hists_mc["h_recoefficiency_short"])
+        
+        hists_data["h_scalefactor_short"] = hists_data["h_tagscalefactor_short"].Clone()
+        hists_data["h_scalefactor_short"].SetName("h_scalefactor_short")
+        hists_data["h_scalefactor_short"].SetLineWidth(2)
+        hists_data["h_scalefactor_short"].Multiply(hists_data["h_recoefficiency_short"])
+        
+        hists_data["h_recoefficiency_long"] = hists_data["h_tracks_reco_long"].Clone()
+        hists_data["h_recoefficiency_long"].SetName("h_recoefficiency_long")
+        hists_data["h_recoefficiency_long"].SetLineWidth(2)
+        hists_data["h_recoefficiency_long"].Divide(hists_data["h_tracks_rereco_long"])
+        
+        hists_mc["h_recoefficiency_long"] = hists_mc["h_tracks_reco_long"].Clone()
+        hists_mc["h_recoefficiency_long"].SetName("h_recoefficiency_long")
+        hists_mc["h_recoefficiency_long"].SetLineWidth(2)
+        hists_mc["h_recoefficiency_long"].Divide(hists_mc["h_tracks_rereco_long"])
+        
+        hists_data["h_recoscalefactor_long"] = hists_data["h_recoefficiency_long"].Clone()
+        hists_data["h_recoscalefactor_long"].SetName("h_recoscalefactor_long")
+        hists_data["h_recoscalefactor_long"].SetLineWidth(2)
+        hists_data["h_recoscalefactor_long"].Divide(hists_mc["h_recoefficiency_long"])
+        
+        hists_data["h_scalefactor_long"] = hists_data["h_tagscalefactor_long"].Clone()
+        hists_data["h_scalefactor_long"].SetName("h_scalefactor_long")
+        hists_data["h_scalefactor_long"].SetLineWidth(2)
+        hists_data["h_scalefactor_long"].Multiply(hists_data["h_recoefficiency_long"])
+        
+        # draw scale factor:
+        canvas = shared_utils.mkcanvas()
+        hists_data["h_recoscalefactor"].SetLineColor(kTeal) 
+        hists_data["h_recoscalefactor"].Draw("hist e")
+        hists_data["h_recoscalefactor"].GetXaxis().SetRangeUser(3,21)
+        #hists_data["h_recoscalefactor"].SetYaxis().SetRangerUser(0,2)
+        hists_data["h_tagscalefactor"].SetLineColor(kBlack)
+        hists_data["h_tagscalefactor"].SetLineStyle(2)
+        hists_data["h_tagscalefactor"].Draw("hist e same")
+        hists_data["h_scalefactor"].SetLineColor(kBlack)
+        hists_data["h_scalefactor"].Draw("hist e same")
+        
+        legend = shared_utils.mklegend(x1=0.3, y1=0.2, x2=0.6, y2=0.35)
+        legend.AddEntry(hists_data["h_recoscalefactor"], "SF_{reco}")
+        legend.AddEntry(hists_data["h_tagscalefactor"], "SF_{tagging}")
+        legend.AddEntry(hists_data["h_scalefactor"], "SF_{reco} * SF_{tagging}")
+        legend.Draw()
+        
+        #hists_data["h_scalefactor_rebinned"].SetLineColor(kRed)
+        #hists_data["h_scalefactor_rebinned"].Draw("hist e same")
+        
+        #ErrorHistogram = hists_data["h_scalefactorg"].Clone('ErrorHistogram')
+        #ErrorHistogram.SetFillStyle(3244)
+        #ErrorHistogram.SetFillColor(kGray+1)
+        #ErrorHistogram.Draw('e2 sames')
+        
+        hists_data["h_recoscalefactor"].SetTitle(";remaining layers;scale factor")
+        hists_data["h_recoscalefactor"].GetYaxis().SetRangeUser(0,2.5)
+        shared_utils.stamp()
+        canvas.Print("plots%s/trackShortening_scalefactor%s.pdf" % (suffix, extralabel))
+        
+        # fit:    
+        hists_data["h_scalefactor"].Draw("hist e")
+        hists_data["h_scalefactor"].GetXaxis().SetRangeUser(3,21)
+        hists_data["h_scalefactor"].GetYaxis().SetRangeUser(0,2)    
+        hists_data["h_scalefactor"].SetTitle(";remaining layers;scale factor")
+        
+        g1 = TF1( 'g1', '[0]',  3,  4 )
+        g2 = TF1( 'g2', '[0]+[1]*x',  4,  15 )
+        hists_data["h_scalefactor"].Fit(g1, "", "same", 3, 4)
+        g1.Draw("same E3")
+        grint1 = hists_data["h_scalefactor"].Clone()
+        TVirtualFitter.GetFitter().GetConfidenceIntervals(grint1)
+        grint1.SetFillStyle(3244)
+        grint1.SetFillColor(kGray+1)
+        #grint1.Draw("e2 sames")
+        
+        hists_data["h_scalefactor"].Fit(g2, "", "same", 4, 15)    
+        g2.Draw("same E3")
+        grint2 = hists_data["h_scalefactor"].Clone()
+        TVirtualFitter.GetFitter().GetConfidenceIntervals(grint2)
+        grint2.SetFillStyle(3244)
+        grint2.SetFillColor(kGray+1)
+        grint2.Draw("e2 sames")
+        
+        shared_utils.stamp()
+        canvas.Print("plots%s/trackShortening_scalefactor_fit%s.pdf" % (suffix, extralabel))
+        
+        
+        
+        # short/long:
+            
+        hists_data["h_scalefactor_short"].Draw("hist e")
+        hists_data["h_scalefactor_short"].GetXaxis().SetRangeUser(3,21)
+        hists_data["h_scalefactor_short"].GetYaxis().SetRangeUser(0,2)    
+        hists_data["h_scalefactor_short"].SetTitle(";remaining layers;scale factor")
+        
+        g1 = TF1( 'g1', '[0]',  3,  15 )
+        hists_data["h_scalefactor_short"].Fit(g1, "", "same", 3, 15)
+        g1.Draw("same E3")
+        grint1 = hists_data["h_scalefactor_short"].Clone()
+        TVirtualFitter.GetFitter().GetConfidenceIntervals(grint1)
+        grint1.SetFillStyle(3244)
+        grint1.SetFillColor(kGray+1)
+        
+        shared_utils.stamp()
+        canvas.Print("plots%s/trackShortening_scalefactor_fit_short%s.pdf" % (suffix, extralabel))
+        
+        hists_data["h_scalefactor_long"].Draw("hist e")
+        hists_data["h_scalefactor_long"].GetXaxis().SetRangeUser(3,21)
+        hists_data["h_scalefactor_long"].GetYaxis().SetRangeUser(0,2)    
+        hists_data["h_scalefactor_long"].SetTitle(";remaining layers;scale factor")
+        
+        g1 = TF1( 'g1', '[0]',  3,  15 )
+        hists_data["h_scalefactor_long"].Fit(g1, "", "same", 3, 15)
+        g1.Draw("same E3")
+        grint1 = hists_data["h_scalefactor_long"].Clone()
+        TVirtualFitter.GetFitter().GetConfidenceIntervals(grint1)
+        grint1.SetFillStyle(3244)
+        grint1.SetFillColor(kGray+1)
+        
+        shared_utils.stamp()
+        canvas.Print("plots%s/trackShortening_scalefactor_fit_long%s.pdf" % (suffix, extralabel))
     
     # draw pt:
     for variable in histolabels:
-        if variable in ["h_muonPt", "h_muonEta", "h_pfIso"] or "track_" in variable or "cutflow" in variable or "h_ptratio_layer" in variable:
+        if variable in ["h_muonPt", "h_muonEta", "h_muonPtCand", "h_muonEtaCand", "h_pfIso"] or "track_" in variable or "cutflow" in variable or "h_ptratio_layer" in variable:
             
             #if variable == "cutflow":
             #    canvas = shared_utils.mkcanvas_wide("cutflow")
@@ -316,6 +525,8 @@ def scalefactors(dataperiod, mcperiod, suffix, extralabel):
                 
             hists_data[variable].GetYaxis().SetRangeUser(1e-4,1e1)
             
+            vartext = variable.replace("h_muonPtCand", "p_{T}^{#mu} (GeV)")
+            vartext = vartext.replace("h_muonEtaCand", "|#eta|")
             vartext = variable.replace("h_muonPt", "p_{T}^{#mu} (GeV)")
             vartext = vartext.replace("h_muonEta", "|#eta|")
             vartext = vartext.replace("track_is_pixel_track", "pixel track")              
@@ -339,7 +550,7 @@ def scalefactors(dataperiod, mcperiod, suffix, extralabel):
             vartext = vartext.split("_layer")[0]
             
             if "h_ptratio_layer" in variable:   
-                vartext = "p_{T}^{#mu-matched track} / p_{T}^{shortened track}"
+                vartext = "p_{T}^{shortened track} / p_{T}^{#mu-matched track}"
             
             if "track_" in variable:
                 hists_data[variable].SetTitle(";%s;normalized number of tracks" % vartext)
@@ -355,12 +566,12 @@ def scalefactors(dataperiod, mcperiod, suffix, extralabel):
                 legend.Draw()
             
             # if track variable, let's include the signal too!
-            if False and "track_" in variable:
+            if "track_" in variable:
                 folder = "/nfs/dust/cms/user/kutznerv/shorttrack/analysis/ntupleanalyzer/skim_64_p15OptionalJetVeto_merged"
                 input_files = glob.glob(folder + "/RunIISummer16MiniAODv3.SMS-T1qqqq*root")
                 base_cut = "tracks_chiCandGenMatchingDR<0.01 && signal_gluino_mass==2000 && signal_lsp_mass==1975 && tracks_nMissingMiddleHits==0"
                 
-                if "_layer" in variable:              
+                if "_layer" in variable:
                     base_cut += " && tracks_trackerLayersWithMeasurement==%s" % variable.split("_layer")[-1]
                     h_signal = plotting.get_histogram_from_file(input_files, "Events", variable.split("_layer")[0].replace("track_", "tracks_"), cutstring=base_cut, nBinsX=hists_data[variable].GetNbinsX(), xmin=hists_data[variable].GetXaxis().GetXmin(), xmax=hists_data[variable].GetXaxis().GetXmax())
                 else:
@@ -446,20 +657,60 @@ def scalefactors(dataperiod, mcperiod, suffix, extralabel):
             canvas.Print("plots%s/trackShortening_%s%s.pdf" % (suffix, variable.replace("h_", ""), extralabel))
 
 
-def doplots(periods = ["Summer16", "Fall17"], suffixes = [""]):        
+def doplots(periods = ["Summer16", "Fall17", "Run2016H", "Run2016B", "Run2017B", "Run2017F"], suffixes = ["", "low", "medium", "high"]):        
 
-
-    #"Run2016H", "Run2016B", "Run2017B", "Run2017F", 
-
+    periods = [
+                "Summer16",
+                "Fall17",
+                "Run2016B",
+                "Run2016C",
+                "Run2016D",
+                "Run2016E",
+                "Run2016F",
+                "Run2016G",
+                "Run2016H",
+                "Run2017B",
+                "Run2017C",
+                "Run2017D",
+                "Run2017E",
+                "Run2017F",
+                #"Run2018A",
+                #"Run2018B",
+                #"Run2018C",
+                #"Run2018D",
+                #"Run2017CUL",
+              ]
+              
+    suffixes = [
+                 "",
+                 #"low",
+                 #"medium",
+                 #"high",
+               ]
+    
+    allperiods()
+                   
     for suffix in suffixes:
         for period in periods: 
             plot(period, suffix)
     
-    if False:
-        scalefactors("Run2016B", "Summer16", "", "_2016B")
-        scalefactors("Run2016H", "Summer16", "", "_2016H")
-        scalefactors("Run2017B", "Fall17", "", "_2017B")
-        scalefactors("Run2017F", "Fall17", "", "_2017F")
+        #scalefactors("Run2016B", "Summer16", suffix, "_2016B")
+        #scalefactors("Run2016C", "Summer16", suffix, "_2016C")
+        #scalefactors("Run2016D", "Summer16", suffix, "_2016D")
+        #scalefactors("Run2016E", "Summer16", suffix, "_2016E")
+        #scalefactors("Run2016F", "Summer16", suffix, "_2016F")
+        #scalefactors("Run2016G", "Summer16", suffix, "_2016G")
+        #scalefactors("Run2016H", "Summer16", suffix, "_2016H")
+        #scalefactors("Run2017B", "Fall17", suffix, "_2017B")
+        #scalefactors("Run2017C", "Fall17", suffix, "_2017C")
+        #scalefactors("Run2017D", "Fall17", suffix, "_2017D")
+        #scalefactors("Run2017E", "Fall17", suffix, "_2017E")
+        #scalefactors("Run2017F", "Fall17", suffix, "_2017F")
+        #scalefactors("Run2018A", "Fall17", suffix, "_2018A")
+        #scalefactors("Run2018B", "Fall17", suffix, "_2018B")
+        #scalefactors("Run2018C", "Fall17", suffix, "_2018C")
+        #scalefactors("Run2018D", "Fall17", suffix, "_2018D")
+
     
 if __name__ == "__main__":
 

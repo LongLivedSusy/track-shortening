@@ -1,9 +1,9 @@
 #! /usr/bin/env python
-import array as pyarray
 from ROOT import *
 import sys, os
 from DataFormats.FWLite import Events, Handle
 from optparse import OptionParser
+import array as pyarray
 
 # inspect RECO and reRECO collections
 # comments @ Viktor Kutzner
@@ -14,9 +14,15 @@ gROOT.SetStyle('Plain')
 parser = OptionParser()
 parser.add_option("--low_pt", dest = "low_pt_threshold", default = 15)
 parser.add_option("--high_pt", dest = "high_pt_threshold", default = 99999)
+parser.add_option("--low_eta", dest = "low_eta_threshold", default = 0)
+parser.add_option("--high_eta", dest = "high_eta_threshold", default = 2.2)
 parser.add_option("--suffix", dest = "suffix", default = "")
 parser.add_option("--nev", dest = "nev", default = -1)
-(options, args) = parser.parse_args()
+(options_, args) = parser.parse_args()
+
+os.system("mkdir -p histograms")
+
+overwrite = True
 
 events = Events(args)
 
@@ -24,20 +30,34 @@ layers_remaining = int(args[0].split("_")[-1].replace(".root", ""))
 print "remaining layers:", layers_remaining
 
 period = ""
-for i_period in ["SummerOld16", "Summer16", "Fall17", "Run2016B", "Run2016H", "Run2016PromptH", "Run2017B", "Run2017F", "Run2018A", "Run2018D"]:
+periods = [
+            "Summer16",
+            "Fall17",
+            "Run2016B",
+            "Run2016C",
+            "Run2016D",
+            "Run2016E",
+            "Run2016F",
+            "Run2016G",
+            "Run2016H",
+            "Run2017B",
+            "Run2017C",
+            "Run2017D",
+            "Run2017E",
+            "Run2017F",
+            "Run2018A",
+            "Run2018B",
+            "Run2018C",
+            "Run2018D",
+          ]
+
+for i_period in periods:
     if i_period in args[0].split(".root")[0]:
         period = i_period
         print "period", period
         break
 if period == "":
     quit("No run period")
-
-outfilename = "histograms%s_%s_%s.root" % (options.suffix, period, layers_remaining)
-
-if False:
-        if os.path.exists(outfilename):
-            print "Already there!"
-            quit(0)
 
 # test for invalid files:
 sane_files = []
@@ -61,16 +81,16 @@ muons_rereco_handle = Handle("std::vector<reco::Muon>")
 tracks_rereco_handle = Handle("std::vector<reco::Track>")
 
 # handles for isotrk producer
-isotrk_matchedCaloEnergy_handle = Handle("vector<double>")
-isotrk_trackerLayersWithMeasurement_handle = Handle("vector<int>")
-isotrk_chi2perNdof_handle = Handle("vector<double>")
-isotrk_trackQualityHighPurity_handle = Handle("vector<bool>")
-isotrk_ptError_handle = Handle("vector<double>")
-isotrk_trkRelIso_handle = Handle("vector<double>")
-isotrk_passPFCandVeto_handle = Handle("vector<bool>")
-isotrk_deDxHarmonic2_handle = Handle("vector<double>")
-isotrk_dxyVtx_handle = Handle("vector<double>")
-isotrk_dzVtx_handle = Handle("vector<double>")
+isotrk_matchedCaloEnergy_handle = Handle("std::vector<double>")
+isotrk_trackerLayersWithMeasurement_handle = Handle("std::vector<int>")
+isotrk_chi2perNdof_handle = Handle("std::vector<double>")
+isotrk_trackQualityHighPurity_handle = Handle("std::vector<bool>")
+isotrk_ptError_handle = Handle("std::vector<double>")
+isotrk_trkRelIso_handle = Handle("std::vector<double>")
+isotrk_passPFCandVeto_handle = Handle("std::vector<bool>")
+isotrk_deDxHarmonic2_handle = Handle("std::vector<double>")
+isotrk_dxyVtx_handle = Handle("std::vector<double>")
+isotrk_dzVtx_handle = Handle("std::vector<double>")
 
 # histograms
 histos = {}
@@ -82,15 +102,19 @@ histos["h_tracks_rereco_rebinned"]           = TH1F("h_tracks_rereco_rebinned", 
 histos["h_tracks_preselection"]              = TH1F("h_tracks_preselection", "", 21, 0, 21)
 histos["h_tracks_tagged"]                    = TH1F("h_tracks_tagged", "", 21, 0, 21)
 histos["h_tracks_tagged_rebinned"]           = TH1F("h_tracks_tagged_rebinned", "", len([0, 3, 4, 21]) - 1, pyarray.array('d', [0, 3, 4, 21]))
+histos["h_tracks_algo"]                      = TH1F("h_tracks_algo", "", 50, 0, 50)
 histos["h_layers2D"]                         = TH2F("h_layers2D", ";targeted number of remaining layers; layers with meas. of matched track;Tracks", 20, 0, 20, 20, 0, 20)
 histos["h_ptratio2D"]                        = TH2F("h_ptratio2D", ";p_{T} of #mu-matched track (GeV); p_{T} of shortened track (GeV);Tracks", 20, 0, 300, 20, 0, 300)
 histos["h_shortbdt2D"]                       = TH2F("h_shortbdt2D", ";BDT score; layers with meas. of matched track;Tracks", 20, -1, 1, 20, 0, 20)
 histos["h_longbdt2D"]                        = TH2F("h_longbdt2D", ";BDT score; layers with meas. of matched track;Tracks", 20, -1, 1, 20, 0, 20)
 histos["h_chi2ndof2D"]                       = TH2F("h_chi2ndof2D", ";layers with meas. of matched track;shortened track p_{T} (GeV); <#chi^{2}/ndof>", 20, 0, 20, 20, 0, 300)
+histos["h_muonPtCand"]                       = TH1F("h_muonPtCand", "", 20, 0, 200)
+histos["h_muonEtaCand"]                      = TH1F("h_muonEtaCand", "", 20, 0, 3.2)
 histos["h_muonPt"]                           = TH1F("h_muonPt", "", 20, 0, 200)
 histos["h_muonEta"]                          = TH1F("h_muonEta", "", 20, 0, 3.2)
 histos["h_pfIso"]                            = TH1F("h_pfIso", "", 25, 0, 1)
 histos["h_ptratio"]                          = TH1F("h_ptratio", "", 40, 0, 2)
+histos["h_ptratioOrig"]                      = TH1F("h_ptratioOrig", "", 40, 0, 2)
 histos["track_is_pixel_track"]               = TH1F("track_is_pixel_track", "", 2, 0, 2)
 histos["track_dxyVtx"]                       = TH1F("track_dxyVtx", "", 20, 0, 0.1)
 histos["track_dzVtx"]                        = TH1F("track_dzVtx", "", 20, 0, 0.1)
@@ -115,6 +139,12 @@ for label in histos.keys():
         for i in range(3,9):
             histos[label + "_layer%s" % i] = histos[label].Clone()
             histos[label + "_layer%s" % i].SetName(label + "_layer%s" % i)
+
+    if "h_tracks_" in label:
+        histos[label + "_short"] = histos[label].Clone()
+        histos[label + "_short"].SetName(label + "_short")
+        histos[label + "_long"] = histos[label].Clone()
+        histos[label + "_long"].SetName(label + "_long")
 
 # load BDTs
 TMVA.Tools.Instance()
@@ -158,7 +188,7 @@ for i_event, event in enumerate(events):
     
         if (i_event+1) % 100 == 0:
             print "%s, event %s / %s (layers_remaining=%s)" % (period, i_event+1, events.size(), layers_remaining)
-            if int(options.nev)>0 and i_event>int(options.nev): break
+            if int(options_.nev)>0 and i_event>int(options_.nev): break
         
         # FIXME
         if period == "SummerOld16" or period == "Run2016PromptH":
@@ -182,6 +212,7 @@ for i_event, event in enumerate(events):
         
         # isotrk collections:
         event.getByLabel("isotrackproducer", "tracks@matchedCaloEnergy", isotrack_producerlabel, isotrk_matchedCaloEnergy_handle)
+        #event.getByLabel("tracks@matchedCaloEnergy", isotrk_matchedCaloEnergy_handle)
         isotrk_matchedCaloEnergy = isotrk_matchedCaloEnergy_handle.product()
         event.getByLabel("isotrackproducer", "tracks@trackerLayersWithMeasurement", isotrack_producerlabel, isotrk_trackerLayersWithMeasurement_handle)
         isotrk_trackerLayersWithMeasurement = isotrk_trackerLayersWithMeasurement_handle.product()
@@ -204,7 +235,7 @@ for i_event, event in enumerate(events):
         
         for muon in muons:
                                     
-            if not (muon.pt()>15 and abs(muon.eta())<2.2):
+            if not (muon.pt()>45 and abs(muon.eta())<2.2):
                 continue
             
             # PFCand isolation:
@@ -219,9 +250,12 @@ for i_event, event in enumerate(events):
             histos["h_pfIso"].Fill(summed_pt/muon.pt())
             if summed_pt/muon.pt()>0.2:
                 continue
+            
+            histos["h_muonPtCand"].Fill(muon.pt())
+            histos["h_muonEtaCand"].Fill(abs(muon.eta()))
                     
             for track in tracks:
-                                            
+                            
                 tvec = TLorentzVector()
                 tvec.SetPtEtaPhiM(track.pt(), track.eta(), track.phi(), 0.0)
                 
@@ -239,10 +273,7 @@ for i_event, event in enumerate(events):
         
                                 if not abs(track.eta())<2.2:
                                     continue
-        
-                                if not ((track.hitPattern().trackerLayersWithMeasurement() == 3 and track.pt()>15) or (track.hitPattern().trackerLayersWithMeasurement() > 3 and track.pt()>40)):
-                                    continue
-                                    
+                                
                                 histos["h_tracks_reco"].Fill(layers_remaining)
                                 histos["h_tracks_reco_rebinned"].Fill(layers_remaining)
                                 histos["h_muonPt"].Fill(muon.pt())
@@ -254,16 +285,31 @@ for i_event, event in enumerate(events):
                                     deltaR = tvec.DeltaR(trerecovec)
                                     if deltaR < 0.01:
         
-                                        if track_rereco.pt()>int(options.low_pt_threshold) and track_rereco.pt()<=int(options.high_pt_threshold) and abs(track_rereco.eta())<2.2:
-                                                                                                                            
+                                        #FIXME
+                                        if ((track_rereco.hitPattern().trackerLayersWithMeasurement() == 3 and track_rereco.pt()>15) or (track_rereco.hitPattern().trackerLayersWithMeasurement() > 3 and track_rereco.pt()>40)) and track_rereco.pt()>int(options_.low_pt_threshold) and track_rereco.pt()<=int(options_.high_pt_threshold) and abs(track_rereco.eta())>float(options_.low_eta_threshold) and abs(track_rereco.eta())<=float(options_.high_eta_threshold) and abs(track_rereco.eta())<2.2:
                                             histos["h_layers2D"].Fill(layers_remaining, track_rereco.hitPattern().trackerLayersWithMeasurement())
                                             histos["h_ptratio2D"].Fill(track.pt(), track_rereco.pt())
                                             histos["h_tracks_rereco"].Fill(layers_remaining)
+                                            histos["h_tracks_algo"].Fill(track_rereco.algo())
+                                            
+                                            # get all necessary tag variables:
+                                            track_trackerLayersWithMeasurement = track_rereco.hitPattern().trackerLayersWithMeasurement() 
+                                            track_pixelLayersWithMeasurement = track_rereco.hitPattern().pixelLayersWithMeasurement() 
+                                            if track_trackerLayersWithMeasurement == track_pixelLayersWithMeasurement:
+                                                track_is_pixel_track = True
+                                            else:
+                                                track_is_pixel_track = False
+                                            
+                                            if track_is_pixel_track:
+                                                histos["h_tracks_rereco_short"].Fill(layers_remaining)
+                                            else:
+                                                histos["h_tracks_rereco_long"].Fill(layers_remaining)
+                                            
                                             histos["h_tracks_rereco_rebinned"].Fill(layers_remaining)
                                                                                     
                                             for i_layer in range(3,9):
                                                 if layers_remaining == i_layer:
-                                                    histos["h_ptratio_layer%s" % i_layer].Fill(1.0 * track.pt() / track_rereco.pt())
+                                                    histos["h_ptratio_layer%s" % i_layer].Fill(1.0 * track_rereco.pt() / track.pt())
                                             
                                             cutflow_counter = 0
                                                                                                     
@@ -282,17 +328,8 @@ for i_event, event in enumerate(events):
                                 
                                             if isotrack_index == -1:
                                                 print "isotrack matching failed"
-                                                continue
-                                
-                                            # get all necessary tag variables:
-                                            track_trackerLayersWithMeasurement = track_rereco.hitPattern().trackerLayersWithMeasurement() 
-                                            track_pixelLayersWithMeasurement = track_rereco.hitPattern().pixelLayersWithMeasurement() 
-                                            
-                                            if track_trackerLayersWithMeasurement == track_pixelLayersWithMeasurement:
-                                                track_is_pixel_track = True
-                                            else:
-                                                track_is_pixel_track = False
-                                                
+                                                break
+                                                                                
                                             track_p = track_rereco.p()
                                             track_eta = track_rereco.eta()
                                             track_pt = track_rereco.pt()
@@ -422,6 +459,11 @@ for i_event, event in enumerate(events):
                                 
                                             if is_tagged:
                                                 histos["h_tracks_tagged"].Fill(layers_remaining)
+                                                if track_is_pixel_track:
+                                                    histos["h_tracks_tagged_short"].Fill(layers_remaining)
+                                                else:
+                                                    histos["h_tracks_tagged_long"].Fill(layers_remaining)
+                                                
                                                 histos["h_tracks_tagged_rebinned"].Fill(layers_remaining)
                                             if is_preselected:
                                                 histos["h_tracks_preselection"].Fill(layers_remaining)
@@ -443,6 +485,8 @@ for i_event, event in enumerate(events):
                                                 print "track_nMissingOuterHits", track_nMissingOuterHits
                                         
                                             break
+                                
+                                break
                                         
     except Exception as e:
         
@@ -450,6 +494,7 @@ for i_event, event in enumerate(events):
                 
                         
 # make a canvas, draw, and save it
+outfilename = "histograms/histograms%s_%s_%s.root" % (options_.suffix, period, layers_remaining)
 outfile = TFile(outfilename, "recreate")
 if histos["h_chi2ndof2D"].GetEntries()>0:
     histos["h_chi2ndof2D"].Scale(1.0/histos["h_chi2ndof2D"].GetEntries())

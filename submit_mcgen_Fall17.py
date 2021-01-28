@@ -7,7 +7,7 @@ import glob
 # comments @ Viktor Kutzner
 
 # select steps:
-step_gensim = 0
+step_gensim = 1
 step_digi   = 1
 step_reco   = 1
 overwrite   = 1
@@ -33,10 +33,11 @@ if step_gensim:
     os.system("mkdir -p %s" % outdir)
     
     commands = []
-    for i in range(1,200):
+    #for i in range(1,200):
+    for i in range(200,400):
         outfile = "/nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/" + outdir + "/seed_%s.root" % i
         if not overwrite and os.path.exists(outfile): continue
-        this_command = example_command.replace("$OUTFILE", outfile).replace("$NEV", "100").replace("$SEED", str(i))
+        this_command = example_command.replace("$OUTFILE", outfile).replace("$NEV", "200").replace("$SEED", str(i))
         commands.append(this_command)
     
     os.system("rm condor.fall17gen1/*")
@@ -55,6 +56,9 @@ if step_digi:
     
     commands = []
     for i, infile in enumerate(glob.glob("/nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/Fall17_GENSIM/*root")):
+        
+        if "_inLHE" in infile: continue
+        
         outfile = "../../" + outdir + "/" + infile.split("/")[-1]
         if not overwrite and os.path.exists(outdir + "/" + infile.split("/")[-1]): continue
         this_command = example_command.replace("$INFILE", infile).replace("$OUTFILE", outfile).replace("$NEV", "-1").replace("$NUM", str(i))
