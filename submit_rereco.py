@@ -62,7 +62,8 @@ elif period == "Run2017B":
     inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2017B/SingleMuon/RAW-RECO/ZMu-17Nov2017-v1/*/*"    
 elif period == "Run2017C":
     cmssw = "CMSSW_9_4_0"
-    inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2017C/SingleMuon/RAW-RECO/ZMu-17Nov2017-v1/*/*"    
+    inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2017C/SingleMuon/RAW-RECO/ZMu-17Nov2017-v1/*/*"
+    #inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2017C/SingleMuon/RAW-RECO/ZMu-09Aug2019_UL2017-v1/*/*"
 elif period == "Run2017D":
     cmssw = "CMSSW_9_4_0"
     inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2017D/SingleMuon/RAW-RECO/ZMu-17Nov2017-v1/*/*"    
@@ -90,18 +91,22 @@ elif period == "Summer16":
 elif period == "Fall17":
     cmssw = "CMSSW_9_4_0" #CMSSW_9_4_0_patch1
     inputpath = "/nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/Fall17_RECO/*"
+elif period == "Autumn18":
+    cmssw = "CMSSW_10_2_7" #"CMSSW_10_2_5"
+    inputpath = "/nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/Autumn18_RECO/*"
 else:
     quit("which period?")
     
 # override settings when running on UL
 if options.ultralegacy:
     cmssw = "CMSSW_10_6_2"
-    #inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2017C/SingleMuon/RAW-RECO/ZMu-09Aug2019_UL2017-v1/*/*.root"
     use_sl6 = False
     suffix = "UL"
 else:
     suffix = ""
     
+    
+
 # set up CMSSW:
 if not os.path.exists("%s/src/shorttrack" % cmssw):
     if use_sl6:
@@ -112,6 +117,8 @@ if not os.path.exists("%s/src/shorttrack" % cmssw):
         else:
             os.system("export SCRAM_ARCH=slc7_amd64_gcc820; scramv1 project CMSSW %s; cd %s/src; eval `scramv1 runtime -sh`; ln -s ../../shorttrack shorttrack; cd shorttrack; chmod +x ./setup.sh; ./setup.sh; cd ..; scram b -j10" % (cmssw, cmssw))
 
+
+
 # modify hit collections:
 if step_clustersurgeon:
     commands = []
@@ -119,11 +126,9 @@ if step_clustersurgeon:
         outfile = i_file.split("/")[-1].replace(".root", "")
         commands.append("cd ~/dust/shorttrack/track-shortening/%s/src/; eval `scramv1 runtime -sh`; cd shorttrack/TrackRefitting/; cmsRun python/ClusterSurgeon.py inputFiles=file://%s outputFile=/nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/%s_HITREMOVER%s/rCluster_%s_%s_allSteps_%s.root" % (cmssw, i_file, period, suffix, outfile, period, i+1))
         
-        #if options.ultralegacy:
-        #    commands[-1] = commands[-1] + " ultralegacy=1"
-
     os.system("mkdir -p /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/%s_HITREMOVER%s" % (period, suffix))
     status = GridEngineTools.runParallel(commands, runmode, condorDir="condor.%s" % period, confirm=options.confirm, use_sl6=use_sl6)
+
 
 
 # do rereco with modified hit collections and remove input:
@@ -137,7 +142,6 @@ if step_reco:
                 commands.append("cd ~/dust/shorttrack/track-shortening/%s/src/; eval `scramv1 runtime -sh`; cd shorttrack/TrackRefitting/; cmsRun python/reRECO_%s%s.py inputFiles=file://../../%s outputFileName=../../%s step=%s MuonSeeds=1" % (cmssw, period, suffix, i_file, o_file, step))
             else:
                 commands.append("cd ~/dust/shorttrack/track-shortening/%s/src/; eval `scramv1 runtime -sh`; cd shorttrack/TrackRefitting/; cmsRun python/reRECO_%s%s.py inputFiles=file://../../../../%s outputFileName=../../../../%s step=%s MuonSeeds=1" % (cmssw, period, suffix, i_file, o_file, step))
-                
 
     os.system("mkdir -p /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/%s_RERECO%s" % (period, suffix))
     status = GridEngineTools.runParallel(commands, runmode, condorDir="condor.%s" % period, confirm=options.confirm, use_sl6=use_sl6)

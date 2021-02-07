@@ -286,7 +286,7 @@ for i_event, event in enumerate(events):
                                     if deltaR < 0.01:
         
                                         #FIXME
-                                        if ((track_rereco.hitPattern().trackerLayersWithMeasurement() == 3 and track_rereco.pt()>15) or (track_rereco.hitPattern().trackerLayersWithMeasurement() > 3 and track_rereco.pt()>40)) and track_rereco.pt()>int(options_.low_pt_threshold) and track_rereco.pt()<=int(options_.high_pt_threshold) and abs(track_rereco.eta())>float(options_.low_eta_threshold) and abs(track_rereco.eta())<=float(options_.high_eta_threshold) and abs(track_rereco.eta())<2.2:
+                                        if ((track_rereco.hitPattern().trackerLayersWithMeasurement() == 3 and track_rereco.pt()>15) or (track_rereco.hitPattern().trackerLayersWithMeasurement() > 3 and track_rereco.pt()>40)) and track_rereco.pt()>int(options_.low_pt_threshold) and track_rereco.pt()<=int(options_.high_pt_threshold) and abs(track_rereco.eta())>float(options_.low_eta_threshold) and abs(track_rereco.eta())<=float(options_.high_eta_threshold):
                                             histos["h_layers2D"].Fill(layers_remaining, track_rereco.hitPattern().trackerLayersWithMeasurement())
                                             histos["h_ptratio2D"].Fill(track.pt(), track_rereco.pt())
                                             histos["h_tracks_rereco"].Fill(layers_remaining)

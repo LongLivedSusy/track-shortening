@@ -68,7 +68,7 @@ def plot(period, suffix):
     os.system("mkdir -p plots%s" % suffix)
 
     # get histos:
-    fin = TFile("histograms/histograms%s_%s.root" % (suffix, period), "open")
+    fin = TFile("histograms-ok/histograms%s_%s.root" % (suffix, period), "open")
     hists = {}
     for label in histolabels:
         hists[label] = fin.Get(label)
@@ -102,7 +102,37 @@ def plot(period, suffix):
     hists["h_efficiency"].GetYaxis().SetRangeUser(0,1)
     shared_utils.stamp()
     legend.Draw()
-    canvas.Print("plots%s/trackShortening_efficiency_%s.pdf" % (suffix, period))  
+    canvas.Print("plots%s/efficiency_%s.pdf" % (suffix, period))  
+
+    # draw TEfficiency:
+    teff_reco = TEfficiency(hists["h_tracks_rereco"].Clone(), hists["h_tracks_reco"].Clone())
+    teff_reco.SetStatisticOption(TEfficiency.kFCP)    
+    
+    teff_tag = TEfficiency(hists["h_tracks_tagged"].Clone(), hists["h_tracks_rereco"].Clone())
+    teff_tag.SetStatisticOption(TEfficiency.kFCP)    
+    
+    # some more options.
+    # eff.SetUseWeightedEvents()
+    # eff.SetStatisticOption(ROOT.TEfficiency.kBUniform)
+    # eff.SetStatisticOption(ROOT.TEfficiency.kBJeffrey)
+    # eff.SetStatisticOption(ROOT.TEfficiency.kBUniform)
+    # eff.SetStatisticOption(ROOT.TEfficiency.kBBayesian)
+
+    canvas = shared_utils.mkcanvas()
+    legend = shared_utils.mklegend(x1=0.4, y1=0.2, x2=0.9, y2=0.4)
+    legend.SetHeader(period)
+    legend.SetTextSize(0.04)
+    teff_reco.Draw("")
+    teff_tag.SetLineColor(kRed)
+    teff_tag.Draw("same")
+    legend.AddEntry(teff_reco, "reconstruction efficiency")
+    legend.AddEntry(teff_tag, "tagging efficiency")
+    teff_reco.SetTitle(";remaining layers;efficiency")
+    #teff_reco.GetYaxis().SetRangeUser(0,1)
+    shared_utils.stamp()
+    legend.Draw()
+    canvas.Print("plots%s/tefficiency_%s.pdf" % (suffix, period))  
+    
 
     # draw abs values:
     canvas = shared_utils.mkcanvas()
@@ -127,7 +157,7 @@ def plot(period, suffix):
     legend.AddEntry(hists["h_tracks_tagged"], "shortenend & tagged tracks")
     shared_utils.stamp()
     legend.Draw()
-    canvas.Print("plots%s/trackShortening_absval_%s.pdf" % (suffix, period))  
+    canvas.Print("plots%s/absval_%s.pdf" % (suffix, period))  
 
     # draw other plots:
     for label in histolabels:
@@ -151,7 +181,7 @@ def plot(period, suffix):
                 hists[label].SetTitle(";%s;normalized events" % label)
                             
             shared_utils.stamp()
-            canvas.Print("plots%s/trackShortening_%s_%s.pdf" % (suffix, label.replace("h_", ""), period))  
+            canvas.Print("plots%s/%s_%s.pdf" % (suffix, label.replace("h_", ""), period))  
 
 
 def allperiods(suffix = ""):
@@ -186,7 +216,7 @@ def allperiods(suffix = ""):
     for period in periods:
         hists[period] = {}
         for label in histolabels:
-            fin = TFile("histograms/histograms%s_%s.root" % (suffix, period), "open")
+            fin = TFile("histograms-ok/histograms%s_%s.root" % (suffix, period), "open")
             hists[period][label] = fin.Get(label)
             hists[period][label].SetDirectory(0)
             hists[period][label].SetLineWidth(2)
@@ -211,16 +241,39 @@ def allperiods(suffix = ""):
         hists[period]["h_tagefficiency"].SetName("h_tagefficiency")
         hists[period]["h_tagefficiency"].SetLineWidth(2)
         hists[period]["h_tagefficiency"].Divide(hists[period]["h_tracks_rereco" + extra])
-        
+                
         hists[mcperiod]["h_tagefficiency"] = hists[mcperiod]["h_tracks_tagged" + extra].Clone()
         hists[mcperiod]["h_tagefficiency"].SetName("h_tagefficiency")
         hists[mcperiod]["h_tagefficiency"].SetLineWidth(2)
         hists[mcperiod]["h_tagefficiency"].Divide(hists[mcperiod]["h_tracks_rereco" + extra])
         
+        if False:
+            # update errors from TEfficiency:
+            hists[period]["h_tagtefficiency"] = TEfficiency(hists[period]["h_tracks_tagged" + extra].Clone(), hists[period]["h_tracks_rereco" + extra].Clone())
+            hists[period]["h_tagtefficiency"].SetStatisticOption(TEfficiency.kFCP)        
+            hists[mcperiod]["h_tagtefficiency"] = TEfficiency(hists[mcperiod]["h_tracks_tagged" + extra].Clone(), hists[mcperiod]["h_tracks_rereco" + extra].Clone())
+            hists[mcperiod]["h_tagtefficiency"].SetStatisticOption(TEfficiency.kFCP)        
+            
+            for i_period in [period, mcperiod]:
+                for i in range(hists[i_period]["h_tagefficiency"].GetNbinsX()):
+                    
+                    print "XX"
+                    
+                    print hists[i_period]["h_tagefficiency"].GetBinContent(i)
+                    print hists[i_period]["h_tagtefficiency"].GetCopyTotalHisto().GetBinContent(i)
+            
+                    print hists[i_period]["h_tagefficiency"].GetBinError(i)
+                    print hists[i_period]["h_tagtefficiency"].GetCopyTotalHisto().GetBinError(i)
+            
+            quit()
+        
         hists[period]["h_tagscalefactor"] = hists[period]["h_tagefficiency"].Clone()
         hists[period]["h_tagscalefactor"].SetName("h_tagscalefactor")
         hists[period]["h_tagscalefactor"].SetLineWidth(2)
         hists[period]["h_tagscalefactor"].Divide(hists[mcperiod]["h_tagefficiency"])
+
+        
+            
         
         # reconstruction:
         
@@ -270,7 +323,7 @@ def allperiods(suffix = ""):
             
         legend.Draw()
         shared_utils.stamp()
-        canvas.Print("plots%s/trackShortening_allSF_%s%s.pdf" % (suffix, year, extra))
+        canvas.Print("plots%s/allSF_%s%s.pdf" % (suffix, year, extra))
 
         if year == "Run":
             colors = [kBlack, kRed, kRed-6, kPink-2, kMagenta, kViolet, kBlue, kAzure+9, kCyan, kTeal-1, kGreen, kGreen+2, kSpring+9, kYellow-3, kOrange, kOrange-8]
@@ -283,14 +336,14 @@ def scalefactors(dataperiod, mcperiod, suffix, extralabel):
     hists_data = {}
     hists_mc = {}
     for label in histolabels:
-        fin = TFile("histograms/histograms%s_%s.root" % (suffix, dataperiod), "open")
+        fin = TFile("histograms-ok/histograms%s_%s.root" % (suffix, dataperiod), "open")
         hists_data[label] = fin.Get(label)
         hists_data[label].SetDirectory(0)
         hists_data[label].SetLineWidth(2)
         shared_utils.histoStyler(hists_data[label])
         fin.Close()
         
-        fin = TFile("histograms/histograms%s_%s.root" % (suffix, mcperiod), "open")
+        fin = TFile("histograms-ok/histograms%s_%s.root" % (suffix, mcperiod), "open")
         hists_mc[label] = fin.Get(label)
         hists_mc[label].SetDirectory(0)
         hists_mc[label].SetLineWidth(2)
@@ -437,7 +490,7 @@ def scalefactors(dataperiod, mcperiod, suffix, extralabel):
         hists_data["h_recoscalefactor"].SetTitle(";remaining layers;scale factor")
         hists_data["h_recoscalefactor"].GetYaxis().SetRangeUser(0,2.5)
         shared_utils.stamp()
-        canvas.Print("plots%s/trackShortening_scalefactor%s.pdf" % (suffix, extralabel))
+        canvas.Print("plots%s/scalefactor%s.pdf" % (suffix, extralabel))
         
         # fit:    
         hists_data["h_scalefactor"].Draw("hist e")
@@ -464,7 +517,7 @@ def scalefactors(dataperiod, mcperiod, suffix, extralabel):
         grint2.Draw("e2 sames")
         
         shared_utils.stamp()
-        canvas.Print("plots%s/trackShortening_scalefactor_fit%s.pdf" % (suffix, extralabel))
+        canvas.Print("plots%s/scalefactor_fit%s.pdf" % (suffix, extralabel))
         
         
         
@@ -484,7 +537,7 @@ def scalefactors(dataperiod, mcperiod, suffix, extralabel):
         grint1.SetFillColor(kGray+1)
         
         shared_utils.stamp()
-        canvas.Print("plots%s/trackShortening_scalefactor_fit_short%s.pdf" % (suffix, extralabel))
+        canvas.Print("plots%s/scalefactor_fit_short%s.pdf" % (suffix, extralabel))
         
         hists_data["h_scalefactor_long"].Draw("hist e")
         hists_data["h_scalefactor_long"].GetXaxis().SetRangeUser(3,21)
@@ -500,7 +553,7 @@ def scalefactors(dataperiod, mcperiod, suffix, extralabel):
         grint1.SetFillColor(kGray+1)
         
         shared_utils.stamp()
-        canvas.Print("plots%s/trackShortening_scalefactor_fit_long%s.pdf" % (suffix, extralabel))
+        canvas.Print("plots%s/scalefactor_fit_long%s.pdf" % (suffix, extralabel))
     
     # draw pt:
     for variable in histolabels:
@@ -654,7 +707,7 @@ def scalefactors(dataperiod, mcperiod, suffix, extralabel):
                 hists_data[variable].GetYaxis().SetRangeUser(0,1)
                 hists_data[variable].SetTitle(";;fraction of remaining shortened tracks")
             
-            canvas.Print("plots%s/trackShortening_%s%s.pdf" % (suffix, variable.replace("h_", ""), extralabel))
+            canvas.Print("plots%s/%s%s.pdf" % (suffix, variable.replace("h_", ""), extralabel))
 
 
 def doplots(periods = ["Summer16", "Fall17", "Run2016H", "Run2016B", "Run2017B", "Run2017F"], suffixes = ["", "low", "medium", "high"]):        
@@ -674,10 +727,10 @@ def doplots(periods = ["Summer16", "Fall17", "Run2016H", "Run2016B", "Run2017B",
                 "Run2017D",
                 "Run2017E",
                 "Run2017F",
-                #"Run2018A",
-                #"Run2018B",
-                #"Run2018C",
-                #"Run2018D",
+                "Run2018A",
+                "Run2018B",
+                "Run2018C",
+                "Run2018D",
                 #"Run2017CUL",
               ]
               
@@ -689,7 +742,7 @@ def doplots(periods = ["Summer16", "Fall17", "Run2016H", "Run2016B", "Run2017B",
                ]
     
     allperiods()
-                   
+                                           
     for suffix in suffixes:
         for period in periods: 
             plot(period, suffix)

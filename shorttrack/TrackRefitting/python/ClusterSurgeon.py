@@ -40,7 +40,6 @@ from Configuration.AlCa.GlobalTag import GlobalTag
 if ultralegacy:
     process.GlobalTag = GlobalTag(process.GlobalTag, '106X_dataRun2_v20', '')
 elif "Run2016" in options.inputFiles[0]:
-    #process.GlobalTag = GlobalTag(process.GlobalTag, '80X_dataRun2_Prompt_v14', '')
     process.GlobalTag = GlobalTag(process.GlobalTag, '80X_dataRun2_2016LegacyRepro_v4', '')
 elif "Run2017" in options.inputFiles[0]:
     process.GlobalTag = GlobalTag(process.GlobalTag, '94X_dataRun2_ReReco17_forValidation', '')
@@ -52,9 +51,13 @@ elif "Summer16" in options.inputFiles[0]:
     process.GlobalTag = GlobalTag(process.GlobalTag, '80X_mcRun2_asymptotic_2016_TrancheIV_v8', '')
 elif "Fall17" in options.inputFiles[0]:
     process.GlobalTag = GlobalTag(process.GlobalTag, '94X_mc2017_realistic_v10', '')
+elif "Autumn18" in options.inputFiles[0]:
+    process.GlobalTag = GlobalTag(process.GlobalTag, '102X_upgrade2018_realistic_v15', '')
 else:
     print "Where is the global tag?"
     quit()
+    
+print "process.GlobalTag", process.GlobalTag
     
 process.goodMuons = cms.EDFilter("GoodRecoMuonsFilter",
     trackslabel = cms.InputTag("generalTracks"),
