@@ -7,13 +7,15 @@ import glob
 # comments @ Viktor Kutzner
 
 # select steps:
-step_gensim = 1
-step_digi   = 1
+step_gensim = 0
+step_digi   = 0
 step_reco   = 1
-overwrite   = 1
+step_rereco = 1
+overwrite   = 0
+ultralegacy = 1
 runmode     = "grid"
 confirm     = 0
-use_sl6     = 1
+use_sl6     = 0
 
 # TODO: was patch1, here without:
 
@@ -72,9 +74,14 @@ if step_digi:
 # recipe from https://cms-pdmv.cern.ch/mcm/public/restapi/requests/get_test/MUO-RunIIFall17DRPremix-00026
 if step_reco:
     
-    example_command = """cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/CMSSW_9_4_0/src; eval `scramv1 runtime -sh`; cmsDriver.py --python_filename MUO-RunIIFall17DRPremix-00026_2_$NUM_cfg.py --eventcontent RECOSIM --customise Configuration/DataProcessing/Utils.addMonitoring --datatier GEN-SIM-RECO --fileout file:$OUTFILE --conditions 94X_mc2017_realistic_v10 --step RAW2DIGI,RECO --filein file:$INFILE --era Run2_2017 runUnscheduled --no_exec --mc -n $NEV; cmsRun -e -j MUO-RunIIFall17DRPremix-00026_report.xml MUO-RunIIFall17DRPremix-00026_2_$NUM_cfg.py"""
-    
-    outdir = "Fall17_RECO"
+    if not ultralegacy:
+        example_command = """cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/CMSSW_9_4_0/src; eval `scramv1 runtime -sh`; cmsDriver.py --python_filename MUO-RunIIFall17DRPremix-00026_2_$NUM_cfg.py --eventcontent RECOSIM --customise Configuration/DataProcessing/Utils.addMonitoring --datatier GEN-SIM-RECO --fileout file:$OUTFILE --conditions 94X_mc2017_realistic_v10 --step RAW2DIGI,RECO --filein file:$INFILE --era Run2_2017 runUnscheduled --no_exec --mc -n $NEV; cmsRun -e -j MUO-RunIIFall17DRPremix-00026_report.xml MUO-RunIIFall17DRPremix-00026_2_$NUM_cfg.py"""
+        outdir = "Fall17_RECO"
+        
+    else:
+        example_command = """cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/CMSSW_10_6_2/src; eval `scramv1 runtime -sh`; cmsDriver.py --python_filename MUO-RunIIFall17DRPremix-00026_2_$NUM_cfg.py --eventcontent RECOSIM --datatier GEN-SIM-RECO --fileout file:$OUTFILE --conditions 106X_mc2017_realistic_v6 --step RAW2DIGI,L1Reco,RECO --filein file:$INFILE --era Run2_2017,pf_badHcalMitigation --customise Configuration/DataProcessing/RecoTLR.customisePostEra_Run2_2018 --runUnscheduled --no_exec --mc -n $NEV; cmsRun -e -j MUO-RunIIFall17DRPremix-00026_report.xml MUO-RunIIFall17DRPremix-00026_2_$NUM_cfg.py"""
+        outdir = "Fall17UL_RECO"
+        
     os.system("mkdir -p %s" % outdir)
     
     commands = []
@@ -87,3 +94,11 @@ if step_reco:
     os.system("rm condor.fall17gen3/*")
     status = GridEngineTools.runParallel(commands, runmode, condorDir="condor.fall17gen3", confirm=confirm, use_sl6=use_sl6)
     #if status != 0: quit(str(status))
+
+
+if step_rereco:
+    
+    if not ultralegacy:
+        os.system("./submit_rereco.py --period Fall17")
+    else:
+        os.system("./submit_rereco.py --period Fall17UL")

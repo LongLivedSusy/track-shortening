@@ -15,7 +15,7 @@ process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(options.inputFiles)
 )
 
-if "UL/" in options.outputFile:
+if "UL" in options.outputFile:
     ultralegacy = True
     print "Processing ultralegacy..."
 else:
@@ -38,7 +38,10 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 from Configuration.AlCa.GlobalTag import GlobalTag
 
 if ultralegacy:
-    process.GlobalTag = GlobalTag(process.GlobalTag, '106X_dataRun2_v20', '')
+    if "Run2017" in options.inputFiles[0]:
+        process.GlobalTag = GlobalTag(process.GlobalTag, '106X_dataRun2_v20', '')
+    elif "Fall17" in options.inputFiles[0]:
+        process.GlobalTag = GlobalTag(process.GlobalTag, '106X_mc2017_realistic_v6', '')
 elif "Run2016" in options.inputFiles[0]:
     process.GlobalTag = GlobalTag(process.GlobalTag, '80X_dataRun2_2016LegacyRepro_v4', '')
 elif "Run2017" in options.inputFiles[0]:

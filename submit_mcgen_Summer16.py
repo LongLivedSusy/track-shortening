@@ -11,6 +11,7 @@ step_gensim = 1
 step_digi   = 1
 step_reco   = 1
 overwrite   = 1
+step_rereco = 1
 runmode     = "grid"           # grid (condor) or multi (multicore)
 confirm     = 0
 
@@ -83,3 +84,7 @@ if step_reco:
     #os.system("rm condor.summer16gen/*")
     status = GridEngineTools.runParallel(commands, runmode, condorDir="condor.summer16gen", confirm=confirm, use_sl6=True)
     #if status != 0: quit(str(status))
+
+
+if step_rereco:
+    os.system("./submit_rereco.py --period Summer16")

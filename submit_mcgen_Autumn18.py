@@ -10,6 +10,7 @@ import glob
 step_gensim = 0
 step_digi   = 0
 step_reco   = 1
+step_rereco = 1
 overwrite   = 0
 runmode     = "grid"
 confirm     = 0
@@ -82,3 +83,7 @@ if step_reco:
     os.system("rm condor.Autumn18gen3/*")
     status = GridEngineTools.runParallel(commands, runmode, condorDir="condor.Autumn18gen3", confirm=confirm, use_sl6=use_sl6)
     #if status != 0: quit(str(status))
+
+
+if step_rereco:
+    os.system("./submit_rereco.py --period Autumn18")
