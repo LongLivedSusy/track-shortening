@@ -2,13 +2,14 @@
 import GridEngineTools
 import os
 import glob
-import plot
+#import plot
 from os.path import expanduser
 from optparse import OptionParser
 
 parser = OptionParser()
 parser.add_option("--submit", dest = "submit", action="store_true")
 parser.add_option("--hadd", dest = "hadd", action="store_true")
+parser.add_option("--plot", dest = "plot", action="store_true")
 (options, args) = parser.parse_args()
 
 periods = [
@@ -31,24 +32,32 @@ periods = [
             "Run2018B",
             "Run2018C",
             "Run2018D",
-            "RunUL2017C",
+            #"RunUL2017C",
             #"Fall17UL",
           ]
           
-suffixes = [
-            "",
-            "low",
-            "medium", 
-            "high",
-            "Barrel",
-            "Endcap", 
-            #"lowBarrel",
-            #"lowEndcap", 
-            #"mediumBarrel",
-            #"mediumEndcap",
-            #"highBarrel", 
-            #"highEndcap",
-           ]
+suffixes = {
+            #"":                 " ",
+            #"onlyP1DiffXsec":   " --onlyp1bdt --bdt may21 ",
+            #"DiffXsecMay":      " --bdt may21 ",
+            #"DiffXsecNov":      " --bdt nov20-noEdep ",
+            "EquXsecMay":        " --bdt may21-equSgXsec3 ",
+            #"low":              "--low_pt 30 --high_pt 35 --override_category_pt ",
+            #"medium":           "--low_pt 35 --high_pt 40 --override_category_pt ",
+            #"high":             "--low_pt 40 --high_pt 45 --override_category_pt ",
+            #"high2":            "--low_pt 45 --high_pt 50 --override_category_pt ",
+            #"high3":            "--low_pt 55 --high_pt 60 --override_category_pt ",
+            #"high4":            "--low_pt 50 --high_pt 55 --override_category_pt ",
+            #"new5":             "--low_pt 0 --high_pt 50 --override_category_pt ",
+            #"new6":             "--low_pt 0 --high_pt 50 ",
+            #"new7":             "--low_pt 50 --high_pt 99999 --override_category_pt ",
+            #"noniso4":          "--iso 4 ",
+            #"noniso5":          "--iso 5 ",
+            #"Barrel":           "--low_eta 0 --high_eta 1.479 ",
+            #"Endcap":           "--low_eta 1.479 --high_eta 2.2 ",
+           }
+           
+histofolder = "histograms"
 
 homedir = expanduser("~")
     
@@ -56,23 +65,14 @@ commands = []
 for period in periods: 
     for i in range(1, 21):
         for suffix in suffixes:
+            if suffix == "":
+                suffixterm = ""
+            else:
+                suffixterm = " --suffix %s " % suffix
 
-            extraargs = ""
-            
-            if suffix == "low":
-                extraargs += "--low_pt 15 --high_pt 40 --suffix low "
-            elif suffix == "medium":
-                extraargs += "--low_pt 40 --high_pt 70 --suffix medium "
-            elif suffix == "high":
-                extraargs += "--low_pt 70 --high_pt 99999 --suffix high "
-            elif suffix == "Barrel":            
-                extraargs += "--low_eta 0 --high_eta 1.479 --suffix Barrel "
-            elif suffix == "Endcap":             
-                extraargs += "--low_eta 1.479 --high_eta 2.2 --suffix Endcap "
-            
-            #commands.append("HOME=%s; cd ~/cmssw/CMSSW_9_2_7_patch1/src/; eval `scramv1 runtime -sh`; cd -; cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening; python analyzer.py %s_RERECO/*_%s.root %s" % (homedir, period, i, extraargs))
-            commands.append("HOME=%s; cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/CMSSW_10_6_2/src/; eval `scramv1 runtime -sh`; cd -; cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening; python analyzer.py %s_RERECO/*_%s.root %s" % (homedir, period, i, extraargs))
-            
+            extraargs = suffixes[suffix] + " %s --outputfolder %s " % (suffixterm, histofolder)
+            commands.append("HOME=%s; cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/CMSSW_10_6_2/src/; eval `scramv1 runtime -sh`; cd -; cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening; python analyzer.py %s_RERECO/*_%s.root %s; " % (homedir, period, i, extraargs))
+        
                 
 if options.submit:
     GridEngineTools.runParallel(commands, "grid", confirm=0, condorDir="condor.analysis2", use_sl6=0)
@@ -80,5 +80,15 @@ if options.submit:
 if options.hadd:
     for period in periods: 
         for suffix in suffixes:
-            os.system("hadd -f histograms/histograms%s_%s.root histograms/histograms%s_%s_*.root" % (suffix, period, suffix, period))
+            os.system("hadd -f %s/histograms%s_%s.root histograms/histograms%s_%s_*.root &" % (histofolder, suffix, period, suffix, period))
+
+if options.plot:
+    for period in periods: 
+        for suffix in suffixes:
+            if suffix == "":
+                os.system("./plot.py --histofolder %s &" % (histofolder))
+            else:
+                os.system("./plot.py --histofolder %s --suffix %s &" % (histofolder, suffix))
+            
+
         
