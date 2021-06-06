@@ -8,7 +8,7 @@ import array as pyarray
 # inspect RECO and reRECO collections
 # comments @ Viktor Kutzner
 
-gROOT.SetBatch() 
+gROOT.SetBatch()
 gROOT.SetStyle('Plain')
 
 parser = OptionParser()
@@ -17,6 +17,10 @@ parser.add_option("--high_pt", dest = "high_pt_threshold", default = 99999)
 parser.add_option("--low_eta", dest = "low_eta_threshold", default = 0)
 parser.add_option("--high_eta", dest = "high_eta_threshold", default = 2.2)
 parser.add_option("--bdt", dest = "bdt", default = "may21-equSgXsec3")
+parser.add_option("--bdtShortP0", dest = "bdtShortP0", default = -1)
+parser.add_option("--bdtLongP0", dest = "bdtLongP0", default = -1)
+parser.add_option("--bdtShortP1", dest = "bdtShortP1", default = -1)
+parser.add_option("--bdtLongP1", dest = "bdtLongP1", default = -1)
 parser.add_option("--iso", dest = "iso", default = 0)
 parser.add_option("--suffix", dest = "suffix", default = "")
 parser.add_option("--outputfolder", dest = "outputfolder", default = "histograms")
@@ -25,6 +29,12 @@ parser.add_option("--override_category_pt", dest = "override_category_pt", actio
 parser.add_option("--onlyp1bdt", dest = "onlyp1bdt", action="store_true")
 
 (options_, args) = parser.parse_args()
+
+# make sure these are floats:
+options_.bdtShortP0 = float(options_.bdtShortP0) 
+options_.bdtLongP0 = float(options_.bdtLongP0)
+options_.bdtShortP1 = float(options_.bdtShortP1)
+options_.bdtLongP1 = float(options_.bdtLongP1)
 
 overwrite = True
 
@@ -63,6 +73,11 @@ for i_period in periods:
         break
 if period == "":
     quit("No run period")
+
+outfilename = "%s/histograms%s_%s_%s.root" % (options_.outputfolder, options_.suffix, period, layers_remaining)
+#if os.path.exists(outfilename):
+#    print "Already done!"
+#    quit(0)
 
 # test for invalid files:
 sane_files = []
@@ -176,7 +191,8 @@ reader_short = TMVA.Reader( "!Color:!Silent" )
 var_dxyVtx_short = pyarray.array('f',[0]) ; reader_short.AddVariable("tracks_dxyVtx", var_dxyVtx_short)
 var_dzVtx_short = pyarray.array('f',[0]) ; reader_short.AddVariable("tracks_dzVtx", var_dzVtx_short)
 var_trkRelIso_short = pyarray.array('f',[0]) ; reader_short.AddVariable("tracks_trkRelIso", var_trkRelIso_short)
-var_nValidPixelHits_short_ = pyarray.array('f',[0]) ; reader_short.AddVariable("tracks_nValidPixelHits", var_nValidPixelHits_short_)
+if not options_.bdt == "may21v2":
+    var_nValidPixelHits_short = pyarray.array('f',[0]) ; reader_short.AddVariable("tracks_nValidPixelHits", var_nValidPixelHits_short)
 var_ptErrOverPt2_short = pyarray.array('f',[0]) ; reader_short.AddVariable("tracks_ptErrOverPt2", var_ptErrOverPt2_short)
 var_chi2perNdof_short = pyarray.array('f',[0]) ; reader_short.AddVariable("tracks_chi2perNdof", var_chi2perNdof_short)
 reader_short.BookMVA("BDT", weights_short)
@@ -351,7 +367,7 @@ for i_event, event in enumerate(events):
                 trerecovec.SetPtEtaPhiM(track_rereco.pt(), track_rereco.eta(), track_rereco.phi(), 0.0)
                 deltaR = tvec.DeltaR(trerecovec)
                 if deltaR < 0.01 \
-                   and (options_.override_category_pt or ((track_rereco.hitPattern().trackerLayersWithMeasurement() <= track_rereco.hitPattern().pixelLayersWithMeasurement() \
+                   and (options_.override_category_pt or ((track_rereco.hitPattern().pixelLayersWithMeasurement() == track_rereco.hitPattern().trackerLayersWithMeasurement() \
                         and track_rereco.pt()>25) \
                         or (track_rereco.hitPattern().trackerLayersWithMeasurement() > track_rereco.hitPattern().pixelLayersWithMeasurement()\
                         and track_rereco.pt()>40))) \
@@ -472,7 +488,7 @@ for i_event, event in enumerate(events):
                                         cutflow_counter += 1
                                         if track_trackerLayersWithMeasurement>=2:
                                             cutflow_counter += 1
-                                            if track_nValidTrackerHits>=2:
+                                            if track_is_pixel_track or track_nValidTrackerHits>=2:
                                                 cutflow_counter += 1
                                                 if track_nMissingInnerHits==0:
                                                     cutflow_counter += 1
@@ -497,12 +513,22 @@ for i_event, event in enumerate(events):
                         var_dxyVtx_short[0] = track_dxyVtx
                         var_dzVtx_short[0] = track_dzVtx
                         var_trkRelIso_short[0] = track_trkRelIso
-                        var_nValidPixelHits_short_[0] = track_nValidPixelHits
+                        if not options_.bdt == "may21v2":
+                            var_nValidPixelHits_short[0] = track_nValidPixelHits
                         var_ptErrOverPt2_short[0] = track_ptErrOverPt2
                         var_chi2perNdof_short[0] = track_chi2perNdof
                         track_mva = reader_short.EvaluateMVA("BDT")
                         
-                        if is_preselected and ((phase==0 and track_mva>0.1) or (phase==1 and track_mva>0.1)):
+                        if options_.bdtShortP0>-1:
+                            bdt_p0 = options_.bdtShortP0
+                        else:
+                            bdt_p0 = 0.1
+                        if options_.bdtShortP1>-1:
+                            bdt_p1 = options_.bdtShortP1
+                        else:
+                            bdt_p1 = 0.1
+                        
+                        if is_preselected and ((phase==0 and track_mva>bdt_p0) or (phase==1 and track_mva>bdt_p1)):
                             cutflow_counter += 1
                             if (track_matchedCaloEnergy<15 or track_matchedCaloEnergy/track_p<0.15):
                                 cutflow_counter += 1
@@ -519,8 +545,17 @@ for i_event, event in enumerate(events):
                         var_ptErrOverPt2_long[0] = track_ptErrOverPt2
                         var_chi2perNdof_long[0] = track_chi2perNdof
                         track_mva = reader_long.EvaluateMVA("BDT")  
+
+                        if options_.bdtLongP0>-1:
+                            bdt_p0 = options_.bdtLongP0
+                        else:
+                            bdt_p0 = 0.12
+                        if options_.bdtLongP1>-1:
+                            bdt_p1 = options_.bdtLongP1
+                        else:
+                            bdt_p1 = 0.15
                         
-                        if is_preselected and ((phase==0 and track_mva>0.12) or (phase==1 and track_mva>0.15)):
+                        if is_preselected and ((phase==0 and track_mva>bdt_p0) or (phase==1 and track_mva>bdt_p1)):
                             cutflow_counter += 1
                             if (track_matchedCaloEnergy<15 or track_matchedCaloEnergy/track_p<0.15):
                                 cutflow_counter += 1
@@ -530,14 +565,15 @@ for i_event, event in enumerate(events):
                     cutflow_fill(layers_remaining, track_is_pixel_track)      
                     
                     # fill var histograms:
-                    for label in histos:
-                        if "track_" in label and "_layer" not in label:
-                            value = eval(label)
-                            histos[label].Fill(value)
-                            
-                            # fill layer-dependent histograms:
-                            if layers_remaining in range(3,9):
-                                histos[label + "_layer%s" % layers_remaining].Fill(value)
+                    if is_preselected:
+                        for label in histos:
+                            if "track_" in label and "_layer" not in label:
+                                value = eval(label)
+                                histos[label].Fill(value)
+                                
+                                # fill layer-dependent histograms:
+                                if layers_remaining in range(3,9):
+                                    histos[label + "_layer%s" % layers_remaining].Fill(value)
                             
                     if is_tagged:
                         histos["h_tracks_tagged"].Fill(layers_remaining)
@@ -585,7 +621,6 @@ for i_event, event in enumerate(events):
                         
 # make a canvas, draw, and save it
 os.system("mkdir -p %s" % options_.outputfolder)
-outfilename = "%s/histograms%s_%s_%s.root" % (options_.outputfolder, options_.suffix, period, layers_remaining)
 outfile = TFile(outfilename, "recreate")
 if histos["h_chi2ndof2D"].GetEntries()>0:
     histos["h_chi2ndof2D"].Scale(1.0/histos["h_chi2ndof2D"].GetEntries())

@@ -105,9 +105,15 @@ def plotdatamc(histofolder, dataperiod, plotfolder, suffix, extralabel, histolab
         shared_utils.histoStyler(hists_mc[label])
         fin.Close()
         
-    # draw pt:
     for variable in histolabels:
-        if variable in ["h_muonPt", "h_muonEta", "h_muonPtCand", "h_muonEtaCand", "h_pfIso", "h_mismatch"] or "track_" in variable or "cutflow" in variable or "h_ptratio_layer" in variable or "h_tracks_algo" in variable:
+        if variable in [
+                        "h_muonPt",
+                        "h_muonEta",
+                        "h_muonPtCand",
+                        "h_muonEtaCand",
+                        "h_pfIso",
+                        "h_mismatch"
+                       ] or "track_" in variable or "cutflow" in variable or "h_ptratio_layer" in variable or "h_tracks_algo" in variable:
             
             if muon_plots and "h_muon" not in variable:
                 continue
@@ -241,9 +247,16 @@ def plotdatamc(histofolder, dataperiod, plotfolder, suffix, extralabel, histolab
                 cutline.Draw("same")
                 hists_data[variable].GetYaxis().SetRangeUser(1e-4,1e1)
             
-            if variable == "cutflow":
+            if "cutflow" in variable:
                 
-                legend = shared_utils.mklegend(x1=0.55, y1=0.2, x2=0.9, y2=0.4)
+                legend = shared_utils.mklegend(x1=0.17, y1=0.2, x2=0.5, y2=0.4)
+                legend.SetTextSize(0.035)
+                if "short" in variable:
+                    legend.SetHeader("short tracks (%s)" % extralabel.replace("_", ""))
+                elif "long" in variable:
+                    legend.SetHeader("long tracks (%s)" % extralabel.replace("_", ""))
+                else:
+                    legend.SetHeader("%s" % extralabel.replace("_", ""))
                 legend.AddEntry(hists_data[variable], "SingleMuon Data")
                 legend.AddEntry(hists_mc[variable], "DYJetsToLL MC")
                 legend.Draw()
@@ -251,14 +264,13 @@ def plotdatamc(histofolder, dataperiod, plotfolder, suffix, extralabel, histolab
                 hists_data[variable].GetXaxis().SetTitleSize(0.04)
                 hists_data[variable].GetXaxis().SetLabelSize(0.04)   
                 
-                
                 canvas.SetLogy(False)
                 
                 binlabels = {
                               0: "#mu-matched tracks",
-                              1: "pt>15 (40) GeV",
+                              1: "p_{T}>25 (40) GeV",
                               2: "high purity",
-                              3: "|eta|<2.4",
+                              3: "|eta|<2.0",
                               4: "#Delta p_{T}/p_{T}^{2}<10/GeV",
                               5: "dz<0.1 cm",
                               6: "relIso<0.2",
@@ -268,9 +280,12 @@ def plotdatamc(histofolder, dataperiod, plotfolder, suffix, extralabel, histolab
                               10: "pixel hits #geq2",
                               11: "PF cand. veto",
                               12: "missing outer hits",
-                              13: "BDT> 0 (0.05)",
-                              14: "E_{dep}/p<0.2",
+                              13: "BDT> 0.1 (0.1)",
+                              14: "E_{dep}<15 or E_{dep}/p<0.15",
                 }
+                
+                if "Run2016" not in dataperiod and "Summer16" not in dataperiod:
+                    binlabels[13] = "BDT> 0.12 (0.15)"
 
                 for i in binlabels:
                     hists_data[variable].GetXaxis().SetBinLabel(i + 1, binlabels[i]);
@@ -285,7 +300,7 @@ def plotdatamc(histofolder, dataperiod, plotfolder, suffix, extralabel, histolab
 
 
 def allperiods(histofolder, plotfolder, suffix, use_uncertainty_from_teff = False, lumi_weighting = 1, use_exact_layer_matching = False, ul_plots = False):
-        
+    
     periods = [
                 "Summer16",
                 "Fall17",
@@ -312,7 +327,7 @@ def allperiods(histofolder, plotfolder, suffix, use_uncertainty_from_teff = Fals
         periods.append("RunUL2017C")
     
     histolabels = [
-                    "h_tracks_reco",                     
+                    "h_tracks_reco",
                     "h_tracks_reco_short",                     
                     "h_tracks_reco_long",                     
                     "h_tracks_rereco",                   
@@ -334,29 +349,31 @@ def allperiods(histofolder, plotfolder, suffix, use_uncertainty_from_teff = Fals
                     "h_shortbdt2D",                      
                     "h_longbdt2D",                       
                     "h_muonPt",                          
-                    "h_muonEta",                         
+                    "h_muonEta",                   
                     "h_muonPtCand",                          
                     "h_muonEtaCand",                         
                     "h_pfIso",
-                    #"h_tracks_algo",
-                    #"track_is_pixel_track",
-                    #"track_dxyVtx",
-                    #"track_dzVtx",
-                    #"track_trkRelIso",                   
-                    #"track_nValidPixelHits",
-                    #"track_nValidTrackerHits",
-                    #"track_trackerLayersWithMeasurement",
-                    #"track_ptErrOverPt2",
-                    #"track_chi2perNdof",
-                    #"track_mva",
-                    #"track_pt",
-                    #"track_trackQualityHighPurity",      
-                    #"track_nMissingInnerHits"           
-                    #"track_passPFCandVeto",              
-                    #"track_nMissingOuterHits",           
-                    #"track_matchedCaloEnergy",           
-                    #"track_p",
-                    #"cutflow",
+                    "h_tracks_algo",
+                    "track_is_pixel_track",
+                    "track_dxyVtx",
+                    "track_dzVtx",
+                    "track_trkRelIso",                   
+                    "track_nValidPixelHits",
+                    "track_nValidTrackerHits",
+                    "track_trackerLayersWithMeasurement",
+                    "track_ptErrOverPt2",
+                    "track_chi2perNdof",
+                    "track_mva",
+                    "track_pt",
+                    "track_trackQualityHighPurity",      
+                    "track_nMissingInnerHits",           
+                    "track_passPFCandVeto",              
+                    "track_nMissingOuterHits",           
+                    "track_matchedCaloEnergy",           
+                    "track_p",
+                    "cutflow",
+                    "cutflow_short",
+                    "cutflow_long",
                     "h_ptratio",
                     "h_ptratio2D",
                     #"h_chi2ndof2D",
@@ -369,7 +386,9 @@ def allperiods(histofolder, plotfolder, suffix, use_uncertainty_from_teff = Fals
             for i in range(3,9):
                 histolabels.append(label + "_layer%s" % i)
     
-    # get all histos:
+    # get all histos
+    #######################################################################
+    
     hists = {}
     for period in periods:
         hists[period] = {}
@@ -380,7 +399,7 @@ def allperiods(histofolder, plotfolder, suffix, use_uncertainty_from_teff = Fals
                 mylabel = label.replace("rereco", "rereco_exact").replace("tagged", "tagged_exact")
             else:
                 mylabel = label
-            
+                        
             hists[period][label] = fin.Get(mylabel)
             hists[period][label].SetDirectory(0)
             hists[period][label].SetLineWidth(2)
@@ -428,6 +447,8 @@ def allperiods(histofolder, plotfolder, suffix, use_uncertainty_from_teff = Fals
         effcat[cat]["tag_unc_lumiweighted"] = {}
         effcat[cat]["reco_unc_lumiweighted"] = {}
         
+    # plot all categories
+    #######################################################################
     
     for category in [
                   "",
@@ -442,11 +463,11 @@ def allperiods(histofolder, plotfolder, suffix, use_uncertainty_from_teff = Fals
         
         for period in periods:
                 
-            #if category == "":
-            #    draw_2D_plots(hists[period], period, plotfolder, suffix, histolabels)
-            #    if "Run201" in period:
-            #        plotdatamc(histofolder, period, plotfolder, suffix, "_%s" % period.replace("Run", ""), histolabels)
-            #        plotdatamc(histofolder, period, plotfolder, suffix, "_%s" % period.replace("Run", ""), histolabels, muon_plots = True)
+            if category == "":
+                draw_2D_plots(hists[period], period, plotfolder, suffix, histolabels)
+            if "Run2017F" in period:
+                plotdatamc(histofolder, period, plotfolder, suffix, "_%s%s" % (period.replace("Run", ""), category), histolabels)
+                plotdatamc(histofolder, period, plotfolder, suffix, "_%s" % period.replace("Run", ""), histolabels, muon_plots = True)
                         
             # draw abs values:
             canvas = shared_utils.mkcanvas()
@@ -914,6 +935,8 @@ def allperiods(histofolder, plotfolder, suffix, use_uncertainty_from_teff = Fals
         
     
     # draw short and long tracks SF for all run periods / years:
+    #######################################################################
+    
     for label in fitresults:
     
         canvas = shared_utils.mkcanvas()
@@ -1012,7 +1035,10 @@ def allperiods(histofolder, plotfolder, suffix, use_uncertainty_from_teff = Fals
     
     efflayer[0] = effcat["short"]
     
+    
     # draw efficiencies:  
+    #######################################################################
+
     for layer in efflayer:
         for label in efflayer[layer]:
             

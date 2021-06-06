@@ -41,7 +41,16 @@ suffixes = {
             #"onlyP1DiffXsec":   " --onlyp1bdt --bdt may21 ",
             #"DiffXsecMay":      " --bdt may21 ",
             #"DiffXsecNov":      " --bdt nov20-noEdep ",
-            "EquXsecMay":        " --bdt may21-equSgXsec3 ",
+            #"EquXsecMay":       " --bdt may21-equSgXsec3 ",
+            #"EquXsecMayA":      " --bdt may21-equSgXsec3 --bdtShortP1 0.05",
+            #"EquXsecMayB":      " --bdt may21-equSgXsec3 --bdtShortP1 0.00",
+            #"EquXsecMayC":      " --bdt may21-equSgXsec3 --bdtShortP1 -0.05",
+            "NewShort":          " --bdt may21v2 ",
+            #"NewShortPS":        " --bdt may21v2 ",
+            #"NewShortA":         " --bdt may21v2 ",
+            #"NewShortB":         " --bdt may21v2 --bdtShortP1 0.05 ",
+            #"NewShortC":         " --bdt may21v2 --bdtShortP1 0.00 ",
+            #"NewShortC":          " --bdt may21v2 ",
             #"low":              "--low_pt 30 --high_pt 35 --override_category_pt ",
             #"medium":           "--low_pt 35 --high_pt 40 --override_category_pt ",
             #"high":             "--low_pt 40 --high_pt 45 --override_category_pt ",
@@ -60,7 +69,7 @@ suffixes = {
 histofolder = "histograms"
 
 homedir = expanduser("~")
-    
+
 commands = []
 for period in periods: 
     for i in range(1, 21):
@@ -73,9 +82,8 @@ for period in periods:
             extraargs = suffixes[suffix] + " %s --outputfolder %s " % (suffixterm, histofolder)
             commands.append("HOME=%s; cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/CMSSW_10_6_2/src/; eval `scramv1 runtime -sh`; cd -; cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening; python analyzer.py %s_RERECO/*_%s.root %s; " % (homedir, period, i, extraargs))
         
-                
 if options.submit:
-    GridEngineTools.runParallel(commands, "grid", confirm=0, condorDir="condor.analysis2", use_sl6=0)
+    GridEngineTools.runParallel(commands, "grid", confirm=0, condorDir="condor.analysis4", use_sl6=0)
 
 if options.hadd:
     for period in periods: 
@@ -83,12 +91,12 @@ if options.hadd:
             os.system("hadd -f %s/histograms%s_%s.root histograms/histograms%s_%s_*.root &" % (histofolder, suffix, period, suffix, period))
 
 if options.plot:
-    for period in periods: 
-        for suffix in suffixes:
-            if suffix == "":
-                os.system("./plot.py --histofolder %s &" % (histofolder))
-            else:
-                os.system("./plot.py --histofolder %s --suffix %s &" % (histofolder, suffix))
+    #for period in periods: 
+    for suffix in suffixes:
+        if suffix == "":
+            os.system("./plot.py --histofolder %s &" % (histofolder))
+        else:
+            os.system("./plot.py --histofolder %s --suffix %s &" % (histofolder, suffix))
             
 
         
