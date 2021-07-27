@@ -26,9 +26,12 @@ parser.add_option("--suffix", dest = "suffix", default = "")
 parser.add_option("--outputfolder", dest = "outputfolder", default = "histograms")
 parser.add_option("--nev", dest = "nev", default = -1)
 parser.add_option("--override_category_pt", dest = "override_category_pt", action="store_true")
-parser.add_option("--onlyp1bdt", dest = "onlyp1bdt", action="store_true")
+parser.add_option("--onlyp0bdt", dest = "onlyp0bdt", action="store_true")
+parser.add_option("--reweightmc", dest = "reweightmc", default="")
+parser.add_option("--reweightfile", dest = "reweightfile", default="hweights.root")
 
 (options_, args) = parser.parse_args()
+first_filename = args[0].split(".root")[0]
 
 # make sure these are floats:
 options_.bdtShortP0 = float(options_.bdtShortP0) 
@@ -67,22 +70,37 @@ periods = [
           ]
 
 for i_period in periods:
-    if i_period in args[0].split(".root")[0]:
+    if i_period in first_filename:
         period = i_period
         print "period", period
         break
 if period == "":
     quit("No run period")
 
-outfilename = "%s/histograms%s_%s_%s.root" % (options_.outputfolder, options_.suffix, period, layers_remaining)
+# set up MC-reweighting:
+if options_.reweightmc != "":
+    reweighting = options_.reweightmc
+    infile = TFile(options_.reweightfile)
+    h_weights = infile.Get(reweighting)
+    h_weights.SetDirectory(0)
+    infile.Close()
+    outfilename = "%s/histograms%s_%s_%s.root" % (options_.outputfolder, options_.suffix, period + "rw" + reweighting, layers_remaining)
+    print "Using MC reweighting!"
+else:
+    reweighting = False
+    outfilename = "%s/histograms%s_%s_%s.root" % (options_.outputfolder, options_.suffix, period, layers_remaining)
+
+print "outfilename", outfilename
+os.system("mkdir -p %s" % options_.outputfolder)
 #if os.path.exists(outfilename):
 #    print "Already done!"
 #    quit(0)
 
+
 # test for invalid files:
 sane_files = []
 for arg in args:
-    if "mimes" in arg: continue
+    if "mimes" in arg: continue    
     test = TFile(arg)
     if not (test.IsZombie() or test.TestBit(TFile.kRecovered)):
         sane_files.append(arg)
@@ -174,7 +192,7 @@ for label in histos.keys():
             histos[label + "_layer%s" % i] = histos[label].Clone()
             histos[label + "_layer%s" % i].SetName(label + "_layer%s" % i)
 
-if options_.onlyp1bdt or ("Run2016" in period or "Summer16" in period):
+if options_.onlyp0bdt or ("Run2016" in period or "Summer16" in period):
     print "Using Phase-0 BDTs"
     weights_short = "../analysis/disappearing-track-tag/2016-short-tracks-%s/dataset/weights/TMVAClassification_BDT.weights.xml" % options_.bdt
     weights_long = "../analysis/disappearing-track-tag/2016-long-tracks-%s/dataset/weights/TMVAClassification_BDT.weights.xml" % options_.bdt
@@ -208,7 +226,6 @@ var_ptErrOverPt2_long = pyarray.array('f',[0]) ; reader_long.AddVariable("tracks
 var_chi2perNdof_long = pyarray.array('f',[0]) ; reader_long.AddVariable("tracks_chi2perNdof", var_chi2perNdof_long)
 reader_long.BookMVA("BDT", weights_long)
 
-    
 cutflow_counter = -1
 
 def cutflow_fill(layers_remaining, pixel_track):
@@ -226,9 +243,9 @@ def cutflow_fill(layers_remaining, pixel_track):
             if layers_remaining in range(3,9):
                 histos["cutflow_layer%s" % (layers_remaining)].Fill(i)
                 histos["cutflow%s_layer%s" % (category, layers_remaining)].Fill(i)
+                
 
-
-# loop over events
+# loop over events:
 for i_event, event in enumerate(events):
         
     if (i_event+1) % 100 == 0:
@@ -277,7 +294,7 @@ for i_event, event in enumerate(events):
     isotrk_dxyVtx = isotrk_dxyVtx_handle.product()
     event.getByLabel("isotrackproducer", "tracks@dzVtx", isotrack_producerlabel, isotrk_dzVtx_handle)
     isotrk_dzVtx = isotrk_dzVtx_handle.product()
-    
+        
     for muon in muons:
                         
         # PFCand isolation:
@@ -344,25 +361,32 @@ for i_event, event in enumerate(events):
                 best_track_is_in_tracks_collection = True
         if not best_track_is_in_tracks_collection:
             continue
-                                                
+        
         # a long track muon:
         if track.hitPattern().trackerLayersWithMeasurement() > 10 and track.dxy() < 0.2 and track.dz() < 0.1:
-                    
-            histos["h_tracks_reco"].Fill(layers_remaining)
-            histos["h_tracks_reco_rebinned"].Fill(layers_remaining)
+            
+            if reweighting:
+                #weight = h_weights.GetBinContent(h_weights.GetXaxis().FindBin(track.hitPattern().pixelLayersWithMeasurement()))
+                weight = h_weights.GetBinContent(h_weights.GetXaxis().FindBin(track.hitPattern().numberOfValidPixelHits()))
+            else:
+                weight = 1.0
+            
+            histos["h_tracks_reco"].Fill(layers_remaining, weight)
+            histos["h_tracks_reco_rebinned"].Fill(layers_remaining, weight)
             
             # possible short/long tracks after shortening:
             if track.hitPattern().pixelLayersWithMeasurement() == layers_remaining: 
-                histos["h_tracks_reco_short"].Fill(layers_remaining)
-                histos["h_tracks_reco_rebinned_short"].Fill(layers_remaining)
+                histos["h_tracks_reco_short"].Fill(layers_remaining, weight)
+                histos["h_tracks_reco_rebinned_short"].Fill(layers_remaining, weight)
             elif layers_remaining > track.hitPattern().pixelLayersWithMeasurement():
-                histos["h_tracks_reco_long"].Fill(layers_remaining)
-                histos["h_tracks_reco_rebinned_long"].Fill(layers_remaining)
+                histos["h_tracks_reco_long"].Fill(layers_remaining, weight)
+                histos["h_tracks_reco_rebinned_long"].Fill(layers_remaining, weight)
             
-            histos["h_muonPt"].Fill(muon.pt())
-            histos["h_muonEta"].Fill(abs(muon.eta()))
+            histos["h_muonPt"].Fill(muon.pt(), weight)
+            histos["h_muonEta"].Fill(abs(muon.eta()), weight)
             
             for track_rereco in tracks_rereco:
+                
                 trerecovec = TLorentzVector()
                 trerecovec.SetPtEtaPhiM(track_rereco.pt(), track_rereco.eta(), track_rereco.phi(), 0.0)
                 deltaR = tvec.DeltaR(trerecovec)
@@ -383,32 +407,38 @@ for i_event, event in enumerate(events):
                     else:
                         track_is_pixel_track = False
                     
+                    if reweighting:
+                        #weight = h_weights.GetBinContent(h_weights.GetXaxis().FindBin(track_pixelLayersWithMeasurement))
+                        weight = h_weights.GetBinContent(h_weights.GetXaxis().FindBin(track_rereco.hitPattern().numberOfValidPixelHits()))
+                    else:
+                        weight = 1.0
+                    
                     # fill track mismatch histogram:
                     if track_trackerLayersWithMeasurement == layers_remaining:
-                        histos["h_tracks_rereco_exact"].Fill(layers_remaining)
+                        histos["h_tracks_rereco_exact"].Fill(layers_remaining, weight)
                     else:
-                        histos["h_mismatch"].Fill(layers_remaining)
+                        histos["h_mismatch"].Fill(layers_remaining, weight)
                     
                     histos["h_layers2D"].Fill(layers_remaining, track_trackerLayersWithMeasurement)
                     histos["h_ptratio2D"].Fill(track.pt(), track_rereco.pt())
-                    histos["h_tracks_rereco"].Fill(layers_remaining)
-                    histos["h_tracks_rereco_rebinned"].Fill(layers_remaining)
-                    histos["h_tracks_algo"].Fill(track_rereco.algo())
+                    histos["h_tracks_rereco"].Fill(layers_remaining, weight)
+                    histos["h_tracks_rereco_rebinned"].Fill(layers_remaining, weight)
+                    histos["h_tracks_algo"].Fill(track_rereco.algo(), weight)
                     
                     if track_is_pixel_track:
-                        histos["h_tracks_rereco_short"].Fill(layers_remaining)
-                        histos["h_tracks_rereco_rebinned_short"].Fill(layers_remaining)
+                        histos["h_tracks_rereco_short"].Fill(layers_remaining, weight)
+                        histos["h_tracks_rereco_rebinned_short"].Fill(layers_remaining, weight)
                         if track_trackerLayersWithMeasurement == layers_remaining:
-                            histos["h_tracks_rereco_exact_short"].Fill(layers_remaining)
+                            histos["h_tracks_rereco_exact_short"].Fill(layers_remaining, weight)
                     else:
-                        histos["h_tracks_rereco_long"].Fill(layers_remaining)
-                        histos["h_tracks_rereco_rebinned_long"].Fill(layers_remaining)
+                        histos["h_tracks_rereco_long"].Fill(layers_remaining, weight)
+                        histos["h_tracks_rereco_rebinned_long"].Fill(layers_remaining, weight)
                         if track_trackerLayersWithMeasurement == layers_remaining:
-                            histos["h_tracks_rereco_exact_long"].Fill(layers_remaining)
+                            histos["h_tracks_rereco_exact_long"].Fill(layers_remaining, weight)
                                                             
                     for i_layer in range(3,9):
                         if layers_remaining == i_layer:
-                            histos["h_ptratio_layer%s" % i_layer].Fill(1.0 * track_rereco.pt() / track.pt())
+                            histos["h_ptratio_layer%s" % i_layer].Fill(1.0 * track_rereco.pt() / track.pt(), weight)
                     
                     cutflow_counter = 0
                                                                             
@@ -569,32 +599,32 @@ for i_event, event in enumerate(events):
                         for label in histos:
                             if "track_" in label and "_layer" not in label:
                                 value = eval(label)
-                                histos[label].Fill(value)
+                                histos[label].Fill(value, weight)
                                 
                                 # fill layer-dependent histograms:
                                 if layers_remaining in range(3,9):
-                                    histos[label + "_layer%s" % layers_remaining].Fill(value)
+                                    histos[label + "_layer%s" % layers_remaining].Fill(value, weight)
                             
                     if is_tagged:
-                        histos["h_tracks_tagged"].Fill(layers_remaining)
-                        histos["h_tracks_tagged_rebinned"].Fill(layers_remaining)
+                        histos["h_tracks_tagged"].Fill(layers_remaining, weight)
+                        histos["h_tracks_tagged_rebinned"].Fill(layers_remaining, weight)
 
                         if track_trackerLayersWithMeasurement == layers_remaining:
-                            histos["h_tracks_tagged_exact"].Fill(layers_remaining)
+                            histos["h_tracks_tagged_exact"].Fill(layers_remaining, weight)
 
                         if track_is_pixel_track:
-                            histos["h_tracks_tagged_short"].Fill(layers_remaining)
-                            histos["h_tracks_tagged_rebinned_short"].Fill(layers_remaining)
+                            histos["h_tracks_tagged_short"].Fill(layers_remaining, weight)
+                            histos["h_tracks_tagged_rebinned_short"].Fill(layers_remaining, weight)
                             if track_trackerLayersWithMeasurement == layers_remaining:
-                                histos["h_tracks_tagged_exact_short"].Fill(layers_remaining)
+                                histos["h_tracks_tagged_exact_short"].Fill(layers_remaining, weight)
                         else:
-                            histos["h_tracks_tagged_long"].Fill(layers_remaining)
-                            histos["h_tracks_tagged_rebinned_long"].Fill(layers_remaining)
+                            histos["h_tracks_tagged_long"].Fill(layers_remaining, weight)
+                            histos["h_tracks_tagged_rebinned_long"].Fill(layers_remaining, weight)
                             if track_trackerLayersWithMeasurement == layers_remaining:
-                                histos["h_tracks_tagged_exact_long"].Fill(layers_remaining)
+                                histos["h_tracks_tagged_exact_long"].Fill(layers_remaining, weight)
                         
                     if is_preselected:
-                        histos["h_tracks_preselection"].Fill(layers_remaining)
+                        histos["h_tracks_preselection"].Fill(layers_remaining, weight)
                     
                     #if layers_remaining == 2:
                     #    print "layers_remaining", layers_remaining
@@ -617,10 +647,8 @@ for i_event, event in enumerate(events):
             
             # exit muon loop to only process a single muon per event:
             break
-                                                        
-                        
+
 # make a canvas, draw, and save it
-os.system("mkdir -p %s" % options_.outputfolder)
 outfile = TFile(outfilename, "recreate")
 if histos["h_chi2ndof2D"].GetEntries()>0:
     histos["h_chi2ndof2D"].Scale(1.0/histos["h_chi2ndof2D"].GetEntries())

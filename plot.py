@@ -74,14 +74,19 @@ def plotdatamc(histofolder, dataperiod, plotfolder, suffix, extralabel, histolab
     
     if "Run2016" in dataperiod:
         mcperiod = "Summer16"
+        phase = 0
     elif "Run2017" in dataperiod:
         mcperiod = "Fall17"
+        phase = 1
     elif "RunUL2017C" in dataperiod:
         mcperiod = "Fall17"
+        phase = 1
     elif "Run2018" in dataperiod:
         mcperiod = "Autumn18"
+        phase = 1
     else:
         mcperiod = "Fall17"
+        phase = 1
         
     if muon_plots:
         dataperiod += "_1"
@@ -188,7 +193,10 @@ def plotdatamc(histofolder, dataperiod, plotfolder, suffix, extralabel, histolab
             # if track variable, let's include the signal too!
             if True and "track_" in variable:
                 folder = "/nfs/dust/cms/user/kutznerv/shorttrack/analysis/ntupleanalyzer/skim_66_noEdep_all_merged"
-                input_files = glob.glob(folder + "/RunIISummer16MiniAODv3.SMS-T1qqqq*root")
+                if phase == 0:
+                    input_files = glob.glob(folder + "/RunIISummer16MiniAODv3.SMS-T1qqqq*root")
+                else:
+                    input_files = glob.glob(folder + "/RunIIFall17MiniAODv2.FastSim-SMS-T1qqq*root")
                 base_cut = "tracks_chiCandGenMatchingDR<0.01 && signal_gluino_mass==2000 && signal_lsp_mass==1975 && tracks_nMissingMiddleHits==0 && abs(tracks_eta)<2.2 "
                                 
                 # insert signal pt and eta cuts:
@@ -216,7 +224,7 @@ def plotdatamc(histofolder, dataperiod, plotfolder, suffix, extralabel, histolab
                 if h_signal.Integral()>0 and normalize:
                     h_signal.Scale(1.0/h_signal.Integral())
                 h_signal.Draw("hist e same")
-                legend.AddEntry(h_signal, "Signal")
+                legend.AddEntry(h_signal, "Signal (Phase-%s)" % phase)
                 
                 # get mean
                 if "track_chi2perNdof" in variable:
@@ -381,11 +389,11 @@ def allperiods(histofolder, plotfolder, suffix, use_uncertainty_from_teff = Fals
                   ]
               
     # add layer-dependent track variable histograms:
-    for label in list(histolabels):
-        if "track_" in label or "h_ptratio" in label:
-            for i in range(3,9):
-                histolabels.append(label + "_layer%s" % i)
-    
+    #for label in list(histolabels):
+    #    if "track_" in label or "h_ptratio" in label:
+    #        for i in range(3,9):
+    #            histolabels.append(label + "_layer%s" % i)
+    #
     # get all histos
     #######################################################################
     
@@ -463,11 +471,11 @@ def allperiods(histofolder, plotfolder, suffix, use_uncertainty_from_teff = Fals
         
         for period in periods:
                 
-            if category == "":
-                draw_2D_plots(hists[period], period, plotfolder, suffix, histolabels)
-            if "Run2017F" in period:
-                plotdatamc(histofolder, period, plotfolder, suffix, "_%s%s" % (period.replace("Run", ""), category), histolabels)
-                plotdatamc(histofolder, period, plotfolder, suffix, "_%s" % period.replace("Run", ""), histolabels, muon_plots = True)
+            #if category == "":
+            #    draw_2D_plots(hists[period], period, plotfolder, suffix, histolabels)
+            #if "Run2017D" in period or "Run2017F" in period:
+            #    plotdatamc(histofolder, period, plotfolder, suffix, "_%s%s" % (period.replace("Run", ""), category), histolabels)
+            #    plotdatamc(histofolder, period, plotfolder, suffix, "_%s" % period.replace("Run", ""), histolabels, muon_plots = True)
                         
             # draw abs values:
             canvas = shared_utils.mkcanvas()
@@ -563,7 +571,7 @@ def allperiods(histofolder, plotfolder, suffix, use_uncertainty_from_teff = Fals
                 mcperiod = "Fall17"            
             else:
                 continue
-                
+                            
             # tagging scale factor:
             
             hists[mcperiod]["h_tagefficiency"] = hists[mcperiod]["h_tracks_tagged" + category].Clone()

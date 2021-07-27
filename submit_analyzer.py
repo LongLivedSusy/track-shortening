@@ -2,7 +2,6 @@
 import GridEngineTools
 import os
 import glob
-#import plot
 from os.path import expanduser
 from optparse import OptionParser
 
@@ -16,41 +15,44 @@ periods = [
             "Summer16",
             "Fall17",
             "Autumn18",
-            "Run2016B",
-            "Run2016C",
-            "Run2016D",
-            "Run2016E",
-            "Run2016F",
-            "Run2016G",
-            "Run2016H",
-            "Run2017B",
-            "Run2017C",
-            "Run2017D",
-            "Run2017E",
-            "Run2017F",
-            "Run2018A",
-            "Run2018B",
-            "Run2018C",
-            "Run2018D",
+            #"Run2016B",
+            #"Run2016C",
+            #"Run2016D",
+            #"Run2016E",
+            #"Run2016F",
+            #"Run2016G",
+            #"Run2016H",
+            #"Run2017B",
+            #"Run2017C",
+            #"Run2017D",
+            #"Run2017E",
+            #"Run2017F",
+            #"Run2018A",
+            #"Run2018B",
+            #"Run2018C",
+            #"Run2018D",
             #"RunUL2017C",
             #"Fall17UL",
           ]
           
 suffixes = {
             #"":                 " ",
-            #"onlyP1DiffXsec":   " --onlyp1bdt --bdt may21 ",
+            #"onlyP0DiffXsec":   " --onlyp0bdt --bdt may21 ",
             #"DiffXsecMay":      " --bdt may21 ",
             #"DiffXsecNov":      " --bdt nov20-noEdep ",
             #"EquXsecMay":       " --bdt may21-equSgXsec3 ",
             #"EquXsecMayA":      " --bdt may21-equSgXsec3 --bdtShortP1 0.05",
             #"EquXsecMayB":      " --bdt may21-equSgXsec3 --bdtShortP1 0.00",
             #"EquXsecMayC":      " --bdt may21-equSgXsec3 --bdtShortP1 -0.05",
-            "NewShort":          " --bdt may21v2 ",
-            #"NewShortPS":        " --bdt may21v2 ",
-            #"NewShortA":         " --bdt may21v2 ",
-            #"NewShortB":         " --bdt may21v2 --bdtShortP1 0.05 ",
-            #"NewShortC":         " --bdt may21v2 --bdtShortP1 0.00 ",
-            #"NewShortC":          " --bdt may21v2 ",
+            #"NewShort":         " --bdt may21v2 ",
+            #"NewShortPresel":   " --bdt may21v2 ",
+            "MCReweighting":     " --bdt may21v2 ",
+            #"MCReweightingE":     " --bdt may21v2 --reweightfile hweights_a.root",
+            ##"MCReweightingF":     " --bdt may21v2 --reweightfile hweights_b.root",
+            #"NewShortA":        " --bdt may21v2 ",
+            #"NewShortB":        " --bdt may21v2 --bdtShortP1 0.05 ",
+            #"NewShortC":        " --bdt may21v2 --bdtShortP1 0.00 ",
+            #"NewShortC":        " --bdt may21v2 ",
             #"low":              "--low_pt 30 --high_pt 35 --override_category_pt ",
             #"medium":           "--low_pt 35 --high_pt 40 --override_category_pt ",
             #"high":             "--low_pt 40 --high_pt 45 --override_category_pt ",
@@ -80,7 +82,39 @@ for period in periods:
                 suffixterm = " --suffix %s " % suffix
 
             extraargs = suffixes[suffix] + " %s --outputfolder %s " % (suffixterm, histofolder)
-            commands.append("HOME=%s; cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/CMSSW_10_6_2/src/; eval `scramv1 runtime -sh`; cd -; cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening; python analyzer.py %s_RERECO/*_%s.root %s; " % (homedir, period, i, extraargs))
+            cmd = "HOME=%s; cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/CMSSW_10_6_2/src/; eval `scramv1 runtime -sh`; cd -; cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening; python analyzer.py %s_RERECO/*_%s.root %s " % (homedir, period, i, extraargs)
+            commands.append(cmd)
+            
+            # add reweighting:
+            if "Run201" not in period:
+                if "Summer16" in period:
+                    for rwperiod in [
+                                    "Run2016B",
+                                    "Run2016C",
+                                    "Run2016D",
+                                    "Run2016E",
+                                    "Run2016F",
+                                    "Run2016G",
+                                    "Run2016H",
+                                    ]:
+                        commands.append(cmd + " --reweightmc " + rwperiod)
+                if "Fall17" in period:
+                    for rwperiod in [
+                                    "Run2017B",
+                                    "Run2017C",
+                                    "Run2017D",
+                                    "Run2017E",
+                                    "Run2017F",
+                                    ]:
+                        commands.append(cmd + " --reweightmc " + rwperiod)
+                if "Autumn18" in period:
+                    for rwperiod in [
+                                    "Run2018A",
+                                    "Run2018B",
+                                    "Run2018C",
+                                    "Run2018D",
+                                    ]:
+                        commands.append(cmd + " --reweightmc " + rwperiod)
         
 if options.submit:
     GridEngineTools.runParallel(commands, "grid", confirm=0, condorDir="condor.analysis4", use_sl6=0)
@@ -89,9 +123,40 @@ if options.hadd:
     for period in periods: 
         for suffix in suffixes:
             os.system("hadd -f %s/histograms%s_%s.root histograms/histograms%s_%s_*.root &" % (histofolder, suffix, period, suffix, period))
+            
+            if "Run201" not in period:
+                if "Summer16" in period:
+                    for rwperiod in [
+                                    "Run2016B",
+                                    "Run2016C",
+                                    "Run2016D",
+                                    "Run2016E",
+                                    "Run2016F",
+                                    "Run2016G",
+                                    "Run2016H",
+                                    ]:
+                        os.system("hadd -f %s/histograms%s_%s.root histograms/histograms%s_%s_*.root &" % (histofolder, suffix, period + "rw" + rwperiod, suffix, period + "rw" + rwperiod))
+                if "Fall17" in period:
+                    for rwperiod in [
+                                    "Run2017B",
+                                    "Run2017C",
+                                    "Run2017D",
+                                    "Run2017E",
+                                    "Run2017F",
+                                    ]:
+                        os.system("hadd -f %s/histograms%s_%s.root histograms/histograms%s_%s_*.root &" % (histofolder, suffix, period + "rw" + rwperiod, suffix, period + "rw" + rwperiod))
+                if "Autumn18" in period:
+                    for rwperiod in [
+                                    "Run2018A",
+                                    "Run2018B",
+                                    "Run2018C",
+                                    "Run2018D",
+                                    ]:
+                        os.system("hadd -f %s/histograms%s_%s.root histograms/histograms%s_%s_*.root &" % (histofolder, suffix, period + "rw" + rwperiod, suffix, period + "rw" + rwperiod))
+                
+                                
 
 if options.plot:
-    #for period in periods: 
     for suffix in suffixes:
         if suffix == "":
             os.system("./plot.py --histofolder %s &" % (histofolder))
