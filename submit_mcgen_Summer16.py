@@ -7,10 +7,11 @@ import glob
 # comments @ Viktor Kutzner
 
 # select steps:
-step_gensim = 1
-step_digi   = 1
-step_reco   = 1
-overwrite   = 1
+step_gensim = 0
+step_digi   = 0
+step_reco   = 0
+step_digi_and_reco = 0
+overwrite   = 0
 step_rereco = 1
 runmode     = "grid"           # grid (condor) or multi (multicore)
 confirm     = 0
@@ -63,13 +64,13 @@ if step_digi:
         commands.append(this_command)
         
     #os.system("rm condor.summer16gen/*")
-    status = GridEngineTools.runParallel(commands, runmode, condorDir="condor.summer16gen", confirm=confirm, use_sl6=True)
+    status = GridEngineTools.runParallel(commands, runmode, condorDir="condor.summer16gen_step2", confirm=confirm, use_sl6=True)
     #if status != 0: quit(str(status))
 
 # generate Summer16 RECO:
 # recipe from https://cms-pdmv.cern.ch/mcm/public/restapi/requests/get_test/SUS-RunIISummer16DR80Premix-00036
 if step_reco:
-    example_command = 'cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/CMSSW_8_0_21/src; eval `scramv1 runtime -sh`; cmsDriver.py --python_filename SUS-RunIISummer16DR80Premix-00036_2_$NUM_cfg.py --eventcontent RECOSIM --datatier GEN-SIM-RECO --fileout file:$OUTFILE --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 --step RAW2DIGI,RECO --filein file:$INFILE --era Run2_2016 --runUnscheduled --no_exec --mc -n $NEV; cmsRun -e -j SUS-RunIISummer16DR80Premix-00036_report.xml SUS-RunIISummer16DR80Premix-00036_2_$NUM_cfg.py'
+    example_command = 'cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/CMSSW_8_0_21/src; eval `scramv1 runtime -sh`; cmsDriver.py --python_filename SUS-RunIISummer16DR80Premix-00036_2_$NUM_cfg.py --eventcontent RECOSIM --datatier GEN-SIM-RECO --fileout file:$OUTFILE --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 --step RAW2DIGI,RECO --filein file:$INFILE --era Run2_2016 --runUnscheduled --no_exec --mc -n $NEV; cmsRun -e -j SUS-RunIISummer16DR80Premix-00036_report.xml SUS-RunIISummer16DR80Premix-00036_2_$NUM_cfg.py && rm $INFILE'
     
     outdir = "Summer16_RECO"
     os.system("mkdir -p %s" % outdir)
@@ -82,7 +83,36 @@ if step_reco:
         commands.append(this_command)
 
     #os.system("rm condor.summer16gen/*")
-    status = GridEngineTools.runParallel(commands, runmode, condorDir="condor.summer16gen", confirm=confirm, use_sl6=True)
+    status = GridEngineTools.runParallel(commands, runmode, condorDir="condor.summer16gen_step3", confirm=confirm, use_sl6=True)
+    #if status != 0: quit(str(status))
+
+
+if step_digi_and_reco:
+    example_command_digi = "cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/CMSSW_8_0_21/src; eval `scramv1 runtime -sh`; cmsDriver.py --python_filename SUS-RunIISummer16DR80Premix-00036_1_$NUM_cfg.py --eventcontent PREMIXRAW --datatier GEN-SIM-RAW --fileout file:$OUTFILE --pileup_input dbs:/Neutrino_E-10_gun/RunIISpring15PrePremix-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v2-v2/GEN-SIM-DIGI-RAW --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 --step DIGIPREMIX_S2,DATAMIX,L1,DIGI2RAW,HLT:@frozen2016 --filein file://$INFILE --datamix PreMix --era Run2_2016 --no_exec --mc -n $NEV; cmsRun -e -j SUS-RunIISummer16DR80Premix-00036_0_report.xml SUS-RunIISummer16DR80Premix-00036_1_$NUM_cfg.py"
+    example_command_reco = 'cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/CMSSW_8_0_21/src; eval `scramv1 runtime -sh`; cmsDriver.py --python_filename SUS-RunIISummer16DR80Premix-00036_2_$NUM_cfg.py --eventcontent RECOSIM --datatier GEN-SIM-RECO --fileout file:$OUTFILE --conditions 80X_mcRun2_asymptotic_2016_TrancheIV_v6 --step RAW2DIGI,RECO --filein file:$INFILE --era Run2_2016 --runUnscheduled --no_exec --mc -n $NEV; cmsRun -e -j SUS-RunIISummer16DR80Premix-00036_report.xml SUS-RunIISummer16DR80Premix-00036_2_$NUM_cfg.py && rm $INFILE'
+    
+    outdir = "Summer16_DIGI"
+    os.system("mkdir -p %s" % outdir)
+    outdir = "Summer16_RECO"
+    os.system("mkdir -p %s" % outdir)
+    
+    commands = []
+    for i, infile in enumerate(glob.glob("/nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/Summer16_GENSIM/*root")):
+        outdir = "Summer16_DIGI"
+        outfile = "../../" + outdir + "/" + infile.split("/")[-1]
+        if not overwrite and os.path.exists(outdir + "/" + infile.split("/")[-1]): continue
+        this_command_digi = example_command_digi.replace("$INFILE", infile).replace("$OUTFILE", outfile).replace("$NEV", "-1").replace("$NUM", str(i))
+        
+        infile = infile.replace("_GENSIM", "_DIGI")
+        outdir = "Summer16_RECO"
+        outfile = "../../" + outdir + "/" + infile.split("/")[-1]
+        if not overwrite and os.path.exists(outdir + "/" + infile.split("/")[-1]): continue
+        this_command_reco = example_command_reco.replace("$INFILE", infile).replace("$OUTFILE", outfile).replace("$NEV", "-1").replace("$NUM", str(i))
+        
+        commands.append(this_command_digi + "; " + this_command_reco)
+        
+    #os.system("rm condor.summer16gen/*")
+    status = GridEngineTools.runParallel(commands, runmode, condorDir="condor.summer16gen_step2", confirm=confirm, use_sl6=True)
     #if status != 0: quit(str(status))
 
 

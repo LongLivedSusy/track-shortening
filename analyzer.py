@@ -12,11 +12,14 @@ gROOT.SetBatch()
 gROOT.SetStyle('Plain')
 
 parser = OptionParser()
-parser.add_option("--low_pt", dest = "low_pt_threshold", default = 15)
+parser.add_option("--low_pt", dest = "low_pt_threshold", default = 25)
 parser.add_option("--high_pt", dest = "high_pt_threshold", default = 99999)
+parser.add_option("--shortsMinPt", dest = "shortsMinPt", default = 25)
+parser.add_option("--longsMinPt", dest = "longsMinPt", default = 40)
 parser.add_option("--low_eta", dest = "low_eta_threshold", default = 0)
-parser.add_option("--high_eta", dest = "high_eta_threshold", default = 2.2)
+parser.add_option("--high_eta", dest = "high_eta_threshold", default = 2.0)
 parser.add_option("--bdt", dest = "bdt", default = "may21-equSgXsec3")
+parser.add_option("--combinedShortBDTs", dest = "combinedShortBDTs", action = "store_true")
 parser.add_option("--bdtShortP0", dest = "bdtShortP0", default = -1)
 parser.add_option("--bdtLongP0", dest = "bdtLongP0", default = -1)
 parser.add_option("--bdtShortP1", dest = "bdtShortP1", default = -1)
@@ -33,13 +36,16 @@ parser.add_option("--reweightfile", dest = "reweightfile", default="hweights.roo
 (options_, args) = parser.parse_args()
 first_filename = args[0].split(".root")[0]
 
-# make sure these are floats:
+# make sure these are ints / floats:
 options_.bdtShortP0 = float(options_.bdtShortP0) 
 options_.bdtLongP0 = float(options_.bdtLongP0)
 options_.bdtShortP1 = float(options_.bdtShortP1)
 options_.bdtLongP1 = float(options_.bdtLongP1)
+options_.shortsMinPt = float(options_.shortsMinPt)
+options_.longsMinPt = float(options_.longsMinPt)
+options_.high_eta_threshold = float(options_.high_eta_threshold)
 
-overwrite = True
+overwrite = False
 
 layers_remaining = int(args[0].split("_")[-1].replace(".root", ""))
 print "remaining layers:", layers_remaining
@@ -92,9 +98,9 @@ else:
 
 print "outfilename", outfilename
 os.system("mkdir -p %s" % options_.outputfolder)
-#if os.path.exists(outfilename):
-#    print "Already done!"
-#    quit(0)
+if os.path.exists(outfilename) and not overwrite:
+    print "Already done!"
+    quit(0)
 
 
 # test for invalid files:
@@ -119,6 +125,8 @@ pfcands_handle = Handle("std::vector<reco::PFCandidate>")
 tracks_handle = Handle("std::vector<reco::Track>")
 muons_rereco_handle = Handle("std::vector<reco::Muon>")
 tracks_rereco_handle = Handle("std::vector<reco::Track>")
+offlinePrimaryVertices_reco_handle = Handle("std::vector<reco::Vertex>")
+offlinePrimaryVertices_rereco_handle = Handle("std::vector<reco::Vertex>")
 
 # handles for isotrk producer
 isotrk_matchedCaloEnergy_handle = Handle("std::vector<double>")
@@ -132,8 +140,6 @@ isotrk_deDxHarmonic2_handle = Handle("std::vector<double>")
 isotrk_dxyVtx_handle = Handle("std::vector<double>")
 isotrk_dzVtx_handle = Handle("std::vector<double>")
 
-#TH1F("h_tracks_reco_rebinned", "", len([0, 21]) - 1, pyarray.array('d', [0, 21]))
-
 # histograms
 histos = {}
 histos["cutflow"]                            = TH1F("cutflow", "", 25, 0, 25)
@@ -146,6 +152,9 @@ histos["h_tracks_preselection"]              = TH1F("h_tracks_preselection", "",
 histos["h_tracks_tagged"]                    = TH1F("h_tracks_tagged", "", 21, 0, 21)
 histos["h_tracks_tagged_rebinned"]           = TH1F("h_tracks_tagged_rebinned", "", 1, 0, 21)
 histos["h_tracks_tagged_exact"]              = TH1F("h_tracks_tagged_exact", "", 21, 0, 21)
+histos["h_tracks_preselected"]               = TH1F("h_tracks_preselected", "", 21, 0, 21)
+histos["h_tracks_preselected_rebinned"]      = TH1F("h_tracks_preselected_rebinned", "", 1, 0, 21)
+histos["h_tracks_preselected_exact"]         = TH1F("h_tracks_preselected_exact", "", 21, 0, 21)
 histos["h_tracks_algo"]                      = TH1F("h_tracks_algo", "", 50, 0, 50)
 histos["h_layers2D"]                         = TH2F("h_layers2D", ";targeted number of remaining layers; layers with meas. of matched track;Tracks", 20, 0, 20, 20, 0, 20)
 histos["h_ptratio2D"]                        = TH2F("h_ptratio2D", ";p_{T} of #mu-matched track (GeV); p_{T} of shortened track (GeV);Tracks", 20, 0, 300, 20, 0, 300)
@@ -180,27 +189,31 @@ histos["h_mismatch"]                         = TH1F("h_mismatch", "", 21, 0, 21)
 
 # add layer-dependent track variable histograms:
 for label in histos.keys():
-    if "h_tracks_" in label or "cutflow" in label:
+    if "h_tracks_" in label or "cutflow" in label or "track_" in label:
         histos[label + "_short"] = histos[label].Clone()
         histos[label + "_short"].SetName(label + "_short")
         histos[label + "_long"] = histos[label].Clone()
         histos[label + "_long"].SetName(label + "_long")
 
 for label in histos.keys():
-    if "track_" in label or "h_ptratio" in label or "cutflow" in label:
+    if ("track_" in label and "short" not in label and "long" not in label) or "h_ptratio" in label or "cutflow" in label:
         for i in range(3,9):
             histos[label + "_layer%s" % i] = histos[label].Clone()
             histos[label + "_layer%s" % i].SetName(label + "_layer%s" % i)
 
+bdtshort = options_.bdt
+bdtlong = options_.bdt
+print "Using BDTs: %s, %s" % (bdtshort, bdtlong)
+
 if options_.onlyp0bdt or ("Run2016" in period or "Summer16" in period):
     print "Using Phase-0 BDTs"
-    weights_short = "../analysis/disappearing-track-tag/2016-short-tracks-%s/dataset/weights/TMVAClassification_BDT.weights.xml" % options_.bdt
-    weights_long = "../analysis/disappearing-track-tag/2016-long-tracks-%s/dataset/weights/TMVAClassification_BDT.weights.xml" % options_.bdt
+    weights_short = "../analysis/disappearing-track-tag/2016-short-tracks-%s/dataset/weights/TMVAClassification_BDT.weights.xml" % bdtshort
+    weights_long = "../analysis/disappearing-track-tag/2016-long-tracks-%s/dataset/weights/TMVAClassification_BDT.weights.xml" % bdtlong
     phase = 0
 else:
     print "Using Phase-1 BDTs"
-    weights_short = "../analysis/disappearing-track-tag/2017-short-tracks-%s/dataset/weights/TMVAClassification_BDT.weights.xml" % options_.bdt
-    weights_long = "../analysis/disappearing-track-tag/2017-long-tracks-%s/dataset/weights/TMVAClassification_BDT.weights.xml" % options_.bdt
+    weights_short = "../analysis/disappearing-track-tag/2017-short-tracks-%s/dataset/weights/TMVAClassification_BDT.weights.xml" % bdtshort
+    weights_long = "../analysis/disappearing-track-tag/2017-long-tracks-%s/dataset/weights/TMVAClassification_BDT.weights.xml" % bdtlong
     phase = 1
     
 # load BDTs
@@ -208,12 +221,28 @@ TMVA.Tools.Instance()
 reader_short = TMVA.Reader( "!Color:!Silent" )
 var_dxyVtx_short = pyarray.array('f',[0]) ; reader_short.AddVariable("tracks_dxyVtx", var_dxyVtx_short)
 var_dzVtx_short = pyarray.array('f',[0]) ; reader_short.AddVariable("tracks_dzVtx", var_dzVtx_short)
-var_trkRelIso_short = pyarray.array('f',[0]) ; reader_short.AddVariable("tracks_trkRelIso", var_trkRelIso_short)
-if not options_.bdt == "may21v2":
+if not "noRelIso" in options_.bdt:
+    var_trkRelIso_short = pyarray.array('f',[0]) ; reader_short.AddVariable("tracks_trkRelIso", var_trkRelIso_short)
+if not options_.bdt == "may21v2" and not "noPixelHits" in options_.bdt:
     var_nValidPixelHits_short = pyarray.array('f',[0]) ; reader_short.AddVariable("tracks_nValidPixelHits", var_nValidPixelHits_short)
-var_ptErrOverPt2_short = pyarray.array('f',[0]) ; reader_short.AddVariable("tracks_ptErrOverPt2", var_ptErrOverPt2_short)
+if not "noDeltaPt" in options_.bdt:
+    var_ptErrOverPt2_short = pyarray.array('f',[0]) ; reader_short.AddVariable("tracks_ptErrOverPt2", var_ptErrOverPt2_short)
 var_chi2perNdof_short = pyarray.array('f',[0]) ; reader_short.AddVariable("tracks_chi2perNdof", var_chi2perNdof_short)
 reader_short.BookMVA("BDT", weights_short)
+
+if phase == 1 and options_.combinedShortBDTs:
+    reader_short_p0 = TMVA.Reader( "!Color:!Silent" )
+    var_dxyVtx_short = pyarray.array('f',[0]) ; reader_short_p0.AddVariable("tracks_dxyVtx", var_dxyVtx_short)
+    var_dzVtx_short = pyarray.array('f',[0]) ; reader_short_p0.AddVariable("tracks_dzVtx", var_dzVtx_short)
+    if not "noRelIso" in options_.bdt:
+        var_trkRelIso_short = pyarray.array('f',[0]) ; reader_short_p0.AddVariable("tracks_trkRelIso", var_trkRelIso_short)
+    if not options_.bdt == "may21v2" and not "noPixelHits" in options_.bdt:
+        var_nValidPixelHits_short = pyarray.array('f',[0]) ; reader_short_p0.AddVariable("tracks_nValidPixelHits", var_nValidPixelHits_short)
+    if not "noDeltaPt" in options_.bdt:
+        var_ptErrOverPt2_short = pyarray.array('f',[0]) ; reader_short_p0.AddVariable("tracks_ptErrOverPt2", var_ptErrOverPt2_short)
+    var_chi2perNdof_short = pyarray.array('f',[0]) ; reader_short_p0.AddVariable("tracks_chi2perNdof", var_chi2perNdof_short)
+    reader_short_p0.BookMVA("BDT", weights_short.replace("2017", "2016"))
+    
 
 reader_long = TMVA.Reader( "!Color:!Silent" )
 var_dxyVtx_long = pyarray.array('f',[0]) ; reader_long.AddVariable("tracks_dxyVtx", var_dxyVtx_long)
@@ -265,12 +294,16 @@ for i_event, event in enumerate(events):
     tracks = tracks_handle.product()
     event.getByLabel("particleFlow", "", "RECO", pfcands_handle)
     pfcands = pfcands_handle.product()
-    
+    event.getByLabel("offlinePrimaryVertices", "", "RECO", offlinePrimaryVertices_reco_handle)
+    offlinePrimaryVerticesReco = offlinePrimaryVertices_reco_handle.product()    
+
     # reRECO collections:
     event.getByLabel("muons", "", "reRECO", muons_rereco_handle)
     muons_rereco = muons_rereco_handle.product()
     event.getByLabel("generalTracks", "", "reRECO", tracks_rereco_handle)
     tracks_rereco = tracks_rereco_handle.product()
+    event.getByLabel("offlinePrimaryVertices", "", "RERECO", offlinePrimaryVertices_rereco_handle)
+    offlinePrimaryVerticesReReco = offlinePrimaryVertices_rereco_handle.product()    
     
     # isotrk collections:
     event.getByLabel("isotrackproducer", "tracks@matchedCaloEnergy", isotrack_producerlabel, isotrk_matchedCaloEnergy_handle)
@@ -294,9 +327,9 @@ for i_event, event in enumerate(events):
     isotrk_dxyVtx = isotrk_dxyVtx_handle.product()
     event.getByLabel("isotrackproducer", "tracks@dzVtx", isotrack_producerlabel, isotrk_dzVtx_handle)
     isotrk_dzVtx = isotrk_dzVtx_handle.product()
-        
+    
     for muon in muons:
-                        
+        
         # PFCand isolation:
         summed_pt = 0
         for pfcand in pfcands:
@@ -343,7 +376,7 @@ for i_event, event in enumerate(events):
             print "No associated best track for muon"
             continue            
 
-        if not (abs(track.eta())<2.2 and track.pt()>40):
+        if not (abs(track.eta())<options_.high_eta_threshold and track.pt()>options_.longsMinPt):
             break
         
         tvec = TLorentzVector()
@@ -363,10 +396,9 @@ for i_event, event in enumerate(events):
             continue
         
         # a long track muon:
-        if track.hitPattern().trackerLayersWithMeasurement() > 10 and track.dxy() < 0.2 and track.dz() < 0.1:
+        if track.hitPattern().trackerLayersWithMeasurement() > 10 and track.dxy(offlinePrimaryVerticesReco[0].position()) < 0.2 and track.dz(offlinePrimaryVerticesReco[0].position()) < 0.1:
             
             if reweighting:
-                #weight = h_weights.GetBinContent(h_weights.GetXaxis().FindBin(track.hitPattern().pixelLayersWithMeasurement()))
                 weight = h_weights.GetBinContent(h_weights.GetXaxis().FindBin(track.hitPattern().numberOfValidPixelHits()))
             else:
                 weight = 1.0
@@ -390,25 +422,24 @@ for i_event, event in enumerate(events):
                 trerecovec = TLorentzVector()
                 trerecovec.SetPtEtaPhiM(track_rereco.pt(), track_rereco.eta(), track_rereco.phi(), 0.0)
                 deltaR = tvec.DeltaR(trerecovec)
+                
+                if track_rereco.hitPattern().pixelLayersWithMeasurement() == track_rereco.hitPattern().trackerLayersWithMeasurement():
+                    track_is_pixel_track = True
+                elif track_rereco.hitPattern().trackerLayersWithMeasurement() > track_rereco.hitPattern().pixelLayersWithMeasurement():
+                    track_is_pixel_track = False                        
+
                 if deltaR < 0.01 \
-                   and (options_.override_category_pt or ((track_rereco.hitPattern().pixelLayersWithMeasurement() == track_rereco.hitPattern().trackerLayersWithMeasurement() \
-                        and track_rereco.pt()>25) \
-                        or (track_rereco.hitPattern().trackerLayersWithMeasurement() > track_rereco.hitPattern().pixelLayersWithMeasurement()\
-                        and track_rereco.pt()>40))) \
+                   and ((track_is_pixel_track and track_rereco.pt()>options_.shortsMinPt) \
+                        or (not track_is_pixel_track and track_rereco.pt()>options_.longsMinPt)) \
                    and track_rereco.pt()>int(options_.low_pt_threshold) and track_rereco.pt()<=int(options_.high_pt_threshold) \
                    and abs(track_rereco.eta())>float(options_.low_eta_threshold) \
                    and abs(track_rereco.eta())<=float(options_.high_eta_threshold):
-                    
+                   
                     # get all necessary tag variables:
                     track_trackerLayersWithMeasurement = track_rereco.hitPattern().trackerLayersWithMeasurement() 
                     track_pixelLayersWithMeasurement = track_rereco.hitPattern().pixelLayersWithMeasurement() 
-                    if track_trackerLayersWithMeasurement == track_pixelLayersWithMeasurement:
-                        track_is_pixel_track = True
-                    else:
-                        track_is_pixel_track = False
                     
                     if reweighting:
-                        #weight = h_weights.GetBinContent(h_weights.GetXaxis().FindBin(track_pixelLayersWithMeasurement))
                         weight = h_weights.GetBinContent(h_weights.GetXaxis().FindBin(track_rereco.hitPattern().numberOfValidPixelHits()))
                     else:
                         weight = 1.0
@@ -428,15 +459,17 @@ for i_event, event in enumerate(events):
                     if track_is_pixel_track:
                         histos["h_tracks_rereco_short"].Fill(layers_remaining, weight)
                         histos["h_tracks_rereco_rebinned_short"].Fill(layers_remaining, weight)
+                        histos["h_tracks_algo_short"].Fill(track_rereco.algo(), weight)
                         if track_trackerLayersWithMeasurement == layers_remaining:
                             histos["h_tracks_rereco_exact_short"].Fill(layers_remaining, weight)
                     else:
                         histos["h_tracks_rereco_long"].Fill(layers_remaining, weight)
                         histos["h_tracks_rereco_rebinned_long"].Fill(layers_remaining, weight)
+                        histos["h_tracks_algo_long"].Fill(track_rereco.algo(), weight)
                         if track_trackerLayersWithMeasurement == layers_remaining:
                             histos["h_tracks_rereco_exact_long"].Fill(layers_remaining, weight)
                                                             
-                    for i_layer in range(3,9):
+                    for i_layer in range(3, 9):
                         if layers_remaining == i_layer:
                             histos["h_ptratio_layer%s" % i_layer].Fill(1.0 * track_rereco.pt() / track.pt(), weight)
                     
@@ -458,6 +491,9 @@ for i_event, event in enumerate(events):
                     if isotrack_index == -1:
                         print "isotrack matching failed"
                         break
+                    else:
+                        print "isotrk_chi2perNdof; track_chi2perNdof", isotrk_chi2perNdof[isotrack_index], track_chi2perNdof
+                        print "isotrk_ptError; track_pt", isotrk_ptError[isotrack_index], track_rereco.ptError()
 
                     track_p = track_rereco.p()
                     track_eta = track_rereco.eta()
@@ -489,26 +525,32 @@ for i_event, event in enumerate(events):
                     
                     # redo relIso, but without the muon:
                     conePtSum_rel = 0
+                    coneRelIsoDR = 0.3
                     for othertrack in tracks_rereco:
-                        if othertrack.pt()>15 and abs(othertrack.eta())<2.2:
-                            othertrackvec = TLorentzVector()
-                            othertrackvec.SetPtEtaPhiM(othertrack.pt(), othertrack.eta(), othertrack.phi(), 0.0)
-                            deltaR = othertrackvec.DeltaR(trerecovec)
-                            if deltaR<0.01:
-                                continue
-                            if deltaR<0.3:
-                                conePtSum_rel += othertrack.pt()
+                        if abs(othertrack.dxy(offlinePrimaryVerticesReReco[0].position())>0.03): continue
+                        if abs(othertrack.dz(offlinePrimaryVerticesReReco[0].position())>0.05): continue
+
+                        othertrackvec = TLorentzVector()
+                        othertrackvec.SetPtEtaPhiM(othertrack.pt(), othertrack.eta(), othertrack.phi(), 0.0)
+                        deltaR = othertrackvec.DeltaR(trerecovec)
+                            
+                        #exclude muon track:
+                        if mvec.DeltaR(othertrackvec) < 0.0001: continue
+                        
+                        if deltaR < 0.00001: continue
+                        if deltaR < coneRelIsoDR: conePtSum_rel += othertrack.pt()
+
                     if track_rereco.pt()>0:
                         track_trkRelIso = conePtSum_rel / track_rereco.pt()
                     else:
                         track_trkRelIso = 0
-                                                        
+         
                     is_tagged = False
                     is_preselected = False
                     
                     if track_trackQualityHighPurity==1:
                         cutflow_counter += 1
-                        if abs(track_eta)<2.0:
+                        if abs(track_eta)<options_.high_eta_threshold:
                             cutflow_counter += 1
                             if track_ptErrOverPt2<10:
                                 cutflow_counter += 1
@@ -527,27 +569,35 @@ for i_event, event in enumerate(events):
                                                         if track_passPFCandVeto==1:
                                                             cutflow_counter += 1
                                                             if track_is_pixel_track:
-                                                                 if track_pt>25:
+                                                                 if track_pt>options_.shortsMinPt:
                                                                      cutflow_counter += 1
                                                                      if track_nMissingOuterHits>=0:
                                                                          cutflow_counter += 1
                                                                          is_preselected = True
                                                             else:
-                                                                 if track_pt>40:
+                                                                 if track_pt>options_.longsMinPt:
                                                                      cutflow_counter += 1
                                                                      if track_nMissingOuterHits>=2:
                                                                          cutflow_counter += 1
                                                                          is_preselected = True
-                                                                 
+
+                    if not is_preselected:
+                        continue
+                    
                     if track_is_pixel_track:
                         var_dxyVtx_short[0] = track_dxyVtx
                         var_dzVtx_short[0] = track_dzVtx
-                        var_trkRelIso_short[0] = track_trkRelIso
-                        if not options_.bdt == "may21v2":
+                        if not "noRelIso" in options_.bdt:
+                            var_trkRelIso_short[0] = track_trkRelIso
+                        if not options_.bdt == "may21v2" and not "noPixelHits" in options_.bdt:
                             var_nValidPixelHits_short[0] = track_nValidPixelHits
-                        var_ptErrOverPt2_short[0] = track_ptErrOverPt2
+                        if not "noDeltaPt" in options_.bdt:
+                            var_ptErrOverPt2_short[0] = track_ptErrOverPt2
                         var_chi2perNdof_short[0] = track_chi2perNdof
                         track_mva = reader_short.EvaluateMVA("BDT")
+                        
+                        if phase == 1 and options_.combinedShortBDTs:
+                            track_mva_p0 = reader_short_p0.EvaluateMVA("BDT")
                         
                         if options_.bdtShortP0>-1:
                             bdt_p0 = options_.bdtShortP0
@@ -558,7 +608,7 @@ for i_event, event in enumerate(events):
                         else:
                             bdt_p1 = 0.1
                         
-                        if is_preselected and ((phase==0 and track_mva>bdt_p0) or (phase==1 and track_mva>bdt_p1)):
+                        if is_preselected and ((phase==0 and track_mva>bdt_p0) or (phase==1 and track_mva>bdt_p1) or (phase == 1 and options_.combinedShortBDTs and (track_mva>bdt_p1 or track_mva_p0>bdt_p0))):
                             cutflow_counter += 1
                             if (track_matchedCaloEnergy<15 or track_matchedCaloEnergy/track_p<0.15):
                                 cutflow_counter += 1
@@ -598,13 +648,21 @@ for i_event, event in enumerate(events):
                     if is_preselected:
                         for label in histos:
                             if "track_" in label and "_layer" not in label:
-                                value = eval(label)
-                                histos[label].Fill(value, weight)
                                 
-                                # fill layer-dependent histograms:
-                                if layers_remaining in range(3,9):
-                                    histos[label + "_layer%s" % layers_remaining].Fill(value, weight)
-                            
+                                if "_short" in label and track_is_pixel_track:
+                                    value = eval(label.replace("_short", ""))
+                                    histos[label].Fill(value, weight)
+                                elif "_long" in label and not track_is_pixel_track:
+                                    value = eval(label.replace("_long", ""))
+                                    histos[label].Fill(value, weight)
+                                elif "_short" not in label and "_long" not in label:
+                                    value = eval(label)
+                                    histos[label].Fill(value, weight)
+                                
+                                    # fill layer-dependent histograms:
+                                    if layers_remaining in range(3,9):
+                                        histos[label + "_layer%s" % layers_remaining].Fill(value, weight)
+                    
                     if is_tagged:
                         histos["h_tracks_tagged"].Fill(layers_remaining, weight)
                         histos["h_tracks_tagged_rebinned"].Fill(layers_remaining, weight)
@@ -625,23 +683,12 @@ for i_event, event in enumerate(events):
                         
                     if is_preselected:
                         histos["h_tracks_preselection"].Fill(layers_remaining, weight)
-                    
-                    #if layers_remaining == 2:
-                    #    print "layers_remaining", layers_remaining
-                    #    print "track_trackerLayersWithMeasurement", track_trackerLayersWithMeasurement
-                    #    print "track_pixelLayersWithMeasurement", track_pixelLayersWithMeasurement
-                    #    print "track_eta", track_eta
-                    #    print "track_pt", track_pt
-                    #    print "track_matchedCaloEnergy", track_matchedCaloEnergy
-                    #    print "track_trackQualityHighPurity", track_trackQualityHighPurity
-                    #    print "track_dxyVtx", track_dxyVtx
-                    #    print "track_dzVtx", track_dzVtx
-                    #    print "track_trkRelIso", track_trkRelIso
-                    #    print "track_nValidTrackerHits", track_nValidTrackerHits
-                    #    print "track_nValidPixelHits", track_nValidPixelHits
-                    #    print "track_nMissingInnerHits", track_nMissingInnerHits
-                    #    print "track_nMissingOuterHits", track_nMissingOuterHits
-                    
+                        
+                        if track_is_pixel_track:
+                            histos["h_tracks_preselected_short"].Fill(layers_remaining, weight)
+                        else:
+                            histos["h_tracks_preselected_long"].Fill(layers_remaining, weight)
+                                        
                     # exit shortened track loop
                     break
             

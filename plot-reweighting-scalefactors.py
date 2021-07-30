@@ -17,6 +17,7 @@ if __name__ == "__main__":
     parser.add_option("--suffix", dest = "suffix", default = "MCReweighting")
     parser.add_option("--mcsuffix", dest = "mcsuffix", default = "")
     parser.add_option("--histofolder", dest = "histofolder", default = "histograms")
+    parser.add_option("--reweighted", dest = "mc_reweighted", action = "store_true")
 
     (options, args) = parser.parse_args()
     
@@ -28,8 +29,6 @@ if __name__ == "__main__":
         plotfolder = plotfolder.replace("_new", "_%s_new" % options.mcsuffix)
     
     os.system("mkdir -p %s" % plotfolder)
-
-    mc_reweighted = True   
 
     periods = [
                 "Summer16",
@@ -53,7 +52,7 @@ if __name__ == "__main__":
                 "Run2018D",
               ]
               
-    if mc_reweighted:
+    if options.mc_reweighted:
         periods += [
                 "Summer16rwRun2016B",
                 "Summer16rwRun2016C",
@@ -125,25 +124,31 @@ if __name__ == "__main__":
     fitresults["fit_uncertreco"] = {}
     fitresults["fit_sftag"] = {}
     fitresults["fit_uncerttag"] = {}
-    
+        
     for category in ["_short", "_long"]:
             
         finaleff_global = {}
         finaleff_reco = {}
         finaleff_tag = {}
-                
+
         for period in periods:
+            
+            print category, period
+            
             finaleff_global[period] = hists[period]["h_tracks_tagged" + category].Clone()
             finaleff_global[period].Divide(hists[period]["h_tracks_reco" + category])
+                                    
             finaleff_reco[period] = hists[period]["h_tracks_rereco" + category].Clone()
             finaleff_reco[period].Divide(hists[period]["h_tracks_reco" + category])
+
             finaleff_tag[period] = hists[period]["h_tracks_tagged" + category].Clone()
             finaleff_tag[period].Divide(hists[period]["h_tracks_rereco" + category])
+            
                     
         h_sf_global = {}
         h_sf_reco = {}
         h_sf_tag = {}
-                                
+                    
         for period in periods:
         
             print category, period
@@ -151,7 +156,7 @@ if __name__ == "__main__":
             if "rw" in period: continue
             if "Run201" not in period: continue
             
-            if not mc_reweighted:
+            if not options.mc_reweighted:
                 if "Run2016" in period:
                     mcperiod = "Summer16"
                 elif "Run2017" in period:
@@ -165,27 +170,43 @@ if __name__ == "__main__":
                     mcperiod = "Fall17rw" + period
                 elif "Run2018" in period: 
                     mcperiod = "Autumn18rw" + period
-                                    
+            
             g1 = TF1( 'g1', '[0]',  3,  20 )
-
+            
             h_sf_global[period] = finaleff_global[period].Clone()
             h_sf_global[period].Divide(finaleff_global[mcperiod])
             fit = h_sf_global[period].Fit(g1, "Q", "same", 3, 20)
             fitresults["fit_sf"][period + category] = g1.GetParameter(0)
-            fitresults["fit_uncert"][period + category] = 0.1
+            if "short" in category:
+                fitresults["fit_uncert"][period + category] = h_sf_global[period].GetBinError(4)
+            else:
+                fitresults["fit_uncert"][period + category] = h_sf_global[period].GetBinError(6)
             
             h_sf_reco[period] = finaleff_reco[period].Clone()
             h_sf_reco[period].Divide(finaleff_reco[mcperiod])
             fit = h_sf_reco[period].Fit(g1, "Q", "same", 3, 20)
             fitresults["fit_sfreco"][period + category] = g1.GetParameter(0)
-            fitresults["fit_uncertreco"][period + category] = 0.1
+            if "short" in category:
+                fitresults["fit_uncertreco"][period + category] = h_sf_reco[period].GetBinError(4)
+            else:
+                fitresults["fit_uncertreco"][period + category] = h_sf_reco[period].GetBinError(6)
             
             h_sf_tag[period] = finaleff_tag[period].Clone()
             h_sf_tag[period].Divide(finaleff_tag[mcperiod])
             fit = h_sf_tag[period].Fit(g1, "Q", "same", 3, 20)
             fitresults["fit_sftag"][period + category] = g1.GetParameter(0)
-            fitresults["fit_uncerttag"][period + category] = 0.1
-                
+            if "short" in category:
+                fitresults["fit_uncerttag"][period + category] = h_sf_tag[period].GetBinError(4)
+            else:
+                fitresults["fit_uncerttag"][period + category] = h_sf_tag[period].GetBinError(6)
+            
+        
+        # plot efficiencies:
+        for i, i_hist in h_sf_global:
+            if i == 0:
+                i_hist.Draw("hist")
+            else:
+                i_hist.Draw("hist same")
                         
 
     # plot:
@@ -234,7 +255,7 @@ if __name__ == "__main__":
             h_sf_short.SetTitle(";;fitted track tagging scale factor")
         else:
             h_sf_short.SetTitle(";;fitted scale factor")
-        h_sf_short.GetYaxis().SetRangeUser(0.5,1.5)
+        h_sf_short.GetYaxis().SetRangeUser(0.25,1.5)
         legend.AddEntry(h_sf_short, "short tracks")
         h_sf_long.SetLineColor(kBlue)
         h_sf_long.SetLineStyle(2)
@@ -266,16 +287,16 @@ if __name__ == "__main__":
         
         pdfname = "%s/allperiods_sf_%s.pdf" % (plotfolder, label)
         
-        if mc_reweighted:
+        if options.mc_reweighted:
             pdfname = pdfname.replace(".pdf", "_mcreweighted.pdf")
                      
         canvas.SaveAs(pdfname)
         
-        fout = TFile(pdfname.replace(".pdf", ".root"), "recreate")
-        canvas.Write()
-        h_sf_short.SetName("h_scalefactor_short")
-        h_sf_short.Write()
-        h_sf_long.SetName("h_scalefactor_long")
-        h_sf_long.Write()
-        fout.Close()
+        #fout = TFile(pdfname.replace(".pdf", ".root"), "recreate")
+        #canvas.Write()
+        #h_sf_short.SetName("h_scalefactor_short")
+        #h_sf_short.Write()
+        #h_sf_long.SetName("h_scalefactor_long")
+        #h_sf_long.Write()
+        #fout.Close()
                              

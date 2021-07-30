@@ -71,23 +71,19 @@ def draw_2D_plots(hists, period, plotfolder, suffix, histolabels):
 
 
 def plotdatamc(histofolder, dataperiod, plotfolder, suffix, extralabel, histolabels, muon_plots = False, category = "", normalize = True):
-    
-    if "Run2016" in dataperiod:
-        mcperiod = "Summer16"
+
+    if "Run2016" in dataperiod and "rw" not in dataperiod:
+        mcperiod = "Summer16rw" + dataperiod
         phase = 0
-    elif "Run2017" in dataperiod:
-        mcperiod = "Fall17"
+    elif "Run2017" in dataperiod and "rw" not in dataperiod:
+        mcperiod = "Fall17rw" + dataperiod
         phase = 1
-    elif "RunUL2017C" in dataperiod:
-        mcperiod = "Fall17"
-        phase = 1
-    elif "Run2018" in dataperiod:
-        mcperiod = "Autumn18"
+    elif "Run2018" in dataperiod and "rw" not in dataperiod:
+        mcperiod = "Autumn18rw" + dataperiod
         phase = 1
     else:
-        mcperiod = "Fall17"
-        phase = 1
-        
+        return
+
     if muon_plots:
         dataperiod += "_1"
         mcperiod += "_1"
@@ -311,8 +307,24 @@ def allperiods(histofolder, plotfolder, suffix, use_uncertainty_from_teff = Fals
     
     periods = [
                 "Summer16",
+                "Summer16rwRun2016B",
+                "Summer16rwRun2016C",
+                "Summer16rwRun2016D",
+                "Summer16rwRun2016E",
+                "Summer16rwRun2016F",
+                "Summer16rwRun2016G",
+                "Summer16rwRun2016H",
                 "Fall17",
+                "Fall17rwRun2017B",
+                "Fall17rwRun2017C",
+                "Fall17rwRun2017D",
+                "Fall17rwRun2017E",
+                "Fall17rwRun2017F",
                 "Autumn18",
+                "Autumn18rwRun2018A",
+                "Autumn18rwRun2018B",
+                "Autumn18rwRun2018C",
+                "Autumn18rwRun2018D",
                 "Run2016B",
                 "Run2016C",
                 "Run2016D",
@@ -330,7 +342,7 @@ def allperiods(histofolder, plotfolder, suffix, use_uncertainty_from_teff = Fals
                 "Run2018C",
                 "Run2018D",
               ]
-              
+    
     if ul_plots:
         periods.append("RunUL2017C")
     
@@ -388,12 +400,6 @@ def allperiods(histofolder, plotfolder, suffix, use_uncertainty_from_teff = Fals
                     "h_mismatch",
                   ]
               
-    # add layer-dependent track variable histograms:
-    #for label in list(histolabels):
-    #    if "track_" in label or "h_ptratio" in label:
-    #        for i in range(3,9):
-    #            histolabels.append(label + "_layer%s" % i)
-    #
     # get all histos
     #######################################################################
     
@@ -470,7 +476,9 @@ def allperiods(histofolder, plotfolder, suffix, use_uncertainty_from_teff = Fals
             hists[period]["h_tracks_reco_long"] = hists[period]["h_tracks_reco"].Clone()
         
         for period in periods:
-                
+            
+            if "rw" in period: continue
+            
             #if category == "":
             #    draw_2D_plots(hists[period], period, plotfolder, suffix, histolabels)
             #if "Run2017D" in period or "Run2017F" in period:
@@ -560,18 +568,19 @@ def allperiods(histofolder, plotfolder, suffix, use_uncertainty_from_teff = Fals
                 effcat[category.replace("_", "")]["reco_value"][period] = hists[period]["h_recoefficiency_rebinned"].GetBinContent(1)
                 effcat[category.replace("_", "")]["tag_unc"][period] = hists[period]["h_tagefficiency_rebinned"].GetBinError(1)
                 effcat[category.replace("_", "")]["reco_unc"][period] = hists[period]["h_recoefficiency_rebinned"].GetBinError(1)
-            
-            if "Run2016" in period:
-                mcperiod = "Summer16"
-            elif "Run2017" in period:
-                mcperiod = "Fall17"
-            elif "Run2018" in period:
-                mcperiod = "Autumn18"
-            elif "RunUL2017C" in period:
-                mcperiod = "Fall17"            
+                        
+            if "Run2016" in period and "rw" not in period:
+                mcperiod = "Summer16rw" + period
+                phase = 0
+            elif "Run2017" in period and "rw" not in period:
+                mcperiod = "Fall17rw" + period
+                phase = 1
+            elif "Run2018" in period and "rw" not in period:
+                mcperiod = "Autumn18rw" + period
+                phase = 1
             else:
                 continue
-                            
+                
             # tagging scale factor:
             
             hists[mcperiod]["h_tagefficiency"] = hists[mcperiod]["h_tracks_tagged" + category].Clone()
@@ -590,27 +599,7 @@ def allperiods(histofolder, plotfolder, suffix, use_uncertainty_from_teff = Fals
             hint = hists[period]["h_tagscalefactor"].Clone()
             TVirtualFitter.GetFitter().GetConfidenceIntervals(hint)
             fitresults["fit_sftag"][period + category] = g1.GetParameter(0)
-            fitresults["fit_uncerttag"][period + category] = g1.GetParError(0)
-
-            ## draw fit:
-            #canvas = shared_utils.mkcanvas()
-            #shared_utils.histoStyler(hists[period]["h_tagscalefactor"])
-            #hists[period]["h_tagscalefactor"].Draw("hist e0")
-            #hists[period]["h_tagscalefactor"].GetYaxis().SetRangeUser(0,2)
-            #hists[period]["h_tagscalefactor"].SetTitle(";tracker layers with measurement;global scale factor")
-            #hint.SetLineColor(17)
-            #hint.SetFillColor(17)
-            #hint.SetFillStyle(3244)
-            #hint.Draw("e3 same")
-            #g1.SetLineWidth(2)
-            #g1.Draw("same e0")
-            #latex = TLatex()
-            #latex.SetTextFont(42)
-            #latex.SetNDC()
-            #latex.SetTextSize(0.04)
-            #latex.DrawLatex(0.72, 0.8, category.replace("_", "") + " tracks")
-            #canvas.SaveAs("plots%s/fit_global_%s%s.pdf" % (options.suffix, period, category))
-            
+            fitresults["fit_uncerttag"][period + category] = g1.GetParError(0)            
 
             # reconstruction scale factor:
             
@@ -667,7 +656,6 @@ def allperiods(histofolder, plotfolder, suffix, use_uncertainty_from_teff = Fals
             else:
                 fitresults["fit_uncert"][period + category] = hists[period]["h_scalefactor"].GetBinError(6)
                 
-            
             # draw fit:
             canvas = shared_utils.mkcanvas()
             shared_utils.histoStyler(hists[period]["h_scalefactor"])
@@ -686,7 +674,6 @@ def allperiods(histofolder, plotfolder, suffix, use_uncertainty_from_teff = Fals
             latex.SetTextSize(0.04)
             latex.DrawLatex(0.72, 0.8, category.replace("_", "") + " tracks")
             canvas.SaveAs("plots%s/sffit_global_%s%s.pdf" % (options.suffix, period, category))
-            
         
         
         # draw UL efficiency ratio:
@@ -730,24 +717,22 @@ def allperiods(histofolder, plotfolder, suffix, use_uncertainty_from_teff = Fals
             "Run2018C": 6.94 ,
             "Run2018D": 31.93,
         }
-            
+        
+        ## reweighting correct until here
+        
         for sf_type in ["global", "reco", "tag"]:
                 
             for year in ["2016", "2017", "2018"]:  
-                            
-                if "2016" in year:
-                    mcperiod = "Summer16"
-                elif "2017" in year:
-                    mcperiod = "Fall17"
-                elif "2018" in year:
-                    mcperiod = "Autumn18"
-                else:
-                    continue
                 
                 numerator_added = 0
                 denominator_added = 0
                 numerator_rebinned_added = 0
                 denominator_rebinned_added = 0
+
+                mc_numerator_added = 0
+                mc_denominator_added = 0
+                mc_numerator_rebinned_added = 0
+                mc_denominator_rebinned_added = 0
                 
                 for rebinned in [False, True]:
             
@@ -758,39 +743,68 @@ def allperiods(histofolder, plotfolder, suffix, use_uncertainty_from_teff = Fals
             
                     numerators = {}
                     denominators = {}
+                    mc_numerators = {}
+                    mc_denominators = {}
                     
                     for i, i_period in enumerate(periods):
                     
-                        if year in i_period:
+                        if "rw" in i_period: continue
+                    
+                        if year in i_period:                            
+                            if "Run2016" in i_period:
+                                mcperiod = "Summer16rw" + i_period
+                            elif "Run2017" in i_period:
+                                mcperiod = "Fall17rw" + i_period
+                            elif "Run2018" in i_period:
+                                mcperiod = "Autumn18rw" + i_period
+                            
                             if sf_type == "global":
                                 numerators[i_period] = hists[i_period]["h_tracks_tagged" + xcategory].Clone()
                                 denominators[i_period] = hists[i_period]["h_tracks_reco" + xcategory].Clone()
+                                mc_numerators[mcperiod] = hists[mcperiod]["h_tracks_tagged" + xcategory].Clone()
+                                mc_denominators[mcperiod] = hists[mcperiod]["h_tracks_reco" + xcategory].Clone()
                             elif sf_type == "reco":
                                 numerators[i_period] = hists[i_period]["h_tracks_rereco" + xcategory].Clone()
                                 denominators[i_period] = hists[i_period]["h_tracks_reco" + xcategory].Clone()
+                                mc_numerators[mcperiod] = hists[mcperiod]["h_tracks_rereco" + xcategory].Clone()
+                                mc_denominators[mcperiod] = hists[mcperiod]["h_tracks_reco" + xcategory].Clone()
                             elif sf_type == "tag":
                                 numerators[i_period] = hists[i_period]["h_tracks_tagged" + xcategory].Clone()
                                 denominators[i_period] = hists[i_period]["h_tracks_rereco" + xcategory].Clone()
+                                mc_numerators[mcperiod] = hists[mcperiod]["h_tracks_tagged" + xcategory].Clone()
+                                mc_denominators[mcperiod] = hists[mcperiod]["h_tracks_rereco" + xcategory].Clone()
                             numerators[i_period].Scale(official_lumis[i_period]/denominators[i_period].Integral())
-                            denominators[i_period].Scale(official_lumis[i_period]/denominators[i_period].Integral())            
+                            denominators[i_period].Scale(official_lumis[i_period]/denominators[i_period].Integral())
+                            mc_numerators[mcperiod].Scale(1.0/mc_numerators[mcperiod].Integral())
+                            mc_denominators[mcperiod].Scale(1.0/mc_denominators[mcperiod].Integral())
+                                                
+                        print "mc_numerators", mc_numerators
                                                         
-                    if not rebinned:
-                        for i_period in numerators:
-                            if not numerator_added:
-                                numerator_added = numerators[i_period].Clone()
-                                denominator_added = denominators[i_period].Clone()
-                            else:
-                                numerator_added.Add(numerators[i_period])
-                                denominator_added.Add(denominators[i_period])   
-                
-                    else:
-                        for i_period in numerators:
-                            if not numerator_rebinned_added:
-                                numerator_rebinned_added = numerators[i_period].Clone()
-                                denominator_rebinned_added = denominators[i_period].Clone()
-                            else:
-                                numerator_rebinned_added.Add(numerators[i_period])
-                                denominator_rebinned_added.Add(denominators[i_period])   
+                        if not rebinned:
+                            for i_period in numerators:
+                                if not numerator_added:
+                                    numerator_added = numerators[i_period].Clone()
+                                    denominator_added = denominators[i_period].Clone()
+                                    mc_numerator_added = mc_numerators[mcperiod].Clone()
+                                    mc_denominator_added = mc_denominators[mcperiod].Clone()
+                                else:
+                                    numerator_added.Add(numerators[i_period])
+                                    denominator_added.Add(denominators[i_period])   
+                                    mc_numerator_added.Add(mc_numerators[mcperiod])
+                                    mc_denominator_added.Add(mc_denominators[mcperiod])   
+                        
+                        else:
+                            for i_period in numerators:
+                                if not numerator_rebinned_added:
+                                    numerator_rebinned_added = numerators[i_period].Clone()
+                                    denominator_rebinned_added = denominators[i_period].Clone()
+                                    mc_numerator_rebinned_added = mc_numerators[mcperiod].Clone()
+                                    mc_denominator_rebinned_added = mc_denominators[mcperiod].Clone()
+                                else:
+                                    numerator_rebinned_added.Add(numerators[i_period])
+                                    denominator_rebinned_added.Add(denominators[i_period])   
+                                    mc_numerator_rebinned_added.Add(mc_numerators[mcperiod])
+                                    mc_denominator_rebinned_added.Add(mc_denominators[mcperiod])   
                 
                 h_finaleff = numerator_added.Clone()
                 h_finaleff.SetName("h_finaleff")
@@ -802,35 +816,45 @@ def allperiods(histofolder, plotfolder, suffix, use_uncertainty_from_teff = Fals
                 h_finaleff_rebinned.SetLineWidth(2)
                 h_finaleff_rebinned.Divide(denominator_rebinned_added)
                 
-                if sf_type == "global":
-                    mc_numerator = hists[mcperiod]["h_tracks_tagged" + category].Clone()
-                    mc_denominator = hists[mcperiod]["h_tracks_reco" + category].Clone()
-                    mc_numerator_rebinned = hists[mcperiod]["h_tracks_tagged_rebinned" + category].Clone()
-                    mc_denominator_rebinned = hists[mcperiod]["h_tracks_reco_rebinned" + category].Clone()
-                elif sf_type == "reco":
-                    mc_numerator = hists[mcperiod]["h_tracks_rereco" + category].Clone()
-                    mc_denominator = hists[mcperiod]["h_tracks_reco" + category].Clone()
-                    mc_numerator_rebinned = hists[mcperiod]["h_tracks_rereco_rebinned" + category].Clone()
-                    mc_denominator_rebinned = hists[mcperiod]["h_tracks_reco_rebinned" + category].Clone()
-                elif sf_type == "tag":
-                    mc_numerator = hists[mcperiod]["h_tracks_tagged" + category].Clone()
-                    mc_denominator = hists[mcperiod]["h_tracks_rereco" + category].Clone()
-                    mc_numerator_rebinned = hists[mcperiod]["h_tracks_tagged_rebinned" + category].Clone()
-                    mc_denominator_rebinned = hists[mcperiod]["h_tracks_rereco_rebinned" + category].Clone()
-                mc_numerator.Scale(1.0/mc_denominator.Integral())
-                mc_denominator.Scale(1.0/mc_denominator.Integral())
-                mc_numerator_rebinned.Scale(1.0/mc_denominator_rebinned.Integral())
-                mc_denominator_rebinned.Scale(1.0/mc_denominator_rebinned.Integral())
-                               
-                h_mcfinaleff = mc_numerator.Clone()
+                h_mcfinaleff = mc_numerator_added.Clone()
                 h_mcfinaleff.SetName("h_mcfinaleff")
                 h_mcfinaleff.SetLineWidth(2)
-                h_mcfinaleff.Divide(mc_denominator)
-                            
-                h_mcfinaleff_rebinned = mc_numerator_rebinned.Clone()
+                h_mcfinaleff.Divide(mc_denominator_added)
+                
+                h_mcfinaleff_rebinned = mc_numerator_rebinned_added.Clone()
                 h_mcfinaleff_rebinned.SetName("h_mcfinaleff_rebinned")
                 h_mcfinaleff_rebinned.SetLineWidth(2)
-                h_mcfinaleff_rebinned.Divide(mc_denominator_rebinned)
+                h_mcfinaleff_rebinned.Divide(mc_denominator_rebinned_added)
+                
+                #if sf_type == "global":
+                #    mc_numerator = hists[mcperiod]["h_tracks_tagged" + category].Clone()
+                #    mc_denominator = hists[mcperiod]["h_tracks_reco" + category].Clone()
+                #    mc_numerator_rebinned = hists[mcperiod]["h_tracks_tagged_rebinned" + category].Clone()
+                #    mc_denominator_rebinned = hists[mcperiod]["h_tracks_reco_rebinned" + category].Clone()
+                #elif sf_type == "reco":
+                #    mc_numerator = hists[mcperiod]["h_tracks_rereco" + category].Clone()
+                #    mc_denominator = hists[mcperiod]["h_tracks_reco" + category].Clone()
+                #    mc_numerator_rebinned = hists[mcperiod]["h_tracks_rereco_rebinned" + category].Clone()
+                #    mc_denominator_rebinned = hists[mcperiod]["h_tracks_reco_rebinned" + category].Clone()
+                #elif sf_type == "tag":
+                #    mc_numerator = hists[mcperiod]["h_tracks_tagged" + category].Clone()
+                #    mc_denominator = hists[mcperiod]["h_tracks_rereco" + category].Clone()
+                #    mc_numerator_rebinned = hists[mcperiod]["h_tracks_tagged_rebinned" + category].Clone()
+                #    mc_denominator_rebinned = hists[mcperiod]["h_tracks_rereco_rebinned" + category].Clone()
+                #mc_numerator.Scale(1.0/mc_denominator.Integral())
+                #mc_denominator.Scale(1.0/mc_denominator.Integral())
+                #mc_numerator_rebinned.Scale(1.0/mc_denominator_rebinned.Integral())
+                #mc_denominator_rebinned.Scale(1.0/mc_denominator_rebinned.Integral())
+                #               
+                #h_mcfinaleff = mc_numerator.Clone()
+                #h_mcfinaleff.SetName("h_mcfinaleff")
+                #h_mcfinaleff.SetLineWidth(2)
+                #h_mcfinaleff.Divide(mc_denominator)
+                #            
+                #h_mcfinaleff_rebinned = mc_numerator_rebinned.Clone()
+                #h_mcfinaleff_rebinned.SetName("h_mcfinaleff_rebinned")
+                #h_mcfinaleff_rebinned.SetLineWidth(2)
+                #h_mcfinaleff_rebinned.Divide(mc_denominator_rebinned)
                             
                 # lumi-weighted scale factors:
                                 
@@ -895,6 +919,7 @@ def allperiods(histofolder, plotfolder, suffix, use_uncertainty_from_teff = Fals
                     effcat[category.replace("_", "")]["%s_unc_lumiweighted" % sf_type][mcperiod] = h_mcfinaleff_rebinned.GetBinError(1)
                 
         # draw plots with all run periods:
+        ###################################
         
         for sftype in ["h_scalefactor", "h_recoscalefactor", "h_tagscalefactor"]:
         
@@ -906,6 +931,7 @@ def allperiods(histofolder, plotfolder, suffix, use_uncertainty_from_teff = Fals
                 legend = shared_utils.mklegend(x1=0.3, y1=0.2, x2=0.6, y2=0.35)
                 for i, period in enumerate(periods):
                     
+                    if "rw" in i_period: continue
                     if year not in period: continue
                     
                     if i == 0:
@@ -971,6 +997,7 @@ def allperiods(histofolder, plotfolder, suffix, use_uncertainty_from_teff = Fals
         
         for i, period in enumerate(sorted(fitresults[label])):
             
+            if "rw" in period: continue
             sf = fitresults[label][period]
             uncert = fitresults[label.replace("_sf", "_uncert")][period]
                                 
@@ -1023,22 +1050,10 @@ def allperiods(histofolder, plotfolder, suffix, use_uncertainty_from_teff = Fals
             h_sf_short.GetXaxis().SetLabelSize(0.1)
         
         legend.Draw()
-
-        if "BdtCutP1A" in plotfolder:
-            legend.SetHeader("BDT_{short}>0.05")
-        if "BdtCutP1B" in plotfolder:
-            legend.SetHeader("BDT_{short}>0.0")
-        if "BdtCutP1C" in plotfolder:
-            legend.SetHeader("BDT_{short}>-0.1")
-        if "BdtCutP1D" in plotfolder:
-            legend.SetHeader("BDT_{short}>-0.2")
-        if "BdtCutP1E" in plotfolder:
-            legend.SetHeader("BDT_{short}>-0.3")
         
         shared_utils.stamp()
         
-        #pdfname = "%s/allperiods_sf_%s.pdf" % (plotfolder, label)
-        pdfname = "%s_allperiods_sf_%s.pdf" % (plotfolder, label)
+        pdfname = "%s/allperiods_sf_%s.pdf" % (plotfolder, label)
         
         if use_exact_layer_matching:
             pdfname = pdfname.replace(".pdf", "_exact.pdf")
@@ -1099,6 +1114,8 @@ def allperiods(histofolder, plotfolder, suffix, use_uncertainty_from_teff = Fals
             
             for i, period in enumerate(period_labels):
 
+                if "rw" in period: continue
+
                 tag_sf = efflayer[layer][label][period]
                 tag_uncert = efflayer[layer][label.replace("_value", "_unc")][period]
                 h_sf_tag.SetBinContent(i_tag + 1, tag_sf)
@@ -1114,12 +1131,12 @@ def allperiods(histofolder, plotfolder, suffix, use_uncertainty_from_teff = Fals
                 if "lumi" in label:
                     
                     if "2016" in period:
-                        mcperiod = "Summer16"
+                        mcperiod = "Summer16rw" + period
                     elif "2017" in period:
-                        mcperiod = "Fall17"
+                        mcperiod = "Fall17rw" + period
                     elif "2018" in period:
-                        mcperiod = "Autumn18"
-                        
+                        mcperiod = "Autumn18rw" + period
+                                                
                     tag_sf = efflayer[layer][label][mcperiod]
                     tag_uncert = efflayer[layer][label.replace("_value", "_unc")][mcperiod]
                     h_sf_tag_mc.SetBinContent(i_tag + 1, tag_sf)
@@ -1189,8 +1206,6 @@ def allperiods(histofolder, plotfolder, suffix, use_uncertainty_from_teff = Fals
 
     
 if __name__ == "__main__":
-
-    print "Loading"
 
     parser = OptionParser()
     parser.add_option("--suffix", dest = "suffix", default = "")

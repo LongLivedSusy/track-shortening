@@ -39,58 +39,65 @@ def runSL6(command):
     singularity_wrapper = "singularity exec --contain --bind /afs:/afs --bind /nfs:/nfs --bind /pnfs:/pnfs --bind /cvmfs:/cvmfs --bind /var/lib/condor:/var/lib/condor --bind /tmp:/tmp --pwd . ~/dust/slc6_latest.sif sh -c 'source /cvmfs/cms.cern.ch/cmsset_default.sh; $CMD'"
     os.system(singularity_wrapper.replace("$CMD", command))
 
+
+def chunks(lst, n):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
+
+
 if period == "Run2016":
     # this is the prompt reco
     cmssw = "CMSSW_8_0_22"
-    inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2016H/SingleMuon/RAW-RECO/ZMu-PromptReco*/*/*/*/*/*"
+    inputpath = "/pnfs/desy.de/cms/tier2/store/user/vkutzner/store/data/Run2016H/SingleMuon/RAW-RECO/ZMu-PromptReco*/*/*/*/*/*"
 elif period == "Run2016B":
     cmssw = "CMSSW_8_0_29"
-    inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2016B/SingleMuon/RAW-RECO/ZMu-07Aug17_ver2-v1/*/*"
+    inputpath = "/pnfs/desy.de/cms/tier2/store/user/vkutzner/store/data/Run2016B/SingleMuon/RAW-RECO/ZMu-07Aug17_ver2-v1/*/*"
 elif period == "Run2016C":
     cmssw = "CMSSW_8_0_29"
-    inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2016C/SingleMuon/RAW-RECO/ZMu-07Aug17-v1/*/*"
+    inputpath = "/pnfs/desy.de/cms/tier2/store/user/vkutzner/store/data/Run2016C/SingleMuon/RAW-RECO/ZMu-07Aug17-v1/*/*"
 elif period == "Run2016D":
     cmssw = "CMSSW_8_0_29"
-    inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2016D/SingleMuon/RAW-RECO/ZMu-07Aug17-v1/*/*"
+    inputpath = "/pnfs/desy.de/cms/tier2/store/user/vkutzner/store/data/Run2016D/SingleMuon/RAW-RECO/ZMu-07Aug17-v1/*/*"
 elif period == "Run2016E":
     cmssw = "CMSSW_8_0_29"
-    inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2016E/SingleMuon/RAW-RECO/ZMu-07Aug17-v1/*/*"
+    inputpath = "/pnfs/desy.de/cms/tier2/store/user/vkutzner/store/data/Run2016E/SingleMuon/RAW-RECO/ZMu-07Aug17-v1/*/*"
 elif period == "Run2016F":
     cmssw = "CMSSW_8_0_29"
-    inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2016F/SingleMuon/RAW-RECO/ZMu-07Aug17-v1/*/*"
+    inputpath = "/pnfs/desy.de/cms/tier2/store/user/vkutzner/store/data/Run2016F/SingleMuon/RAW-RECO/ZMu-07Aug17-v1/*/*"
 elif period == "Run2016G":
     cmssw = "CMSSW_8_0_29"
-    inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2016G/SingleMuon/RAW-RECO/ZMu-07Aug17-v1/*/*"
+    inputpath = "/pnfs/desy.de/cms/tier2/store/user/vkutzner/store/data/Run2016G/SingleMuon/RAW-RECO/ZMu-07Aug17-v1/*/*"
 elif period == "Run2016H":
     cmssw = "CMSSW_8_0_29"
-    inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2016H/SingleMuon/RAW-RECO/ZMu-07Aug17-v1/*/*"    
+    inputpath = "/pnfs/desy.de/cms/tier2/store/user/vkutzner/store/data/Run2016H/SingleMuon/RAW-RECO/ZMu-07Aug17-v1/*/*"    
 elif period == "Run2017B":
     cmssw = "CMSSW_9_4_0"
-    inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2017B/SingleMuon/RAW-RECO/ZMu-17Nov2017-v1/*/*"    
+    inputpath = "/pnfs/desy.de/cms/tier2/store/user/vkutzner/store/data/Run2017B/SingleMuon/RAW-RECO/ZMu-17Nov2017-v1/*/*"    
 elif period == "Run2017C":
     cmssw = "CMSSW_9_4_0"
-    inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2017C/SingleMuon/RAW-RECO/ZMu-17Nov2017-v1/*/*"
+    inputpath = "/pnfs/desy.de/cms/tier2/store/user/vkutzner/store/data/Run2017C/SingleMuon/RAW-RECO/ZMu-17Nov2017-v1/*/*"
 elif period == "Run2017D":
     cmssw = "CMSSW_9_4_0"
-    inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2017D/SingleMuon/RAW-RECO/ZMu-17Nov2017-v1/*/*"    
+    inputpath = "/pnfs/desy.de/cms/tier2/store/user/vkutzner/store/data/Run2017D/SingleMuon/RAW-RECO/ZMu-17Nov2017-v1/*/*"    
 elif period == "Run2017E":
     cmssw = "CMSSW_9_4_0"
-    inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2017E/SingleMuon/RAW-RECO/ZMu-17Nov2017-v1/*/*"    
+    inputpath = "/pnfs/desy.de/cms/tier2/store/user/vkutzner/store/data/Run2017E/SingleMuon/RAW-RECO/ZMu-17Nov2017-v1/*/*"    
 elif period == "Run2017F":
     cmssw = "CMSSW_9_4_0"
-    inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2017F/SingleMuon/RAW-RECO/ZMu-17Nov2017-v1/*/*"    
+    inputpath = "/pnfs/desy.de/cms/tier2/store/user/vkutzner/store/data/Run2017F/SingleMuon/RAW-RECO/ZMu-17Nov2017-v1/*/*"    
 elif period == "Run2018A":
     cmssw = "CMSSW_10_2_7" #CMSSW_10_2_4_patch1
-    inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2018A/SingleMuon/RAW-RECO/ZMu-17Sep2018-v2/*/*"    
+    inputpath = "/pnfs/desy.de/cms/tier2/store/user/vkutzner/store/data/Run2018A/SingleMuon/RAW-RECO/ZMu-17Sep2018-v2/*/*"    
 elif period == "Run2018B":
     cmssw = "CMSSW_10_2_7" #CMSSW_10_2_4_patch1
-    inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2018B/SingleMuon/RAW-RECO/ZMu-17Sep2018-v1/*/*"    
+    inputpath = "/pnfs/desy.de/cms/tier2/store/user/vkutzner/store/data/Run2018B/SingleMuon/RAW-RECO/ZMu-17Sep2018-v1/*/*"    
 elif period == "Run2018C":
     cmssw = "CMSSW_10_2_7" #CMSSW_10_2_4_patch1
-    inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2018C/SingleMuon/RAW-RECO/ZMu-17Sep2018-v1/*/*"    
+    inputpath = "/pnfs/desy.de/cms/tier2/store/user/vkutzner/store/data/Run2018C/SingleMuon/RAW-RECO/ZMu-17Sep2018-v1/*/*"    
 elif period == "Run2018D":
     cmssw = "CMSSW_10_2_7" #CMSSW_10_2_4_patch1
-    inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2018D/SingleMuon/RAW-RECO/ZMu-PromptReco-v2/*/*/*/*/*"    
+    inputpath = "/pnfs/desy.de/cms/tier2/store/user/vkutzner/store/data/Run2018D/SingleMuon/RAW-RECO/ZMu-PromptReco-v2/*/*/*/*/*"    
 elif period == "Summer16":
     cmssw = "CMSSW_8_0_21"
     inputpath = "/nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/Summer16_RECO/*"
@@ -106,8 +113,8 @@ elif period == "Fall17UL":
     use_sl6 = False
 elif period == "RunUL2017C":
     cmssw = "CMSSW_10_6_2"
-    #inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2017C/SingleMuon/RAW-RECO/ZMu-17Nov2017-v1/*/*"
-    inputpath = "/nfs/dust/cms/user/kutznerv/store/data/Run2017C/SingleMuon/RAW-RECO/ZMu-09Aug2019_UL2017-v1/*/*"
+    #inputpath = "/pnfs/desy.de/cms/tier2/store/user/vkutzner/store/data/Run2017C/SingleMuon/RAW-RECO/ZMu-17Nov2017-v1/*/*"
+    inputpath = "/pnfs/desy.de/cms/tier2/store/user/vkutzner/store/data/Run2017C/SingleMuon/RAW-RECO/ZMu-09Aug2019_UL2017-v1/*/*"
     use_sl6 = False
 else:
     quit("which period?")
@@ -129,22 +136,23 @@ if not os.path.exists("%s/src/shorttrack" % cmssw):
 if step_clustersurgeon:
     commands = []
     for i, i_file in enumerate(glob.glob(inputpath)):
-        outfile = i_file.split("/")[-1].replace(".root", "")
-        commands.append("cd ~/dust/shorttrack/track-shortening/%s/src/; eval `scramv1 runtime -sh`; cd shorttrack/TrackRefitting/; cmsRun python/ClusterSurgeon.py inputFiles=file://%s outputFile=/nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/%s_HITREMOVER/rCluster_%s_%s_allSteps_%s.root" % (cmssw, i_file, period, outfile, period, i+1))
+        outfile = "/nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/%s_HITREMOVER/rCluster_%s_%s_allSteps_%s.root" % (period, i_file.split("/")[-1].replace(".root", ""), period, i+1)
+        commands.append("cd ~/dust/shorttrack/track-shortening/%s/src/; eval `scramv1 runtime -sh`; cd shorttrack/TrackRefitting/; cmsRun python/ClusterSurgeon.py inputFiles=file://%s outputFile=%s" % (cmssw, i_file, outfile))
+
+        # check if already there:
+        if os.path.exists(outfile):
+            print "Exists:", outfile
+            continue
         
         # limit number of RECO input files...
         if period == "RunUL2017C" and i > 4:
             break
         
     os.system("mkdir -p /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/%s_HITREMOVER" % (period))
-    status = GridEngineTools.runParallel(commands, runmode, condorDir="condor.%s_step1" % period, confirm=options.confirm, use_sl6=use_sl6)
+    if len(commands)>0:
+        status = GridEngineTools.runParallel(commands, runmode, condorDir="condor.%s_step1" % period, confirm=options.confirm, use_sl6=use_sl6)
 
 
-
-def chunks(lst, n):
-    """Yield successive n-sized chunks from lst."""
-    for i in range(0, len(lst), n):
-        yield lst[i:i + n]
 
 #if step_hadd:
 #
@@ -178,7 +186,7 @@ if step_reco:
     
         o_file = i_chunk[0].replace("HITREMOVER", "RERECO").replace(".root", "")
         inputFiles = ""
-    
+        
         for i_file in i_chunk:
             if use_sl6:
                 inputFiles += "inputFiles=file://../../%s " % i_file
@@ -193,3 +201,8 @@ if step_reco:
 
     os.system("mkdir -p /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/%s_RERECO" % (period))
     status = GridEngineTools.runParallel(commands, runmode, condorDir="condor.%s_step3" % period, confirm=options.confirm, use_sl6=use_sl6)
+
+    print "Will now delete input files after successful run..."
+    os.system("rm %s_HITREMOVER/*root" % period)
+
+    
