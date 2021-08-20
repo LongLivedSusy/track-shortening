@@ -11,6 +11,7 @@ parser = OptionParser()
 parser.add_option("--period", dest = "period", default = "Run2016")
 parser.add_option("--step", dest = "step", default = 0)
 parser.add_option("--confirm", dest = "confirm", action = "store_true")
+parser.add_option("--recompile", dest = "recompile", action = "store_true")
 (options, args) = parser.parse_args()
 
 runmode             = "grid"
@@ -33,7 +34,7 @@ elif int(options.step) == 3:
     step_clustersurgeon = 0
     step_hadd           = 0
     step_reco           = 1
-    
+
 
 def runSL6(command):
     singularity_wrapper = "singularity exec --contain --bind /afs:/afs --bind /nfs:/nfs --bind /pnfs:/pnfs --bind /cvmfs:/cvmfs --bind /var/lib/condor:/var/lib/condor --bind /tmp:/tmp --pwd . ~/dust/slc6_latest.sif sh -c 'source /cvmfs/cms.cern.ch/cmsset_default.sh; $CMD'"
@@ -131,19 +132,34 @@ if not os.path.exists("%s/src/shorttrack" % cmssw):
             os.system("export SCRAM_ARCH=slc7_amd64_gcc820; scramv1 project CMSSW %s; cd %s/src; eval `scramv1 runtime -sh`; ln -s ../../shorttrack shorttrack; cd shorttrack; chmod +x ./setup.sh; ./setup.sh; cd ..; scram b -j10" % (cmssw, cmssw))
 
 
+if options.recompile:
+    for cmssw in [
+        "CMSSW_8_0_21",
+        "CMSSW_8_0_22",
+        "CMSSW_8_0_29",
+        "CMSSW_9_4_0",
+        "CMSSW_10_2_7",
+                 ]:
+                 
+        runSL6("cd ~/dust/shorttrack/track-shortening/%s/src/; eval `scramv1 runtime -sh`; scram b -j20" % cmssw)
+    
+    print "non-UL cmssw releases recompiled!"
+    quit()
+    
 
 # modify hit collections:
 if step_clustersurgeon:
     commands = []
     for i, i_file in enumerate(glob.glob(inputpath)):
         outfile = "/nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/%s_HITREMOVER/rCluster_%s_%s_allSteps_%s.root" % (period, i_file.split("/")[-1].replace(".root", ""), period, i+1)
-        commands.append("cd ~/dust/shorttrack/track-shortening/%s/src/; eval `scramv1 runtime -sh`; cd shorttrack/TrackRefitting/; cmsRun python/ClusterSurgeon.py inputFiles=file://%s outputFile=%s" % (cmssw, i_file, outfile))
 
         # check if already there:
         if os.path.exists(outfile):
             print "Exists:", outfile
             continue
-        
+
+        commands.append("cd ~/dust/shorttrack/track-shortening/%s/src/; eval `scramv1 runtime -sh`; cd shorttrack/TrackRefitting/; cmsRun python/ClusterSurgeon.py inputFiles=file://%s outputFile=%s" % (cmssw, i_file, outfile))
+
         # limit number of RECO input files...
         if period == "RunUL2017C" and i > 4:
             break
@@ -151,7 +167,6 @@ if step_clustersurgeon:
     os.system("mkdir -p /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/%s_HITREMOVER" % (period))
     if len(commands)>0:
         status = GridEngineTools.runParallel(commands, runmode, condorDir="condor.%s_step1" % period, confirm=options.confirm, use_sl6=use_sl6)
-
 
 
 #if step_hadd:
@@ -175,16 +190,22 @@ if step_clustersurgeon:
 #        status = GridEngineTools.runParallel(commands, runmode, condorDir="condor.%s_step2" % period, confirm=options.confirm)
             
             
-
 # do rereco with modified hit collections and remove input:
 if step_reco:
     
     commands = []
     
     files = glob.glob("%s_HITREMOVER/*root" % (period))
-    for i, i_chunk in enumerate(chunks(files, 10)):
+    for i, i_chunk in enumerate(chunks(files, 1)):
+    #for i, i_chunk in enumerate(chunks(files, 10)):
     
         o_file = i_chunk[0].replace("HITREMOVER", "RERECO").replace(".root", "")
+        
+        # check if already there:
+        if os.path.exists(o_file):
+            print "Exists:", outfile
+            continue
+        
         inputFiles = ""
         
         for i_file in i_chunk:
@@ -202,7 +223,22 @@ if step_reco:
     os.system("mkdir -p /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/%s_RERECO" % (period))
     status = GridEngineTools.runParallel(commands, runmode, condorDir="condor.%s_step3" % period, confirm=options.confirm, use_sl6=use_sl6)
 
-    print "Will now delete input files after successful run..."
-    os.system("rm %s_HITREMOVER/*root" % period)
+    ## test for invalid files:
+    #invalid_files = []
+    #all_rereco_files_valid = True    
+    #for arg in glob.glob("%s*RERECO/*root" % period):
+    #    test = TFile(arg)
+    #    if (test.IsZombie() or test.TestBit(TFile.kRecovered)):
+    #        all_rereco_files_valid = False
+    #        invalid_files.append(arg)
+    #    test.Close()
+    #
+    #if all_rereco_files_valid:
+    #    print "Will now delete input files after successful run..." 
+    #    os.system("rm %s_HITREMOVER/*root" % period)
+    #
+    #if len(invalid_files)>0:
+    #    print "invalid_files: %s" % invalid_files
 
-    
+    if len(glob.glob("%s_RERECO/*root" % period)) > 20:
+        os.system("rm %s_HITREMOVER/*root" % period)

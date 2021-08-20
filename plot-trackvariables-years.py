@@ -48,7 +48,7 @@ if __name__ == "__main__":
     periods = [
                 "Run2016B",
                 "Run2016C",
-                "Run2016D",
+                #"Run2016D",
                 "Run2016E",
                 "Run2016F",
                 "Run2016G",

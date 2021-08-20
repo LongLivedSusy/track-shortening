@@ -16,22 +16,27 @@ parser.add_option("--low_pt", dest = "low_pt_threshold", default = 25)
 parser.add_option("--high_pt", dest = "high_pt_threshold", default = 99999)
 parser.add_option("--shortsMinPt", dest = "shortsMinPt", default = 25)
 parser.add_option("--longsMinPt", dest = "longsMinPt", default = 40)
+parser.add_option("--shortsMaxPt", dest = "shortsMaxPt", default = 99999)
+parser.add_option("--longsMaxPt", dest = "longsMaxPt", default = 99999)
 parser.add_option("--low_eta", dest = "low_eta_threshold", default = 0)
 parser.add_option("--high_eta", dest = "high_eta_threshold", default = 2.0)
 parser.add_option("--bdt", dest = "bdt", default = "may21-equSgXsec3")
 parser.add_option("--combinedShortBDTs", dest = "combinedShortBDTs", action = "store_true")
-parser.add_option("--bdtShortP0", dest = "bdtShortP0", default = -1)
-parser.add_option("--bdtLongP0", dest = "bdtLongP0", default = -1)
-parser.add_option("--bdtShortP1", dest = "bdtShortP1", default = -1)
-parser.add_option("--bdtLongP1", dest = "bdtLongP1", default = -1)
+parser.add_option("--bdtShortP0", dest = "bdtShortP0", default = 0.1)
+parser.add_option("--bdtLongP0", dest = "bdtLongP0", default = 0.12)
+parser.add_option("--bdtShortP1", dest = "bdtShortP1", default = 0.1)
+parser.add_option("--bdtLongP1", dest = "bdtLongP1", default = 0.15)
 parser.add_option("--iso", dest = "iso", default = 0)
 parser.add_option("--suffix", dest = "suffix", default = "")
+parser.add_option("--chunkid", dest = "chunkid", default = "")
 parser.add_option("--outputfolder", dest = "outputfolder", default = "histograms")
 parser.add_option("--nev", dest = "nev", default = -1)
 parser.add_option("--override_category_pt", dest = "override_category_pt", action="store_true")
 parser.add_option("--onlyp0bdt", dest = "onlyp0bdt", action="store_true")
 parser.add_option("--reweightmc", dest = "reweightmc", default="")
 parser.add_option("--reweightfile", dest = "reweightfile", default="hweights.root")
+parser.add_option("--onlyshorts", dest = "onlyshorts", action="store_true")
+parser.add_option("--useExotag", dest = "useExotag", action="store_true")
 
 (options_, args) = parser.parse_args()
 first_filename = args[0].split(".root")[0]
@@ -43,9 +48,11 @@ options_.bdtShortP1 = float(options_.bdtShortP1)
 options_.bdtLongP1 = float(options_.bdtLongP1)
 options_.shortsMinPt = float(options_.shortsMinPt)
 options_.longsMinPt = float(options_.longsMinPt)
+options_.shortsMaxPt = float(options_.shortsMaxPt)
+options_.longsMaxPt = float(options_.longsMaxPt)
 options_.high_eta_threshold = float(options_.high_eta_threshold)
 
-overwrite = False
+overwrite = True
 
 layers_remaining = int(args[0].split("_")[-1].replace(".root", ""))
 print "remaining layers:", layers_remaining
@@ -90,11 +97,11 @@ if options_.reweightmc != "":
     h_weights = infile.Get(reweighting)
     h_weights.SetDirectory(0)
     infile.Close()
-    outfilename = "%s/histograms%s_%s_%s.root" % (options_.outputfolder, options_.suffix, period + "rw" + reweighting, layers_remaining)
+    outfilename = "%s/histograms%s_%s_%s_%s.root" % (options_.outputfolder, options_.suffix, period + "rw" + reweighting, options_.chunkid, layers_remaining)
     print "Using MC reweighting!"
 else:
     reweighting = False
-    outfilename = "%s/histograms%s_%s_%s.root" % (options_.outputfolder, options_.suffix, period, layers_remaining)
+    outfilename = "%s/histograms%s_%s_%s_%s.root" % (options_.outputfolder, options_.suffix, period, options_.chunkid, layers_remaining)
 
 print "outfilename", outfilename
 os.system("mkdir -p %s" % options_.outputfolder)
@@ -111,7 +118,7 @@ for arg in args:
     if not (test.IsZombie() or test.TestBit(TFile.kRecovered)):
         sane_files.append(arg)
     else:
-        print "deleting file: %s" % arg
+        print "ignoring file: %s" % arg
         os.system("rm %s" % arg)
     test.Close()
 
@@ -247,11 +254,13 @@ if phase == 1 and options_.combinedShortBDTs:
 reader_long = TMVA.Reader( "!Color:!Silent" )
 var_dxyVtx_long = pyarray.array('f',[0]) ; reader_long.AddVariable("tracks_dxyVtx", var_dxyVtx_long)
 var_dzVtx_long = pyarray.array('f',[0]) ; reader_long.AddVariable("tracks_dzVtx", var_dzVtx_long)
-var_trkRelIso_long = pyarray.array('f',[0]) ; reader_long.AddVariable("tracks_trkRelIso", var_trkRelIso_long)
+if not "noRelIso" in options_.bdt:
+    var_trkRelIso_long = pyarray.array('f',[0]) ; reader_long.AddVariable("tracks_trkRelIso", var_trkRelIso_long)
 var_nValidPixelHits_long = pyarray.array('f',[0]) ; reader_long.AddVariable("tracks_nValidPixelHits", var_nValidPixelHits_long)
 var_nValidTrackerHits_long = pyarray.array('f',[0]) ; reader_long.AddVariable("tracks_nValidTrackerHits", var_nValidTrackerHits_long)
 var_nMissingOuterHits_long = pyarray.array('f',[0]) ; reader_long.AddVariable("tracks_nMissingOuterHits", var_nMissingOuterHits_long)
-var_ptErrOverPt2_long = pyarray.array('f',[0]) ; reader_long.AddVariable("tracks_ptErrOverPt2", var_ptErrOverPt2_long)
+if not "noDeltaPt" in options_.bdt:
+    var_ptErrOverPt2_long = pyarray.array('f',[0]) ; reader_long.AddVariable("tracks_ptErrOverPt2", var_ptErrOverPt2_long)
 var_chi2perNdof_long = pyarray.array('f',[0]) ; reader_long.AddVariable("tracks_chi2perNdof", var_chi2perNdof_long)
 reader_long.BookMVA("BDT", weights_long)
 
@@ -302,7 +311,7 @@ for i_event, event in enumerate(events):
     muons_rereco = muons_rereco_handle.product()
     event.getByLabel("generalTracks", "", "reRECO", tracks_rereco_handle)
     tracks_rereco = tracks_rereco_handle.product()
-    event.getByLabel("offlinePrimaryVertices", "", "RERECO", offlinePrimaryVertices_rereco_handle)
+    event.getByLabel("offlinePrimaryVertices", "", "reRECO", offlinePrimaryVertices_rereco_handle)
     offlinePrimaryVerticesReReco = offlinePrimaryVertices_rereco_handle.product()    
     
     # isotrk collections:
@@ -426,7 +435,9 @@ for i_event, event in enumerate(events):
                 if track_rereco.hitPattern().pixelLayersWithMeasurement() == track_rereco.hitPattern().trackerLayersWithMeasurement():
                     track_is_pixel_track = True
                 elif track_rereco.hitPattern().trackerLayersWithMeasurement() > track_rereco.hitPattern().pixelLayersWithMeasurement():
-                    track_is_pixel_track = False                        
+                    track_is_pixel_track = False
+                    if options_.onlyshorts:
+                        continue                        
 
                 if deltaR < 0.01 \
                    and ((track_is_pixel_track and track_rereco.pt()>options_.shortsMinPt) \
@@ -491,9 +502,9 @@ for i_event, event in enumerate(events):
                     if isotrack_index == -1:
                         print "isotrack matching failed"
                         break
-                    else:
-                        print "isotrk_chi2perNdof; track_chi2perNdof", isotrk_chi2perNdof[isotrack_index], track_chi2perNdof
-                        print "isotrk_ptError; track_pt", isotrk_ptError[isotrack_index], track_rereco.ptError()
+                    #else:
+                    #    print "isotrk_chi2perNdof; track_chi2perNdof", isotrk_chi2perNdof[isotrack_index], track_chi2perNdof
+                    #    print "isotrk_ptError; track_pt", isotrk_ptError[isotrack_index], track_rereco.ptError()
 
                     track_p = track_rereco.p()
                     track_eta = track_rereco.eta()
@@ -510,6 +521,7 @@ for i_event, event in enumerate(events):
                     track_trkRelIso = isotrk_trkRelIso[isotrack_index]
                     track_nValidTrackerHits = track_rereco.hitPattern().numberOfValidTrackerHits()
                     track_nValidPixelHits = track_rereco.hitPattern().numberOfValidPixelHits()
+                    track_nMissingMiddleHits = track_rereco.hitPattern().trackerLayersWithoutMeasurement(0)
                     track_nMissingInnerHits = track_rereco.hitPattern().trackerLayersWithoutMeasurement(1)
                     track_nMissingOuterHits = track_rereco.hitPattern().trackerLayersWithoutMeasurement(2)
                     track_passPFCandVeto = bool(isotrk_passPFCandVeto[isotrack_index])
@@ -569,19 +581,19 @@ for i_event, event in enumerate(events):
                                                         if track_passPFCandVeto==1:
                                                             cutflow_counter += 1
                                                             if track_is_pixel_track:
-                                                                 if track_pt>options_.shortsMinPt:
+                                                                 if track_pt>options_.shortsMinPt and track_pt<options_.shortsMaxPt:
                                                                      cutflow_counter += 1
                                                                      if track_nMissingOuterHits>=0:
                                                                          cutflow_counter += 1
                                                                          is_preselected = True
                                                             else:
-                                                                 if track_pt>options_.longsMinPt:
+                                                                 if track_pt>options_.longsMinPt and track_pt<options_.longsMinPt:
                                                                      cutflow_counter += 1
                                                                      if track_nMissingOuterHits>=2:
                                                                          cutflow_counter += 1
                                                                          is_preselected = True
 
-                    if not is_preselected:
+                    if not is_preselected and not options_.useExotag:
                         continue
                     
                     if track_is_pixel_track:
@@ -599,41 +611,54 @@ for i_event, event in enumerate(events):
                         if phase == 1 and options_.combinedShortBDTs:
                             track_mva_p0 = reader_short_p0.EvaluateMVA("BDT")
                         
-                        if options_.bdtShortP0>-1:
-                            bdt_p0 = options_.bdtShortP0
-                        else:
-                            bdt_p0 = 0.1
-                        if options_.bdtShortP1>-1:
-                            bdt_p1 = options_.bdtShortP1
-                        else:
-                            bdt_p1 = 0.1
+                        bdt_p0 = options_.bdtShortP0
+                        bdt_p1 = options_.bdtShortP1
                         
-                        if is_preselected and ((phase==0 and track_mva>bdt_p0) or (phase==1 and track_mva>bdt_p1) or (phase == 1 and options_.combinedShortBDTs and (track_mva>bdt_p1 or track_mva_p0>bdt_p0))):
-                            cutflow_counter += 1
-                            if (track_matchedCaloEnergy<15 or track_matchedCaloEnergy/track_p<0.15):
+                        if options_.useExotag:
+                        
+                            if (
+                                track_dxyVtx<0.02 and \
+                                track_dzVtx<0.5 and \
+                                track_nMissingInnerHits==0 and \
+                                track_nMissingMiddleHits==0 and \
+                                track_nMissingOuterHits>=3 and \
+                                track_trkRelIso<0.05 and \
+                                track_pt>55 and \
+                                (abs(track_eta)<0.15 and abs(track_eta)>0.35) and \
+                                (abs(track_eta)<1.42 and abs(track_eta)>1.65) and \
+                                (abs(track_eta)<1.55 and abs(track_eta)>1.85) and \
+                                abs(track_eta)<2.1 and \
+                                track_nValidPixelHits>=3 and \
+                                track_matchedCaloEnergy<10
+                               ):
                                 cutflow_counter += 1
                                 is_tagged = True
                                 histos["h_shortbdt2D"].Fill(track_mva, track_trackerLayersWithMeasurement)
+                        
+                        else:
+                            
+                            if is_preselected and ((phase==0 and track_mva>bdt_p0) or (phase==1 and track_mva>bdt_p1) or (phase == 1 and options_.combinedShortBDTs and (track_mva>bdt_p1 or track_mva_p0>bdt_p0))):
+                                cutflow_counter += 1
+                                if (track_matchedCaloEnergy<15 or track_matchedCaloEnergy/track_p<0.15):
+                                    cutflow_counter += 1
+                                    is_tagged = True
+                                    histos["h_shortbdt2D"].Fill(track_mva, track_trackerLayersWithMeasurement)
                                                                                                                                       
                     else:
                         var_dxyVtx_long[0] = track_dxyVtx
                         var_dzVtx_long[0] = track_dzVtx
-                        var_trkRelIso_long[0] = track_trkRelIso
+                        if not "noRelIso" in options_.bdt:
+                            var_trkRelIso_long[0] = track_trkRelIso
                         var_nValidPixelHits_long[0] = track_nValidPixelHits
                         var_nValidTrackerHits_long[0] = track_nValidTrackerHits
                         var_nMissingOuterHits_long[0] = track_nMissingOuterHits
-                        var_ptErrOverPt2_long[0] = track_ptErrOverPt2
+                        if not "noDeltaPt" in options_.bdt:
+                            var_ptErrOverPt2_long[0] = track_ptErrOverPt2
                         var_chi2perNdof_long[0] = track_chi2perNdof
                         track_mva = reader_long.EvaluateMVA("BDT")  
 
-                        if options_.bdtLongP0>-1:
-                            bdt_p0 = options_.bdtLongP0
-                        else:
-                            bdt_p0 = 0.12
-                        if options_.bdtLongP1>-1:
-                            bdt_p1 = options_.bdtLongP1
-                        else:
-                            bdt_p1 = 0.15
+                        bdt_p0 = options_.bdtLongP0
+                        bdt_p1 = options_.bdtLongP1
                         
                         if is_preselected and ((phase==0 and track_mva>bdt_p0) or (phase==1 and track_mva>bdt_p1)):
                             cutflow_counter += 1

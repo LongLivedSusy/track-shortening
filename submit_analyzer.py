@@ -5,29 +5,35 @@ import glob
 from os.path import expanduser
 from optparse import OptionParser
 
+def chunks(lst, n):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
+
 periods = [
-            "Summer16",
+            #"Summer16",
+            #"Run2016B",
+            #"Run2016C",
+            #"Run2016D",
+            #"Run2016E",
+            #"Run2016F",
+            #"Run2016G",
+            #"Run2016H",
             "Fall17",
-            "Autumn18",
-            "Run2016B",
-            "Run2016C",
-            "Run2016D",
-            "Run2016E",
-            "Run2016F",
-            "Run2016G",
-            "Run2016H",
             "Run2017B",
             "Run2017C",
             "Run2017D",
             "Run2017E",
             "Run2017F",
-            "Run2018A",
-            "Run2018B",
-            "Run2018C",
-            "Run2018D",
-            #"RunUL2017C",
-            #"Fall17UL",
+            #"Autumn18",
+            #"Run2018A",
+            #"Run2018B",
+            #"Run2018C",
+            #"Run2018D",
+            ##"RunUL2017C",
+            ##"Fall17UL",
           ]
+          
           
 suffixes = {
             #"":                 " ",
@@ -55,17 +61,41 @@ suffixes = {
             #"ShortsBaselineV5noPixelHits":  " --bdt jul21-noRelIso",
             #"ShortsBaselineV5noDeltaPt":    " --bdt jul21-noPixelHits",
             #"ShortsBaselineV5TighterDxy":   " --bdt jul21-TighterDxy",
-            #"ShortsBaselineV5noPixelHitsnoDeltaPt":   " --bdt jul21-noPixelHits-noDeltaPt",
-            #"ShortsBaselineV6":                        " --bdt jun21",
-            #"ShortsBaselineV6noRelIso":                " --bdt jul21-noRelIso",
-            #"ShortsBaselineV6noDeltaPt":               " --bdt jul21-noDeltaPt",
-            #"ShortsBaselineV6noPixelHits":             " --bdt jul21-noPixelHits",
-            #"ShortsBaselineV6noPixelHitsnoDeltaPt":    " --bdt jul21-noPixelHits-noDeltaPt",
-            "ShortsBaselineV7":                        " --bdt jun21",
-            "ShortsBaselineV7noRelIso":                " --bdt jul21-noRelIso",
-            "ShortsBaselineV7noDeltaPt":               " --bdt jul21-noDeltaPt",
-            "ShortsBaselineV7noPixelHits":             " --bdt jul21-noPixelHits",
-            #"ShortsBaselineV7noPixelHitsnoDeltaPt":    " --bdt jul21-noPixelHits-noDeltaPt",
+            #"ShortsBaselineV5noPixelHitsnoDeltaPt":     " --bdt jul21-noPixelHits-noDeltaPt",
+            #"ShortsBaselineV6":                         " --bdt jun21",
+            #"ShortsBaselineV6noRelIso":                 " --bdt jul21-noRelIso",
+            #"ShortsBaselineV6noDeltaPt":                " --bdt jul21-noDeltaPt",
+            #"ShortsBaselineV6noPixelHits":              " --bdt jul21-noPixelHits",
+            #"ShortsBaselineV6noPixelHitsnoDeltaPt":     " --bdt jul21-noPixelHits-noDeltaPt",
+            #"ShortsBaselineV7":                         " --bdt jun21",
+            #"ShortsBaselineV7baseline":                 " --bdt jul21-baseline",
+            #"ShortsBaselineV7noRelIso":                 " --bdt jul21-noRelIso",
+            #"ShortsBaselineV7noDeltaPt":                " --bdt jul21-noDeltaPt",
+            #"ShortsBaselineV7noPixelHits":              " --bdt jul21-noPixelHits",
+            #"verifyV2Aug21baseline":                    " --bdt aug21-baseline",
+            #"verifyV2Aug21noPixel":                     " --bdt aug21-noPixelHits",
+            #"verifyV2Aug21noDeltaPt":                   " --bdt aug21-noDeltaPt",
+            #"verify-aug21v3-baseline":                  " --bdt aug21v3-baseline",
+            #"verify-aug21v3-noPixelHits":               " --bdt aug21v3-noPixelHits",
+            #"verify-aug21v3-noDeltaPt":                 " --bdt aug21v3-noDeltaPt",
+            #"verify-aug21v3-noPixelHits-noDeltaPt":     " --bdt aug21v3-noPixelHits-noDeltaPt",
+            #"verify-aug21v3-baseline-ptL":               " --bdt aug21v3-baseline --shortsMinPt 25 --shortsMaxPt 33",
+            #"verify-aug21v3-baseline-ptM":               " --bdt aug21v3-baseline --shortsMinPt 33 --shortsMaxPt 40",
+            #"verify-aug21v3-baseline-ptH":               " --bdt aug21v3-baseline --shortsMinPt 40",
+            "verify-aug21v3-baseline-bdtp10p1":           " --bdt aug21v3-baseline --onlyshorts --bdtShortP1 0.1",
+            "verify-aug21v3-baseline-bdtp10p05":          " --bdt aug21v3-baseline --onlyshorts --bdtShortP1 0.05",
+            "verify-aug21v3-baseline-bdtp10p0":           " --bdt aug21v3-baseline --onlyshorts --bdtShortP1 0.00",
+            "verify-aug21v3-baseline-bdtp1m0p05":         " --bdt aug21v3-baseline --onlyshorts --bdtShortP1 -0.05",
+            "verify-aug21v3-baseline-bdtp1m0p1":          " --bdt aug21v3-baseline --onlyshorts --bdtShortP1 -0.10",
+            #"ShortsBaselineV7noPixelHitsnoDeltaPt":     " --bdt jul21-noPixelHits-noDeltaPt",
+            #"Aug21V1baseline":                          " --bdt aug21-baseline               ",
+            #"Aug21V1noDeltaPt":                         " --bdt aug21-noDeltaPt              ",
+            #"Aug21V1noPixelHits":                       " --bdt aug21-noPixelHits            ",
+            #"Aug21V1noPixelHitsnoDeltaPt":              " --bdt aug21-noPixelHits-noDeltaPt  ",
+            #"Aug21V1noRelIso":                          " --bdt aug21-noRelIso               ",
+            #"Aug21V1onlyT1qqqq":                        " --bdt aug21-onlyT1qqqq             ",
+            #"Aug21V1onlyT2bt":                          " --bdt aug21-onlyT2bt               ",
+            #"Aug21V1useLayers":                         " --bdt aug21-useLayers              ",
             #"BaselineV4A":     " --bdt jun21-noJetVeto ",
             #"BaselineV4B":     " --bdt jun21-noPixelHits ",
             #"BaselineV4C":     " --bdt jun21-noVetoes ",
@@ -126,56 +156,68 @@ if __name__ == "__main__":
     for period in periods: 
         for i in range(1, 21):
             for suffix in suffixes:
-                if suffix == "":
-                    suffixterm = ""
-                else:
-                    suffixterm = " --suffix %s " % suffix
-    
-                extraargs = suffixes[suffix] + " %s --outputfolder %s " % (suffixterm, histofolder)
-                cmd = "HOME=%s; cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/CMSSW_10_6_2/src/; eval `scramv1 runtime -sh`; cd -; cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening; python analyzer.py %s_RERECO/*_%s.root %s " % (homedir, period, i, extraargs)
+                allfiles = glob.glob("%s_RERECO/*_%s.root" % (period, i))
                 
-                outfilename = "%s/histograms%s_%s_%s.root" % (histofolder, suffix, period, i)
-                if os.path.exists(outfilename) and not overwrite:
-                    continue
+                #FIXME
+                allfiles = [allfiles[0]]
                 
-                commands.append(cmd)
-                
-                # add reweighting:
-                if "Run201" not in period and "reweightfile" in suffixes[suffix]:
-                    if "Summer16" in period:
-                        for rwperiod in [
-                                        "Run2016B",
-                                        "Run2016C",
-                                        "Run2016D",
-                                        "Run2016E",
-                                        "Run2016F",
-                                        "Run2016G",
-                                        "Run2016H",
-                                        ]:
-                            commands.append(cmd + " --reweightmc " + rwperiod)
-                    if "Fall17" in period:
-                        for rwperiod in [
-                                        "Run2017B",
-                                        "Run2017C",
-                                        "Run2017D",
-                                        "Run2017E",
-                                        "Run2017F",
-                                        ]:
-                            commands.append(cmd + " --reweightmc " + rwperiod)
-                    if "Autumn18" in period:
-                        for rwperiod in [
-                                        "Run2018A",
-                                        "Run2018B",
-                                        "Run2018C",
-                                        "Run2018D",
-                                        ]:
-                            commands.append(cmd + " --reweightmc " + rwperiod)
+                for i_iFiles, iFiles in enumerate(chunks( allfiles , 20 )):
+                                
+                    if suffix == "":
+                        suffixterm = ""
+                    else:
+                        suffixterm = " --suffix %s " % suffix
+                    
+                    extraargs = suffixes[suffix] + " %s --outputfolder %s " % (suffixterm, histofolder)
+                    cmd = "HOME=%s; cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/CMSSW_10_6_2/src/; eval `scramv1 runtime -sh`; cd -; cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening; python analyzer.py --chunkid %s %s %s " % (homedir, i_iFiles, " ".join(iFiles), extraargs)
+                    
+                    outfilename = "%s/histograms%s_%s_%s_%s.root" % (histofolder, suffix, period, i_iFiles, i)
+                    if os.path.exists(outfilename) and not overwrite:
+                        continue
+                    
+                    commands.append(cmd)
+                    
+                    # add reweighting:
+                    if "Run201" not in period and "reweightfile" in suffixes[suffix]:
+                        if "Summer16" in period:
+                            for rwperiod in [
+                                            "Run2016B",
+                                            "Run2016C",
+                                            "Run2016D",
+                                            "Run2016E",
+                                            "Run2016F",
+                                            "Run2016G",
+                                            "Run2016H",
+                                            ]:
+                                commands.append(cmd + " --reweightmc " + rwperiod)
+                        if "Fall17" in period:
+                            for rwperiod in [
+                                            "Run2017B",
+                                            "Run2017C",
+                                            "Run2017D",
+                                            "Run2017E",
+                                            "Run2017F",
+                                            ]:
+                                commands.append(cmd + " --reweightmc " + rwperiod)
+                        if "Autumn18" in period:
+                            for rwperiod in [
+                                            "Run2018A",
+                                            "Run2018B",
+                                            "Run2018C",
+                                            "Run2018D",
+                                            ]:
+                                commands.append(cmd + " --reweightmc " + rwperiod)
                 
     if options.submit:
         
-        print commands[-1]
+        #print len(commands), commands[0]
+        #print len(commands), commands[-1]
         
-        GridEngineTools.runParallel(commands, "grid", confirm=0, condorDir="condor.analysis6", use_sl6=0)
+        print commands
+        print len(commands)
+        raw_input("OK?")
+        
+        GridEngineTools.runParallel(commands, "multi", confirm=0, condorDir="condor.analysis7", use_sl6=0)
         #GridEngineTools.runParallel(commands, "grid", confirm=0, condorDir="condor.analysis4a2", use_sl6=0)
         #GridEngineTools.runParallel(commands, "multi", confirm=0, condorDir="condor.analysis5", use_sl6=0)
     

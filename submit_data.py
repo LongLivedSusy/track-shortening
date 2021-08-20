@@ -12,30 +12,31 @@ periods = [
             #"Summer16",
             #"Fall17",
             #"Autumn18",
-            #"Run2016B",
-            "Run2016C",
-            #"Run2016D",
-            "Run2016E",
-            #"Run2016F",
-            #"Run2016G",
-            "Run2016H",
-            "Run2017B",
-            "Run2017C",
-            "Run2017D",
-            "Run2017E",
-            "Run2017F",
-            "Run2018A",
-            "Run2018B",
-            "Run2018C",
-            "Run2018D",
+            #"Run2016B",    ##
+            #"Run2016C",     ##
+            #"Run2016D",    ##
+            #"Run2016E",     #
+            #"Run2016F",     #
+            #"Run2016G",     #
+            #"Run2016H",    ##
+            "Run2017B",     #?
+            #"Run2017C",     ##
+            "Run2017D",     #?
+            "Run2017E",     #?
+            "Run2017F",     #?
+            "Run2018A",     #?
+            #"Run2018B",     #>>
+            #"Run2018C",     #>>
+            "Run2018D",     #?
             #"RunUL2017C",
           ]
 
-for period in periods:
-    os.system("./submit_rereco.py --period %s &" % period)
+#for period in periods:
+#    os.system("./submit_rereco.py --period %s --step 3 &" % period)
 
-#for i, i_chunk in enumerate(chunks(periods, 6)):
-#    for period in i_chunk:
-#        os.system("./submit_rereco.py --period %s &" % period)
-#    time.sleep(60*60)
+for i, i_chunk in enumerate(chunks(periods, 3)):
+    for period in i_chunk:
+        #os.system("./submit_rereco.py --period %s &" % period)
+        os.system("./submit_rereco.py --period %s --step 3 &" % period)
+    time.sleep(60*60*2)
 

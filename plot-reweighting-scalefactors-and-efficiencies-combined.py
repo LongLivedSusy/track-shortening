@@ -23,22 +23,22 @@ def main(options, lumiweighted):
     os.system("mkdir -p %s" % plotfolder)
 
     periods = [
-                "Run2016B",
-                "Run2016C",
-                "Run2016D",
-                "Run2016E",
-                "Run2016F",
-                "Run2016G",
-                "Run2016H",
+                #"Run2016B",
+                #"Run2016C",
+                #"Run2016D",
+                #"Run2016E",
+                #"Run2016F",
+                #"Run2016G",
+                #"Run2016H",
                 "Run2017B",
                 "Run2017C",
                 "Run2017D",
                 "Run2017E",
                 "Run2017F",
-                "Run2018A",
-                "Run2018B",
-                "Run2018C",
-                "Run2018D",
+                #"Run2018A",
+                #"Run2018B",
+                #"Run2018C",
+                #"Run2018D",
               ]
               
     if options.mc_reweighted:
@@ -62,9 +62,9 @@ def main(options, lumiweighted):
               ]
     else:
         periods += [
-                "Summer16",
+                #"Summer16",
                 "Fall17",
-                "Autumn18",
+                #"Autumn18",
                    ]        
     
     histolabels = [
@@ -77,15 +77,15 @@ def main(options, lumiweighted):
                 "h_tracks_tagged",                   
                 "h_tracks_tagged_short",                   
                 "h_tracks_tagged_long",
-                "h_tracks_reco_rebinned",                     
-                "h_tracks_reco_rebinned_short",
-                "h_tracks_reco_rebinned_long",
-                "h_tracks_rereco_rebinned",
-                "h_tracks_rereco_rebinned_short",
-                "h_tracks_rereco_rebinned_long",
-                "h_tracks_tagged_rebinned",                   
-                "h_tracks_tagged_rebinned_short",                
-                "h_tracks_tagged_rebinned_long",
+                #"h_tracks_reco_rebinned",                     
+                #"h_tracks_reco_rebinned_short",
+                #"h_tracks_reco_rebinned_long",
+                #"h_tracks_rereco_rebinned",
+                #"h_tracks_rereco_rebinned_short",
+                #"h_tracks_rereco_rebinned_long",
+                #"h_tracks_tagged_rebinned",                   
+                #"h_tracks_tagged_rebinned_short",                
+                #"h_tracks_tagged_rebinned_long",
                   ]
     
     # get all histos:
@@ -166,12 +166,18 @@ def main(options, lumiweighted):
         finaleff_tag[category] = {}
 
         if lumiweighted:
-            finaleff_global_num[category] = {"Run2016": False, "Run2017": False, "Run2018": False, "Summer16": False, "Fall17": False, "Autumn18": False}
-            finaleff_reco_num[category] = {"Run2016": False, "Run2017": False, "Run2018": False, "Summer16": False, "Fall17": False, "Autumn18": False}
-            finaleff_tag_num[category] = {"Run2016": False, "Run2017": False, "Run2018": False, "Summer16": False, "Fall17": False, "Autumn18": False}
-            finaleff_global_denom[category] = {"Run2016": False, "Run2017": False, "Run2018": False, "Summer16": False, "Fall17": False, "Autumn18": False}
-            finaleff_reco_denom[category] = {"Run2016": False, "Run2017": False, "Run2018": False, "Summer16": False, "Fall17": False, "Autumn18": False}
-            finaleff_tag_denom[category] = {"Run2016": False, "Run2017": False, "Run2018": False, "Summer16": False, "Fall17": False, "Autumn18": False}
+            #finaleff_global_num[category] =   {"Run2016": False, "Run2017": False, "Run2018": False, "Summer16": False, "Fall17": False, "Autumn18": False}
+            #finaleff_reco_num[category] =     {"Run2016": False, "Run2017": False, "Run2018": False, "Summer16": False, "Fall17": False, "Autumn18": False}
+            #finaleff_tag_num[category] =      {"Run2016": False, "Run2017": False, "Run2018": False, "Summer16": False, "Fall17": False, "Autumn18": False}
+            #finaleff_global_denom[category] = {"Run2016": False, "Run2017": False, "Run2018": False, "Summer16": False, "Fall17": False, "Autumn18": False}
+            #finaleff_reco_denom[category] =   {"Run2016": False, "Run2017": False, "Run2018": False, "Summer16": False, "Fall17": False, "Autumn18": False}
+            #finaleff_tag_denom[category] =    {"Run2016": False, "Run2017": False, "Run2018": False, "Summer16": False, "Fall17": False, "Autumn18": False}
+            finaleff_global_num[category] =   {"Run2017": False, "Fall17": False}
+            finaleff_reco_num[category] =     {"Run2017": False, "Fall17": False}
+            finaleff_tag_num[category] =      {"Run2017": False, "Fall17": False}
+            finaleff_global_denom[category] = {"Run2017": False, "Fall17": False}
+            finaleff_reco_denom[category] =   {"Run2017": False, "Fall17": False}
+            finaleff_tag_denom[category] =    {"Run2017": False, "Fall17": False}
         
         def fill_num_denom(i_finaleff, i_year, i_category, i_value):
             if not i_finaleff[i_category][i_year]:
@@ -390,7 +396,7 @@ def main(options, lumiweighted):
                     h_sf_short[label].SetTitle(";;fitted track tagging scale factor")
                 else:
                     h_sf_short[label].SetTitle(";;fitted scale factor")
-                h_sf_short[label].GetYaxis().SetRangeUser(0.5,1.5)
+                h_sf_short[label].GetYaxis().SetRangeUser(0.0, 2.0)
             else:
                 if label == "fit_sf":
                     h_sf_long[label].Draw("hist e")
@@ -403,7 +409,7 @@ def main(options, lumiweighted):
                     h_sf_long[label].SetTitle(";;fitted track tagging scale factor")
                 else:
                     h_sf_long[label].SetTitle(";;fitted scale factor")
-                h_sf_long[label].GetYaxis().SetRangeUser(0.5,1.5)
+                h_sf_long[label].GetYaxis().SetRangeUser(0.0, 2.0)
                 
             if label == "fit_sf":
                 #h_sf_short[label].SetLineStyle(1)
@@ -518,8 +524,8 @@ def main(options, lumiweighted):
                         finaleff[category][period].SetLineColor(color)
                         finaleff[category][period].SetLineStyle(1)
                         finaleff[category][period].SetTitle(";number of remaining tracker layers;efficiency, scale factor")
-                        finaleff[category][period].GetXaxis().SetRangeUser(0,20)
-                        finaleff[category][period].GetYaxis().SetRangeUser(0,1.5)
+                        finaleff[category][period].GetXaxis().SetRangeUser(0, 20)
+                        finaleff[category][period].GetYaxis().SetRangeUser(0, 2.0)
                         
                         legend.AddEntry(finaleff[category][period], period)
                         
