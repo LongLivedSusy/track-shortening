@@ -23,10 +23,10 @@ def main(options, lumiweighted):
     os.system("mkdir -p %s" % plotfolder)
 
     periods = [
-                #"Run2016B",
-                #"Run2016C",
+                "Run2016B",
+                "Run2016C",
                 #"Run2016D",
-                #"Run2016E",
+                "Run2016E",
                 #"Run2016F",
                 #"Run2016G",
                 #"Run2016H",
@@ -35,10 +35,10 @@ def main(options, lumiweighted):
                 "Run2017D",
                 "Run2017E",
                 "Run2017F",
-                #"Run2018A",
-                #"Run2018B",
-                #"Run2018C",
-                #"Run2018D",
+                "Run2018A",
+                "Run2018B",
+                "Run2018C",
+                "Run2018D",
               ]
               
     if options.mc_reweighted:
@@ -62,9 +62,9 @@ def main(options, lumiweighted):
               ]
     else:
         periods += [
-                #"Summer16",
+                "Summer16",
                 "Fall17",
-                #"Autumn18",
+                "Autumn18",
                    ]        
     
     histolabels = [
@@ -77,14 +77,14 @@ def main(options, lumiweighted):
                 "h_tracks_tagged",                   
                 "h_tracks_tagged_short",                   
                 "h_tracks_tagged_long",
-                #"h_tracks_reco_rebinned",                     
+                #"h_tracks_reco_rebinned",
                 #"h_tracks_reco_rebinned_short",
                 #"h_tracks_reco_rebinned_long",
                 #"h_tracks_rereco_rebinned",
                 #"h_tracks_rereco_rebinned_short",
                 #"h_tracks_rereco_rebinned_long",
-                #"h_tracks_tagged_rebinned",                   
-                #"h_tracks_tagged_rebinned_short",                
+                #"h_tracks_tagged_rebinned",
+                #"h_tracks_tagged_rebinned_short",
                 #"h_tracks_tagged_rebinned_long",
                   ]
     
@@ -100,6 +100,7 @@ def main(options, lumiweighted):
                     fin = TFile("%s/histograms%s_%s.root" % (histofolder, options.mcsuffix, period), "open")                                           
             else:
                 fin = TFile("%s/histograms%s_%s.root" % (histofolder, suffix, period), "open")                       
+            print period, label
             hists[period][label] = fin.Get(label)
             hists[period][label].SetDirectory(0)
             hists[period][label].SetLineWidth(2)
@@ -166,18 +167,19 @@ def main(options, lumiweighted):
         finaleff_tag[category] = {}
 
         if lumiweighted:
-            #finaleff_global_num[category] =   {"Run2016": False, "Run2017": False, "Run2018": False, "Summer16": False, "Fall17": False, "Autumn18": False}
-            #finaleff_reco_num[category] =     {"Run2016": False, "Run2017": False, "Run2018": False, "Summer16": False, "Fall17": False, "Autumn18": False}
-            #finaleff_tag_num[category] =      {"Run2016": False, "Run2017": False, "Run2018": False, "Summer16": False, "Fall17": False, "Autumn18": False}
-            #finaleff_global_denom[category] = {"Run2016": False, "Run2017": False, "Run2018": False, "Summer16": False, "Fall17": False, "Autumn18": False}
-            #finaleff_reco_denom[category] =   {"Run2016": False, "Run2017": False, "Run2018": False, "Summer16": False, "Fall17": False, "Autumn18": False}
-            #finaleff_tag_denom[category] =    {"Run2016": False, "Run2017": False, "Run2018": False, "Summer16": False, "Fall17": False, "Autumn18": False}
-            finaleff_global_num[category] =   {"Run2017": False, "Fall17": False}
-            finaleff_reco_num[category] =     {"Run2017": False, "Fall17": False}
-            finaleff_tag_num[category] =      {"Run2017": False, "Fall17": False}
-            finaleff_global_denom[category] = {"Run2017": False, "Fall17": False}
-            finaleff_reco_denom[category] =   {"Run2017": False, "Fall17": False}
-            finaleff_tag_denom[category] =    {"Run2017": False, "Fall17": False}
+
+            finaleff_global_num[category] =   {"Run2016": False, "Run2017": False, "Run2018": False, "Summer16": False, "Fall17": False, "Autumn18": False}
+            finaleff_reco_num[category] =     {"Run2016": False, "Run2017": False, "Run2018": False, "Summer16": False, "Fall17": False, "Autumn18": False}
+            finaleff_tag_num[category] =      {"Run2016": False, "Run2017": False, "Run2018": False, "Summer16": False, "Fall17": False, "Autumn18": False}
+            finaleff_global_denom[category] = {"Run2016": False, "Run2017": False, "Run2018": False, "Summer16": False, "Fall17": False, "Autumn18": False}
+            finaleff_reco_denom[category] =   {"Run2016": False, "Run2017": False, "Run2018": False, "Summer16": False, "Fall17": False, "Autumn18": False}
+            finaleff_tag_denom[category] =    {"Run2016": False, "Run2017": False, "Run2018": False, "Summer16": False, "Fall17": False, "Autumn18": False}
+            #finaleff_global_num[category] =   {"Run2017": False, "Fall17": False, "Autumn18": False, "Run2018": False}
+            #finaleff_reco_num[category] =     {"Run2017": False, "Fall17": False, "Autumn18": False, "Run2018": False}
+            #finaleff_tag_num[category] =      {"Run2017": False, "Fall17": False, "Autumn18": False, "Run2018": False}
+            #finaleff_global_denom[category] = {"Run2017": False, "Fall17": False, "Autumn18": False, "Run2018": False}
+            #finaleff_reco_denom[category] =   {"Run2017": False, "Fall17": False, "Autumn18": False, "Run2018": False}
+            #finaleff_tag_denom[category] =    {"Run2017": False, "Fall17": False, "Autumn18": False, "Run2018": False}
         
         def fill_num_denom(i_finaleff, i_year, i_category, i_value):
             if not i_finaleff[i_category][i_year]:
@@ -189,7 +191,6 @@ def main(options, lumiweighted):
         for period in periods:
             
             print category, period
-            
             if "Run201" in period and "rw" not in period:
                 if "Run2016" in period: year = "Run2016"
                 if "Run2017" in period: year = "Run2017"
@@ -287,7 +288,6 @@ def main(options, lumiweighted):
         for period in this_periods:
         
             print category, period
-        
             if "rw" in period: continue
             if "Run201" not in period: continue
             
@@ -337,13 +337,18 @@ def main(options, lumiweighted):
                 fitresults["fit_uncerttag"][period + category] = h_sf_tag[category][period].GetBinError(6)
                             
 
-    # plot SF:
+    print "plot SF..."
+    
+    output_rootfile = TFile("%s/allperiods_sf_combined.root" % (plotfolder), "recreate")
 
     for category in ["short", "long"]:
 
         canvas = shared_utils.mkcanvas()
         legend = shared_utils.mklegend(x1=0.47, y1=0.65, x2=0.85, y2=0.85)
-        legend.SetHeader("%s tracks" % category)
+        suffix_converted = suffix.replace("verify4-aug21v3-baseline-bdtp1", "BDT_{short}^{Phase-1} > ").replace("m0", "-0").replace("0p", "0.")
+        suffix_converted = suffix.replace("verify4-static", "approx. EXO tag")
+
+        legend.SetHeader("%s tracks, %s" % (category, suffix_converted))
         legend.SetTextSize(0.035)
             
         h_sf_short = {}
@@ -370,25 +375,30 @@ def main(options, lumiweighted):
                 
                 sf = fitresults[label][period]
                 uncert = fitresults[label.replace("_sf", "_uncert")][period]
+
+                print category, period
                                     
                 if "short" in period:
                     h_sf_short[label].SetBinContent(i_short + 1, sf)
                     h_sf_short[label].SetBinError(i_short + 1, uncert)
                     i_short +=1
                     binlabels_short.append(period.replace("Run", "").replace("_short", "").replace("_long", ""))
-                    print "Adding", label, period, sf, uncert
                 elif "long" in period:
                     h_sf_long[label].SetBinContent(i_long + 1, sf)
                     h_sf_long[label].SetBinError(i_long + 1, uncert)
                     i_long += 1
                     binlabels_long.append(period.replace("Run", "").replace("_short", "").replace("_long", ""))
-                    print "Adding", label, period, sf, uncert
                     
             if category == "short":      
                 if label == "fit_sf":
                     h_sf_short[label].Draw("hist e")
                 else:
                     h_sf_short[label].Draw("hist e same")
+
+                outhist = h_sf_short[label].Clone()
+                outhist.SetDirectory(0)
+                outhist.SetName(label + "_" + category)
+                outhist.Write()
                 
                 if "reco" in label:
                     h_sf_short[label].SetTitle(";;fitted track reconstruction scale factor")
@@ -402,6 +412,11 @@ def main(options, lumiweighted):
                     h_sf_long[label].Draw("hist e")
                 else:
                     h_sf_long[label].Draw("hist e same")
+                
+                outhist = h_sf_long[label].Clone()
+                outhist.SetDirectory(0)
+                outhist.SetName(label + "_" + category)
+                outhist.Write()
                 
                 if "reco" in label:
                     h_sf_long[label].SetTitle(";;fitted track reconstruction scale factor")
@@ -434,10 +449,7 @@ def main(options, lumiweighted):
                 h_sf_long[label].SetLineColor(62)
                 if category == "short": legend.AddEntry(h_sf_short[label], "tagging SF")
                 else: legend.AddEntry(h_sf_long[label], "tagging SF")
-                
-            print binlabels_short
-            print binlabels_long
-            
+                           
             for i, i_binlabel in enumerate(binlabels_short):
                 h_sf_short[label].GetXaxis().SetBinLabel(i + 1, i_binlabel)    
             for i, i_binlabel in enumerate(binlabels_long):
@@ -447,8 +459,10 @@ def main(options, lumiweighted):
                 h_sf_short[label].GetXaxis().SetTitleSize(0.04)
                 h_sf_short[label].GetXaxis().SetLabelSize(0.04)   
             else:
-                print "lumilumi"
                 h_sf_short[label].GetXaxis().SetLabelSize(0.09)
+
+            if lumiweighted and category == "short":
+                os.system("echo '%s: %s, %s, %s\n' >> results-short" % (plotfolder, h_sf_short["fit_sf"].GetBinCenter(1), h_sf_short["fit_sf"].GetBinCenter(2), h_sf_short["fit_sf"].GetBinCenter(3) ) )
             
         legend.Draw()
         
@@ -462,6 +476,7 @@ def main(options, lumiweighted):
             pdfname = pdfname.replace(".pdf", "_lumiweighted.pdf")
         
         canvas.SaveAs(pdfname)
+        #canvas.SaveAs(pdfname.replace(".pdf", ".root"))
         
         #fout = TFile(pdfname.replace(".pdf", ".root"), "recreate")
         #canvas.Write()
@@ -472,8 +487,10 @@ def main(options, lumiweighted):
         #fout.Close()
         
     
+    output_rootfile.Close()
+    
     # plot underlying efficiencies and SFs:
-       
+
     for i_finaleff, finaleff in enumerate([finaleff_global, finaleff_reco, finaleff_tag]):
      
         for year in ["2016", "2017", "2018"]:
@@ -516,10 +533,7 @@ def main(options, lumiweighted):
 
                         if period != mcperiod:
                             finaleff[category][period].SetMarkerStyle(20)
-                        
-                        print finaleff
-                        print finaleff[category].keys()
-                        
+                                               
                         finaleff[category][period].Draw(drawoption)
                         finaleff[category][period].SetLineColor(color)
                         finaleff[category][period].SetLineStyle(1)
@@ -587,7 +601,10 @@ if __name__ == "__main__":
 
     (options, args) = parser.parse_args()
 
-    for lumiweighted in [False, True]:
+    for lumiweighted in [
+                          #False,
+                          True,
+                        ]:
                 
         main(options, lumiweighted)
         

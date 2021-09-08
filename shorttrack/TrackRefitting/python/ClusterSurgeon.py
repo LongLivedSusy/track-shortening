@@ -6,7 +6,7 @@ options = VarParsing('analysis')
 options.parseArguments()				  
 
 process = cms.Process("HITREMOVER")
-process.load("FWCore.MessageService.MessageLogger_cfi")
+#process.load("FWCore.MessageService.MessageLogger_cfi")
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
 process.options  = cms.untracked.PSet( wantSummary = cms.untracked.bool(True),
                                        SkipEvent = cms.untracked.vstring('ProductNotFound') )
@@ -23,7 +23,7 @@ else:
 
 process.load('Configuration.StandardSequences.Services_cff')
 process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
-process.load('FWCore.MessageService.MessageLogger_cfi')
+#process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('Configuration.EventContent.EventContent_cff')
 process.load('SimGeneral.MixingModule.mixNoPU_cfi')
 process.load('Configuration.StandardSequences.RawToDigi_cff')

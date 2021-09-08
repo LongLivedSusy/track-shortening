@@ -233,7 +233,7 @@ RClusterProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 			//std::cout << "found match! " << std::endl;
 			candidates ++;
 			if (chiNdof < fitProb){
-				std::cout << " dxy: " << dxy << " dz : " << dz << std::endl;
+				//std::cout << " dxy: " << dxy << " dz : " << dz << std::endl;
 				fitProb = chiNdof;
 				bestTrack = track;
 				bestTrack.setExtra(track.extra());
@@ -342,8 +342,8 @@ RClusterProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 				
 			    sequLayers = pxbLayers+pxfLayers+tibLayers+tidLayers+tobLayers+tecLayers;
 	            if (debug) std::cout << sequLayers << " : " << pxbLayers << " "<< pxfLayers << " "<< tibLayers << " "<< tidLayers << " "<< tobLayers << " "<< tecLayers <<std::endl;
-	            std::cout << sequLayers << " : " << pxbLayers << " "<< pxfLayers << " "<< tibLayers << " "<< tidLayers << " "<< tobLayers << " "<< tecLayers <<std::endl;
-				std::cout << "this hit: " << h << " trackerpart: " << hitpattern.getSubStructure(pHit) << " layer/disk/wheel : " << hitpattern.getLayer(pHit) <<" layer in sequence: " << sequLayers <<std::endl;								
+	            if (debug) std::cout << sequLayers << " : " << pxbLayers << " "<< pxfLayers << " "<< tibLayers << " "<< tidLayers << " "<< tobLayers << " "<< tecLayers <<std::endl;
+				if (debug) std::cout << "this hit: " << h << " trackerpart: " << hitpattern.getSubStructure(pHit) << " layer/disk/wheel : " << hitpattern.getLayer(pHit) <<" layer in sequence: " << sequLayers <<std::endl;								
 				auto recHit = *(hb+h);
 				auto const & hit = *recHit;
 				unsigned int rawId = 0;
@@ -364,7 +364,7 @@ RClusterProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 				if (debug) std::cout << "thisLayer : " << thisLayer << " prevLayer: " << prevLayer << " hit layer nr.:" << sequLayers << std::endl;					
 				if (sequLayers > layersRemaining) {
 								
-					std::cout << "will remove hit: " << h << " trackerpart: " << hitpattern.getSubStructure(pHit) << " layer/disk/wheel : " << hitpattern.getLayer(pHit) << " layer in sequence: " << sequLayers <<std::endl;		
+					if (debug) std::cout << "will remove hit: " << h << " trackerpart: " << hitpattern.getSubStructure(pHit) << " layer/disk/wheel : " << hitpattern.getLayer(pHit) << " layer in sequence: " << sequLayers <<std::endl;		
 					if (rcluster.isStrip()){	
 						if (std::find(stripIds.begin(), stripIds.end(), rawId) != stripIds.end()){
 							if(debug) std::cout << "STRIP hit: " << h << " Id already in set: " << rawId << std::endl;
@@ -389,7 +389,7 @@ RClusterProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 		goodTracks->push_back(track);
 		}
 		catch(...){
-		std::cout << "de-referenced track extra" << std::endl;
+		if (debug) std::cout << "de-referenced track extra" << std::endl;
 		}       
 	}
 	

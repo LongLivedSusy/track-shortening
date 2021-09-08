@@ -32,6 +32,7 @@ if __name__ == "__main__":
     parser.add_option("--suffix", dest = "suffix", default = "ShortsBaselineV5")
     parser.add_option("--mcsuffix", dest = "mcsuffix", default = "")
     parser.add_option("--histofolder", dest = "histofolder", default = "histograms")
+    parser.add_option("--tagged", dest = "tagged", default = "")
     parser.add_option("--reweighted", dest = "mc_reweighted", action = "store_true")
 
     (options, args) = parser.parse_args()
@@ -89,6 +90,11 @@ if __name__ == "__main__":
                 "Fall17",
                 "Autumn18",
                    ]
+                   
+    
+    #for AfterTagged in ["", "tagged"]:
+    
+    AfterTagged = options.tagged 
     
     variables = {
                   #"track_trkRelIso": [[0, 0.005, 0.01, 0.015, 0.02, 0.2], 0, 0.2, "relative track isolation"],
@@ -100,24 +106,24 @@ if __name__ == "__main__":
                   #"track_chi2perNdof": [20, 0, 5.0, "track #chi^{2}/ndof"],
                   #"track_ptErrOverPt2": [[0, 0.005, 0.01, 0.015, 0.02, 0.1], 0, 0.1, "#Delta p_{T} / p_{T}^{2} (GeV^{-1})"],                  
                   #"track_matchedCaloEnergy": [20, 0, 50, "E_{dep} (GeV)"],
-                  "track_dxyVtx"                       : [20, 0, 0.1 , "track_dxyVtx"],
-                  "track_dzVtx"                        : [20, 0, 0.1 , "track_dzVtx"],
-                  "track_trkRelIso"                    : [20, 0, 0.2 , "track_trkRelIso"],
-                  "track_nValidPixelHits"              : [10, 0, 10  , "track_nValidPixelHits"],
-                  "track_nValidTrackerHits"            : [20, 0, 20  , "track_nValidTrackerHits"],
-                  "track_trackerLayersWithMeasurement" : [20, 0, 20  , "track_trackerLayersWithMeasurement"],
-                  "track_ptErrOverPt2"                 : [20, 0, 0.01, "track_ptErrOverPt2"],
-                  "track_chi2perNdof"                  : [20, 0, 2   , "track_chi2perNdof"],
-                  "track_mva"                          : [20, -1, 1  , "track_mva"],
-                  "track_pt"                           : [20, 0, 200 , "track_pt"],
-                  "track_trackQualityHighPurity"       : [2, 0, 2    , "track_trackQualityHighPurity"],
-                  "track_nMissingInnerHits"            : [5, 0, 5    , "track_nMissingInnerHits"],
-                  "track_passPFCandVeto"               : [2, 0, 2    , "track_passPFCandVeto"],
-                  "track_nMissingOuterHits"            : [10, 0, 10  , "track_nMissingOuterHits"],
-                  "track_matchedCaloEnergy"            : [25, 0, 50  , "track_matchedCaloEnergy"],
-                  "track_p"                            : [20, 0, 200 , "track_p"],
-                  "cutflow"                              : [25, 0, 25, ""],
-                  #"h_tracks_algo"                        : [50, 0, 50, "h_tracks_algo"],
+                  "track%s_dxyVtx" % AfterTagged                       : [20, 0, 0.1 , "track%s_dxyVtx" % AfterTagged],
+                  "track%s_dzVtx" % AfterTagged                        : [20, 0, 0.1 , "track%s_dzVtx" % AfterTagged],
+                  "track%s_trkRelIso" % AfterTagged                    : [20, 0, 0.2 , "track%s_trkRelIso" % AfterTagged],
+                  "track%s_nValidPixelHits" % AfterTagged              : [10, 0, 10  , "track%s_nValidPixelHits" % AfterTagged],
+                  "track%s_nValidTrackerHits" % AfterTagged            : [20, 0, 20  , "track%s_nValidTrackerHits" % AfterTagged],
+                  "track%s_trackerLayersWithMeasurement" % AfterTagged : [20, 0, 20  , "track%s_trackerLayersWithMeasurement" % AfterTagged],
+                  "track%s_ptErrOverPt2" % AfterTagged                 : [20, 0, 0.01, "track%s_ptErrOverPt2" % AfterTagged],
+                  "track%s_chi2perNdof" % AfterTagged                  : [20, 0, 2   , "track%s_chi2perNdof" % AfterTagged],
+                  "track%s_mva" % AfterTagged                          : [20, -1, 1  , "track%s_mva" % AfterTagged],
+                  "track%s_pt" % AfterTagged                           : [20, 0, 200 , "track%s_pt" % AfterTagged],
+                  "track%s_trackQualityHighPurity" % AfterTagged       : [2, 0, 2    , "track%s_trackQualityHighPurity" % AfterTagged],
+                  "track%s_nMissingInnerHits" % AfterTagged            : [5, 0, 5    , "track%s_nMissingInnerHits" % AfterTagged],
+                  "track%s_passPFCandVeto" % AfterTagged               : [2, 0, 2    , "track%s_passPFCandVeto" % AfterTagged],
+                  "track%s_nMissingOuterHits" % AfterTagged            : [10, 0, 10  , "track%s_nMissingOuterHits" % AfterTagged],
+                  "track%s_matchedCaloEnergy" % AfterTagged            : [25, 0, 50  , "track%s_matchedCaloEnergy" % AfterTagged],
+                  "track%s_p" % AfterTagged                            : [20, 0, 200 , "track%s_p" % AfterTagged],
+                  "cutflow"                                            : [25, 0, 25  , ""],
+                  #"h_tracks_algo"                                     : [50, 0, 50, "h_tracks_algo"],
                  }
     
     # get all histos:

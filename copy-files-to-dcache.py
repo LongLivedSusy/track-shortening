@@ -8,7 +8,8 @@ import os
 import time
 
 #folder = "/nfs/dust/cms/user/kutznerv/store/"
-folder = "/nfs/dust/cms/user/kutznerv/DisappTrksSignalMC/"
+#folder = "/nfs/dust/cms/user/kutznerv/DisappTrksSignalMC/"
+folder = "/nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/Summer16_RERECO/"
 
 matches = []
 for root, dirnames, filenames in os.walk(folder):
@@ -32,5 +33,5 @@ for i_ifile, ifile in enumerate(matches):
     os.system(cmd)
     #print cmd
 
-    if i_ifile+1%100==0:
+    if i_ifile+1%1000==0:
         time.sleep(60)
