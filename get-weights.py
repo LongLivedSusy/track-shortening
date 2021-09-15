@@ -19,11 +19,11 @@ def get_reweighting_factor(histofolder, plotfolder, suffix):
                 "Autumn18",
                 "Run2016B",
                 "Run2016C",
-                "Run2016D",
+                #"Run2016D",
                 "Run2016E",
                 "Run2016F",
                 "Run2016G",
-                "Run2016H",
+                #"Run2016H",
                 "Run2017B",
                 "Run2017C",
                 "Run2017D",
@@ -37,6 +37,12 @@ def get_reweighting_factor(histofolder, plotfolder, suffix):
     
     histolabels = [
                 "track_nValidPixelHits",
+                "track_nValidPixelHits_short",
+                "track_nValidPixelHits_long",
+                "h_muonPtCand",
+                "track_pt",
+                "track_pt_short",
+                "track_pt_long",
               ]
     
     hists = {}
@@ -53,63 +59,82 @@ def get_reweighting_factor(histofolder, plotfolder, suffix):
             shared_utils.histoStyler(hists[period][label])
             fin.Close()
 
+    print "all loaded"
+
     # hweight = histTarget_NPixHits.Clone(); hweight.Divide(histSimulation)
     hweight = {}
     
-    for year in ["2016", "2017", "2018"]:
-        canvas = shared_utils.mkcanvas()
-        legend = shared_utils.mklegend(x1=0.6, y1=0.6, x2=0.85, y2=0.85)
-        colors = range(209,250)[::3]
-        
-        for i, period in enumerate(sorted(periods)):
+    for label in histolabels:
+
+        hweight[label] = {}
+
+        for year in ["2016", "2017", "2018"]:
+            canvas = shared_utils.mkcanvas()
+            legend = shared_utils.mklegend(x1=0.6, y1=0.6, x2=0.85, y2=0.85)
+            colors = range(209,250)[::3]
             
-            if year not in period: continue
+            for i, period in enumerate(sorted(periods)):
+                
+                if year not in period: continue
+                
+                if "Run2016" in period:
+                    mc = "Summer16"
+                elif "Run2017" in period:
+                    mc = "Fall17"
+                elif "Run2018" in period:
+                    mc = "Autumn18"
+                else:
+                    continue
+                
+                #num = hists[period]["track_nValidPixelHits"].Clone()
+                #denom = hists[mc]["track_nValidPixelHits"].Clone()
+                num = hists[period][label].Clone()
+                denom = hists[mc][label].Clone()
+
+                if num.Integral()>0:
+                    num.Scale(1.0/num.Integral())
+                else:
+                    print label, year, period, num.Integral()
+
+                if denom.Integral()>0:
+                    denom.Scale(1.0/denom.Integral())
+                else:
+                    print label, year, period, denom.Integral()
+
+                hweight[label][period] = num.Clone()
+                hweight[label][period].Divide(denom)
+                hweight[label][period].SetName(period + "_" + label)
+                shared_utils.histoStyler(hweight[label][period])
+                hweight[label][period].SetLineColor(colors.pop(0))
+                hweight[label][period].GetYaxis().SetRangeUser(0,5)
+                #hweight[label][period].SetTitle(";number of pixel hits;weight")
+                hweight[label][period].SetTitle(";track p_{T} (GeV);weight")
             
-            if "Run2016" in period:
-                mc = "Summer16"
-            elif "Run2017" in period:
-                mc = "Fall17"
-            elif "Run2018" in period:
-                mc = "Autumn18"
-            else:
-                continue
+                if i==0:
+                    hweight[label][period].Draw("hist e")
+                else:
+                    hweight[label][period].Draw("hist e same")
+                
+                legend.SetTextSize(0.035)
+                legend.AddEntry(hweight[label][period], period)
             
-            num = hists[period]["track_nValidPixelHits"].Clone()
-            denom = hists[mc]["track_nValidPixelHits"].Clone()
-            num.Scale(1.0/num.Integral())
-            denom.Scale(1.0/denom.Integral())
-            hweight[period] = num.Clone()
-            hweight[period].Divide(denom)
-            hweight[period].SetName(period)
-            shared_utils.histoStyler(hweight[period])
-            hweight[period].SetLineColor(colors.pop(0))
-            hweight[period].GetYaxis().SetRangeUser(0,5)
-            hweight[period].SetTitle(";number of pixel hits;weight")
-        
-            if i==0:
-                hweight[period].Draw("hist e")
-            else:
-                hweight[period].Draw("hist e same")
-            
-            legend.SetTextSize(0.035)
-            legend.AddEntry(hweight[period], period)
-        
-        legend.Draw()
-        shared_utils.stamp()
-        canvas.SaveAs("hweights_%s.pdf" % year)
+            legend.Draw()
+            shared_utils.stamp()
+            canvas.SaveAs("hweights_%s_%s.pdf" % (label, year))
 
     # save weights:
     fout = TFile("hweights.root", "recreate")
-    for period in hweight:
-        hweight[period].Write()
+    for label in histolabels:
+        for period in hweight[label]:
+            hweight[label][period].Write()
     fout.Close()
     
 
 if __name__ == "__main__":
 
     parser = OptionParser()
-    parser.add_option("--suffix", dest = "suffix", default = "NewShortPresel")
-    parser.add_option("--histofolder", dest = "histofolder", default = "histograms_beforereweighting")
+    parser.add_option("--suffix", dest = "suffix", default = "sep21v3-baseline1")
+    parser.add_option("--histofolder", dest = "histofolder", default = "histograms")
 
     (options, args) = parser.parse_args()
     

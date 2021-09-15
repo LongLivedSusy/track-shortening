@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 from ROOT import *
 import sys, os
 from DataFormats.FWLite import Events, Handle
@@ -37,6 +37,7 @@ parser.add_option("--override_category_pt", dest = "override_category_pt", actio
 parser.add_option("--onlyp0bdt", dest = "onlyp0bdt", action="store_true")
 parser.add_option("--reweightmc", dest = "reweightmc", default="")
 parser.add_option("--reweightfile", dest = "reweightfile", default="hweights.root")
+parser.add_option("--reweightvariable", dest = "reweightvariable", default="")
 parser.add_option("--onlyshorts", dest = "onlyshorts", action="store_true")
 parser.add_option("--useExotag", dest = "useExotag", action="store_true")
 
@@ -96,7 +97,7 @@ if period == "":
 if options_.reweightmc != "":
     reweighting = options_.reweightmc
     infile = TFile(options_.reweightfile)
-    h_weights = infile.Get(reweighting)
+    h_weights = infile.Get(options_.reweightmc + "_" + options_.reweightvariable)
     h_weights.SetDirectory(0)
     infile.Close()
     outfilename = "%s/histograms%s_%s_%s_%s.root" % (options_.outputfolder, options_.suffix, period + "rw" + reweighting, options_.chunkid, layers_remaining)
@@ -104,6 +105,8 @@ if options_.reweightmc != "":
 else:
     reweighting = False
     outfilename = "%s/histograms%s_%s_%s_%s.root" % (options_.outputfolder, options_.suffix, period, options_.chunkid, layers_remaining)
+
+print "reweighting:", reweighting
 
 print "outfilename", outfilename
 os.system("mkdir -p %s" % options_.outputfolder)
@@ -379,8 +382,13 @@ for i_event, event in enumerate(events):
             if not (summed_pt/muon.pt()>0.1 and summed_pt/muon.pt()<0.2):
                 continue
         
-        histos["h_muonPtCand"].Fill(muon.pt())
-        histos["h_muonEtaCand"].Fill(abs(muon.eta()))
+        if "h_muonPtCand" in options_.reweightvariable:
+            weight = h_weights.GetBinContent(h_weights.GetXaxis().FindBin(muon.pt()))
+        else:
+            weight = 1.0
+
+        histos["h_muonPtCand"].Fill(muon.pt(), weight)
+        histos["h_muonEtaCand"].Fill(abs(muon.eta()), weight)
         
         # select best muon track:
         try:
@@ -411,11 +419,15 @@ for i_event, event in enumerate(events):
         # a long track muon:
         if track.hitPattern().trackerLayersWithMeasurement() > 10 and abs(track.dxy(offlinePrimaryVerticesReco[0].position())) < 0.2 and abs(track.dz(offlinePrimaryVerticesReco[0].position())) < 0.1:
             
-            if reweighting:
+            if "track_pt" in options_.reweightvariable:
+                weight = h_weights.GetBinContent(h_weights.GetXaxis().FindBin(track.pt()))
+            elif "track_nValidPixelHits" in options_.reweightvariable:
                 weight = h_weights.GetBinContent(h_weights.GetXaxis().FindBin(track.hitPattern().numberOfValidPixelHits()))
+            elif "h_muonPtCand" in options_.reweightvariable:
+                weight = h_weights.GetBinContent(h_weights.GetXaxis().FindBin(muon.pt()))
             else:
                 weight = 1.0
-            
+
             histos["h_tracks_reco"].Fill(layers_remaining, weight)
             histos["h_tracks_reco_rebinned"].Fill(layers_remaining, weight)
             
@@ -443,22 +455,26 @@ for i_event, event in enumerate(events):
                     if options_.onlyshorts:
                         continue                        
 
-                if deltaR < 0.01 \
-                   and ((track_is_pixel_track and track_rereco.pt()>options_.shortsMinPt) \
-                        or (not track_is_pixel_track and track_rereco.pt()>options_.longsMinPt)) \
-                   and track_rereco.pt()>int(options_.low_pt_threshold) and track_rereco.pt()<=int(options_.high_pt_threshold) \
-                   and abs(track_rereco.eta())>float(options_.low_eta_threshold) \
-                   and abs(track_rereco.eta())<=float(options_.high_eta_threshold):
+                if deltaR < 0.01:
+                   #and ((track_is_pixel_track and track_rereco.pt()>options_.shortsMinPt) \
+                   #     or (not track_is_pixel_track and track_rereco.pt()>options_.longsMinPt)) \
+                   #and track_rereco.pt()>int(options_.low_pt_threshold) and track_rereco.pt()<=int(options_.high_pt_threshold) \
+                   #and abs(track_rereco.eta())>float(options_.low_eta_threshold) \
+                   #and abs(track_rereco.eta())<=float(options_.high_eta_threshold):
                                        
                     # get all necessary tag variables:
                     track_trackerLayersWithMeasurement = track_rereco.hitPattern().trackerLayersWithMeasurement() 
                     track_pixelLayersWithMeasurement = track_rereco.hitPattern().pixelLayersWithMeasurement() 
-                    
-                    if reweighting:
+
+                    if "track_pt" in options_.reweightvariable:
+                        weight = h_weights.GetBinContent(h_weights.GetXaxis().FindBin(track_rereco.pt()))
+                    elif "track_nValidPixelHits" in options_.reweightvariable:
                         weight = h_weights.GetBinContent(h_weights.GetXaxis().FindBin(track_rereco.hitPattern().numberOfValidPixelHits()))
+                    elif "h_muonPtCand" in options_.reweightvariable:
+                        weight = h_weights.GetBinContent(h_weights.GetXaxis().FindBin(muon.pt()))
                     else:
                         weight = 1.0
-                    
+        
                     # fill track mismatch histogram:
                     if track_trackerLayersWithMeasurement == layers_remaining:
                         histos["h_tracks_rereco_exact"].Fill(layers_remaining, weight)

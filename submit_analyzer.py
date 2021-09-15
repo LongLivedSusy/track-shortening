@@ -207,12 +207,24 @@ suffixes = OrderedDict()
 #suffixes["sep21v1-baseline16"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_nMissingMiddleHits==0 and track_dxyVtx<0.02 and track_dzVtx<0.5 and track_trkRelIso<0.05' "
 #suffixes["sep21v1-baseline17"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_nMissingMiddleHits==0 and track_dxyVtx<0.02 and track_dzVtx<0.5 and track_trkRelIso<0.05 and abs(track_eta)<2.1' "
 
-suffixes["sep21v2-baseline7a"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortsMinPt 55 "
-suffixes["sep21v2-baseline7aAUG"] =                                " --onlyshorts --bdt aug21v4-baseline --shortsMinPt 55 "
-suffixes["sep21v2-baseline7b"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>55' "
-suffixes["sep21v2-baseline7bAUG"] =                                " --onlyshorts --bdt aug21v4-baseline --shortCut 'track_pt>55' "
-suffixes["sep21v2-baseline7c"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>45' "
-suffixes["sep21v2-baseline7d"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>35' "
+#suffixes["sep21v2-baseline7a"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortsMinPt 55 "
+#suffixes["sep21v2-baseline7aAUG"] =                                " --onlyshorts --bdt aug21v4-baseline --shortsMinPt 55 "
+#suffixes["sep21v2-baseline7b"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>55' "
+#suffixes["sep21v2-baseline7bAUG"] =                                " --onlyshorts --bdt aug21v4-baseline --shortCut 'track_pt>55' "
+#suffixes["sep21v2-baseline7c"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>45' "
+#suffixes["sep21v2-baseline7d"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>35' "
+
+
+#suffixes["sep21v3-baseline5"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>50' "
+#suffixes["sep21v3-baseline4"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>55' "
+#suffixes["sep21v3-baseline3"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>45' "
+#suffixes["sep21v3-baseline2"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>35' "
+suffixes["sep21v3-baseline1"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>25' "
+#suffixes["sep21v3-baseline1AUG"] =                                   " --onlyshorts --bdt aug21v4-baseline --shortCut 'track_pt>25' "
+
+#suffixes["sep21v3-baseline1-RWh_muonPtCand"] =                     " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>25' --reweightfile hweights.root --reweightvariable h_muonPtCand"
+#suffixes["sep21v3-baseline1-RWtrack_pt_short"] =                     " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>25' --reweightfile hweights.root --reweightvariable track_pt_short"
+
 
 if False:
 
@@ -244,7 +256,7 @@ if __name__ == "__main__":
     overwrite = True
     lowstat = False
     runmode = "grid"
-    files_per_job = 3
+    files_per_job = 10
     njobs_divide_by = 1
 
     histofolder = "histograms"
@@ -276,8 +288,9 @@ if __name__ == "__main__":
                         suffixterm = " --suffix %s " % suffix
                     
                     extraargs = suffixes[suffix] + " %s --outputfolder %s " % (suffixterm, histofolder)
-                    cmd = "HOME=%s; cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/CMSSW_10_6_2/src/; eval `scramv1 runtime -sh`; cd -; cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening; python analyzer.py --chunkid %s %s %s " % (homedir, i_iFiles, " ".join(iFiles), extraargs)
-                    
+                    #cmd = "HOME=%s; cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/CMSSW_10_6_2/src/; eval `scramv1 runtime -sh`; cd -; cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening; python analyzer.py --chunkid %s %s %s " % (homedir, i_iFiles, " ".join(iFiles), extraargs)
+                    cmd = "HOME=%s; cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening; python analyzer.py --chunkid %s %s %s " % (homedir, i_iFiles, " ".join(iFiles), extraargs)
+
                     outfilename = "%s/histograms%s_%s_%s_%s.root" % (histofolder, suffix, period, i_iFiles, i)
                     if os.path.exists(outfilename) and not overwrite:
                         continue
@@ -290,11 +303,11 @@ if __name__ == "__main__":
                             for rwperiod in [
                                             "Run2016B",
                                             "Run2016C",
-                                            "Run2016D",
+                                            #"Run2016D",
                                             "Run2016E",
                                             "Run2016F",
                                             "Run2016G",
-                                            "Run2016H",
+                                            #"Run2016H",
                                             ]:
                                 commands.append(cmd + " --reweightmc " + rwperiod)
                         if "Fall17" in period:
@@ -325,10 +338,11 @@ if __name__ == "__main__":
             commands = commands2
         
         #print commands
+        print commands[0]
         print len(commands)
         raw_input("OK?")
         
-        GridEngineTools.runParallel(commands, runmode, confirm=0, condorDir="condor.analysis", use_sl6=0)
+        GridEngineTools.runParallel(commands, runmode, confirm=0, condorDir="condor.analysis3", use_sl6=0)
     
     if options.hadd:
         for period in periods: 
@@ -373,7 +387,7 @@ if __name__ == "__main__":
             else:
                 #os.system("./plot-reweighting-scalefactors-and-efficiencies.py --histofolder %s --suffix %s &" % (histofolder, suffix))
                 os.system("./plot-reweighting-scalefactors-and-efficiencies-combined.py --suffix %s &" % suffix)
-                #os.system("./plot-trackvariables-years.py --suffix %s &" % suffix)
-                #os.system("./plot-trackvariables-years.py --suffix %s --tagged tagged &" % suffix)
+                os.system("./plot-trackvariables-years.py --suffix %s &" % suffix)
+                os.system("./plot-trackvariables-years.py --suffix %s --tagged tagged &" % suffix)
                 
 

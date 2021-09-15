@@ -122,6 +122,7 @@ if __name__ == "__main__":
                   "track%s_nMissingOuterHits" % AfterTagged            : [10, 0, 10  , "track%s_nMissingOuterHits" % AfterTagged],
                   "track%s_matchedCaloEnergy" % AfterTagged            : [25, 0, 50  , "track%s_matchedCaloEnergy" % AfterTagged],
                   "track%s_p" % AfterTagged                            : [20, 0, 200 , "track%s_p" % AfterTagged],
+                  "h_muonPt"                                           : [20, 0, 200 , "h_muonPt"],
                   "cutflow"                                            : [25, 0, 25  , ""],
                   #"h_tracks_algo"                                     : [50, 0, 50, "h_tracks_algo"],
                  }
@@ -131,13 +132,16 @@ if __name__ == "__main__":
     for period in periods:
         hists[period] = {}
         for category in [
-                        #"",
+                        "",
                         "_short",
                         "_long",
                         ]:
                 
             for label in variables:
-                
+
+                if category == "" and label != "h_muonPt": continue
+                if label == "h_muonPt" and category != "": continue
+
                 print period, category, label
                 fin = TFile("%s/histograms%s_%s.root" % (histofolder, suffix, period), "open")                       
                 hists[period][label + category] = fin.Get(label + category)
@@ -145,6 +149,9 @@ if __name__ == "__main__":
                 hists[period][label + category].SetLineWidth(2)
                 shared_utils.histoStyler(hists[period][label + category])
                 fin.Close()
+
+    print "hists", hists["Run2016"]
+    #quit()
 
     # add years lumiweighted:
 
@@ -176,6 +183,10 @@ if __name__ == "__main__":
             if not "Run%s" % year in hists:
                 hists["Run%s" % year] = {}
             for label in variables:
+
+                if category == "" and label != "h_muonPt": continue
+                if label == "h_muonPt" and category != "": continue
+
                 hists["Run%s" % year][label + category] = 0
                 for i_period in periods:
                     if year in i_period and "rw" not in i_period:
@@ -188,13 +199,16 @@ if __name__ == "__main__":
                             hists["Run%s" % year][label + category].Add(scaledhisto)
                         
     for category in [
-                    #"",
+                    "",
                     "_short",
                     "_long",
                     ]:
         
         for label in variables:
         
+            if category == "" and label != "h_muonPt": continue
+            if label == "h_muonPt" and category != "": continue
+
             canvas = shared_utils.mkcanvas()
             legend = shared_utils.mklegend(x1=0.6, y1=0.55, x2=0.85, y2=0.85)
         
@@ -238,8 +252,9 @@ if __name__ == "__main__":
                     color = kGreen
                 
                 period = "Run%s" % year
-                print year, period, mcperiod
-                
+                print "X", year, period, mcperiod, label, category
+                print hists[period]
+
                 pad1.cd()
                 pad1.SetLogy()
                                 
@@ -251,6 +266,17 @@ if __name__ == "__main__":
                 legend.AddEntry(hists[period][label + category], period)
 
                 pad1.cd()
+                
+                # Draw overflow:
+                
+                last_bin = hists[period][label + category].GetNbinsX()+1
+                overflow = hists[period][label + category].GetBinContent(last_bin)
+                hists[period][label + category].AddBinContent((last_bin-1), overflow)
+                
+                last_bin = hists[mcperiod][label + category].GetNbinsX()+1
+                overflow = hists[mcperiod][label + category].GetBinContent(last_bin)
+                hists[mcperiod][label + category].AddBinContent((last_bin-1), overflow)
+                
                 
                 # normalize:
                 if hists[period][label + category].Integral()>0:
@@ -279,6 +305,7 @@ if __name__ == "__main__":
                 hists[mcperiod][label + category].SetLineWidth(3)
                 hists[mcperiod][label + category].SetTitle(";;Events")
                 legend.AddEntry(hists[mcperiod][label + category], mcperiod)
+                
                 
                 if "cutflow" in label:
                     hists[period][label + category].GetXaxis().SetTitleSize(0.04)
