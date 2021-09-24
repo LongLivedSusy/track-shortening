@@ -36,57 +36,7 @@ periods = [
           ]
                     
 suffixes = OrderedDict()
-#"onlyP0DiffXsec":   " --onlyp0bdt --bdt may21 ",
-#"Verifymay21":       " --bdt may21",
-#"Verifymay21equSgXsec3":       " --bdt may21-equSgXsec3",
-#"ShortsBaselineV2":    " --bdt jun21 ",
-#"ShortsCombinedV2":    " --bdt jun21 --combinedShortBDTs",
-#"ShortsRedefinedV2":   " --bdt jun21 --redefineCategories",
-#"ShortsBaselineV3":    " --bdt jun21 ",
-#"ShortsCombinedV3":    " --bdt jun21 --combinedShortBDTs",
-#"ShortsRedefinedV4":   " --bdt jun21 --redefineCategories",
-#"ShortsBaselineV3":    " --bdt jun21 ",
-#"ShortsBaselineV4":    " --bdt nov20-noEdep ",
-#"ShortsBaselineV4a2":    " --bdt nov20-noEdep ",
-#"ShortsBaselineV4spt15":    " --bdt nov20-noEdep --shortsMinPt 15",
-#"ShortsBaselineV4spt30":    " --bdt nov20-noEdep --shortsMinPt 30",
-#"ShortsBaselineV4spt40":    " --bdt nov20-noEdep --shortsMinPt 40",
-#"ShortsBaselineV5spt15":    " --bdt nov20-noEdep --shortsMinPt 15 --high_pt 25",
-#"ShortsBaselineV5spt25":    " --bdt nov20-noEdep --shortsMinPt 25 --high_pt 35",
-#"ShortsBaselineV5spt35":    " --bdt nov20-noEdep --shortsMinPt 35 --high_pt 50",
-#"ShortsBaselineV5":             " --bdt jun21",
-#"ShortsBaselineV5noRelIso":     " --bdt jul21-noRelIso",
-#"ShortsBaselineV5noDeltaPt":    " --bdt jul21-noDeltaPt",
-#"ShortsBaselineV5noPixelHits":  " --bdt jul21-noRelIso",
-#"ShortsBaselineV5noDeltaPt":    " --bdt jul21-noPixelHits",
-#"ShortsBaselineV5TighterDxy":   " --bdt jul21-TighterDxy",
-#"ShortsBaselineV5noPixelHitsnoDeltaPt":     " --bdt jul21-noPixelHits-noDeltaPt",
-#"ShortsBaselineV6":                         " --bdt jun21",
-#"ShortsBaselineV6noRelIso":                 " --bdt jul21-noRelIso",
-#"ShortsBaselineV6noDeltaPt":                " --bdt jul21-noDeltaPt",
-#"ShortsBaselineV6noPixelHits":              " --bdt jul21-noPixelHits",
-#"ShortsBaselineV6noPixelHitsnoDeltaPt":     " --bdt jul21-noPixelHits-noDeltaPt",
-#"ShortsBaselineV7":                         " --bdt jun21",
-#"ShortsBaselineV7baseline":                 " --bdt jul21-baseline",
-#"ShortsBaselineV7noRelIso":                 " --bdt jul21-noRelIso",
-#"ShortsBaselineV7noDeltaPt":                " --bdt jul21-noDeltaPt",
-#"ShortsBaselineV7noPixelHits":              " --bdt jul21-noPixelHits",
-#"verifyV2Aug21baseline":                    " --bdt aug21-baseline",
-#"verifyV2Aug21noPixel":                     " --bdt aug21-noPixelHits",
-#"verifyV2Aug21noDeltaPt":                   " --bdt aug21-noDeltaPt",
-#"verify-aug21v3-baseline":                  " --bdt aug21v3-baseline",
-#"verify-aug21v3-noPixelHits":               " --bdt aug21v3-noPixelHits",
-#"verify-aug21v3-noDeltaPt":                 " --bdt aug21v3-noDeltaPt",
-#"verify-aug21v3-noPixelHits-noDeltaPt":     " --bdt aug21v3-noPixelHits-noDeltaPt",
-#"verify-aug21v3-baseline-ptL":               " --bdt aug21v3-baseline --shortsMinPt 25 --shortsMaxPt 33",
-#"verify-aug21v3-baseline-ptM":               " --bdt aug21v3-baseline --shortsMinPt 33 --shortsMaxPt 40",
-#"verify-aug21v3-baseline-ptH":               " --bdt aug21v3-baseline --shortsMinPt 40",
-#"verify6-aug21v3-baseline-bdtp10p1":           " --bdt aug21v3-baseline --onlyshorts --bdtShortP1 0.1",
-#"verify6-aug21v3-baseline-bdtp10p05":          " --bdt aug21v3-baseline --onlyshorts --bdtShortP1 0.05",
-#"verify6-aug21v3-baseline-bdtp10p0":           " --bdt aug21v3-baseline --onlyshorts --bdtShortP1 0.00",
-#"verify6-aug21v3-baseline-bdtp1m0p05":         " --bdt aug21v3-baseline --onlyshorts --bdtShortP1 -0.05",
-#"verify6-aug21v3-baseline-bdtp1m0p1":          " --bdt aug21v3-baseline --onlyshorts --bdtShortP1 -0.10",
-#"verify6-static":                              " --useExotag --onlyshorts",
+
 #suffixes["aug21v4-baseline"] =                    " --onlyshorts --bdt aug21v4-baseline"
 #suffixes["aug21v4-noChi2perNdof-noChi2perNdof"] = " --onlyshorts --bdt aug21v4-noChi2perNdof-noChi2perNdof"
 #suffixes["aug21v4-noChi2perNdof-noDeltaPt"] =     " --onlyshorts --bdt aug21v4-noChi2perNdof-noDeltaPt"
@@ -192,7 +142,6 @@ suffixes = OrderedDict()
 #suffixes["sep21v1-baseline2"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_nMissingMiddleHits==0' "
 #suffixes["sep21v1-baseline3"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_nMissingMiddleHits==0 and track_dxyVtx<0.02 and track_dzVtx<0.5 and track_trkRelIso<0.05' "
 #suffixes["sep21v1-baseline4"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_nMissingMiddleHits==0 and track_nMissingInnerHits==0 and track_nMissingOuterHits>=3 and track_pt>55 and abs(track_eta)<2.1 and track_nValidPixelHits>=3 and track_matchedCaloEnergy<10 and track_dxyVtx<0.02 and track_dzVtx<0.5 and track_trkRelIso<0.05' "
-
 #suffixes["sep21v1-baseline5"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_nMissingMiddleHits==0' "
 #suffixes["sep21v1-baseline6"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_nMissingOuterHits>=3' "
 #suffixes["sep21v1-baseline7"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>55' "  #$$$
@@ -206,24 +155,70 @@ suffixes = OrderedDict()
 #suffixes["sep21v1-baseline15"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_dxyVtx<0.02 and track_dzVtx<0.5 and track_trkRelIso<0.05 and abs(track_eta)<2.1' "
 #suffixes["sep21v1-baseline16"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_nMissingMiddleHits==0 and track_dxyVtx<0.02 and track_dzVtx<0.5 and track_trkRelIso<0.05' "
 #suffixes["sep21v1-baseline17"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_nMissingMiddleHits==0 and track_dxyVtx<0.02 and track_dzVtx<0.5 and track_trkRelIso<0.05 and abs(track_eta)<2.1' "
-
 #suffixes["sep21v2-baseline7a"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortsMinPt 55 "
 #suffixes["sep21v2-baseline7aAUG"] =                                " --onlyshorts --bdt aug21v4-baseline --shortsMinPt 55 "
 #suffixes["sep21v2-baseline7b"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>55' "
 #suffixes["sep21v2-baseline7bAUG"] =                                " --onlyshorts --bdt aug21v4-baseline --shortCut 'track_pt>55' "
 #suffixes["sep21v2-baseline7c"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>45' "
 #suffixes["sep21v2-baseline7d"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>35' "
-
-
 #suffixes["sep21v3-baseline5"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>50' "
 #suffixes["sep21v3-baseline4"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>55' "
 #suffixes["sep21v3-baseline3"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>45' "
 #suffixes["sep21v3-baseline2"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>35' "
-suffixes["sep21v3-baseline1"] =                                   " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>25' "
-#suffixes["sep21v3-baseline1AUG"] =                                   " --onlyshorts --bdt aug21v4-baseline --shortCut 'track_pt>25' "
-
+#suffixes["sep21v4-baseline1"] =                                    " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>25' "
+#suffixes["sep21v3-baseline1AUG"] =                                   " --onlyshorts --bdt aug21v4-baseline --shortCut 'track_pt>25' 
 #suffixes["sep21v3-baseline1-RWh_muonPtCand"] =                     " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>25' --reweightfile hweights.root --reweightvariable h_muonPtCand"
 #suffixes["sep21v3-baseline1-RWtrack_pt_short"] =                     " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>25' --reweightfile hweights.root --reweightvariable track_pt_short"
+
+#suffixes["sep21v4-baseline1-rw1"] =                                 " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>25' --reweightfile hweights.root --reweightvariable h_muonPtCand"
+#suffixes["sep21v4-baseline1-rw2"] =                                 " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>25' --reweightfile hweights.root --reweightvariable track_nValidPixelHits_short"
+#suffixes["sep21v4-baseline1-rw3"] =                                 " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>25' --reweightfile hweights.root --reweightvariable track_pt_short"
+
+#suffixes["sep21v5-baseline1"] =                                    " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>=50 and track_pt<55' "
+#suffixes["sep21v5-baseline2"] =                                    " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>=25' --muonMinPt 25 "
+
+#suffixes["sep21v5-baseline3"] =                                    " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>=25' --muonMinPt 25 "
+#suffixes["sep21v5-baseline3-rw1"] =                                " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>=25' --muonMinPt 25 --reweightfile hweights.root --reweightvariable h_muonPtCand"
+#suffixes["sep21v5-baseline3-rw2"] =                                " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>=25' --muonMinPt 25 --reweightfile hweights.root --reweightvariable h_muonPt2Cand"
+#suffixes["sep21v5-baseline3-rw3"] =                                " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>=25' --muonMinPt 25 --reweightfile hweights.root --reweightvariable h_muonPt"
+#suffixes["sep21v5-baseline3-rw4"] =                                " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>=25' --muonMinPt 25 --reweightfile hweights.root --reweightvariable track_pt_short"
+
+#suffixes["sep21v5-baseline4"] =                                    " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt<50 or track_pt>55' "
+
+#suffixes["test3"] =     " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>=25' --muonMinPt 25 "
+#suffixes["test3-rw2"] = " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>=25' --muonMinPt 25 --reweightfile hweights.root --reweightvariable h_muonPt"
+#suffixes["test4"] =     " --bdt sep21v1-baseline --shortCut 'track_pt>=25' --longCut 'track_pt>=40' --muonMinPt 25 "
+#suffixes["test5"] =     " --bdt sep21v1-baseline --shortCut 'track_pt>=25' --longCut 'track_pt>=40' --muonMinPt 40 "
+suffixes["test6"] =                                         " --bdt nov20-noEdep "
+
+
+
+
+                            #if options_.useCustomTag:
+                            #                        
+                            #    if (
+                            #        abs(track_dxyVtx)<0.02 and \
+                            #        abs(track_dzVtx)<0.5 and \
+                            #        track_nMissingInnerHits==0 and \
+                            #        track_nMissingMiddleHits==0 and \
+                            #        track_nMissingOuterHits>=3 and \
+                            #        track_trkRelIso<0.05 and \
+                            #        track_pt>55 and \
+                            #        #(abs(track_eta)<0.15 and abs(track_eta)>0.35) and \
+                            #        #(abs(track_eta)<1.42 and abs(track_eta)>1.65) and \
+                            #        #(abs(track_eta)<1.55 and abs(track_eta)>1.85) and \
+                            #        abs(track_eta)<2.1 and \
+                            #        track_nValidPixelHits>=3 and \
+                            #        track_matchedCaloEnergy<10
+                            #       ):
+                            #        cutflow_counter += 1
+                            #        is_tagged = True
+                            #        histos["h_shortbdt2D"].Fill(track_mva, track_trackerLayersWithMeasurement)
+                            #
+                            #else:
+
+
+
 
 
 if False:
@@ -256,7 +251,7 @@ if __name__ == "__main__":
     overwrite = True
     lowstat = False
     runmode = "grid"
-    files_per_job = 10
+    files_per_job = 4
     njobs_divide_by = 1
 
     histofolder = "histograms"
@@ -288,8 +283,9 @@ if __name__ == "__main__":
                         suffixterm = " --suffix %s " % suffix
                     
                     extraargs = suffixes[suffix] + " %s --outputfolder %s " % (suffixterm, histofolder)
-                    #cmd = "HOME=%s; cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/CMSSW_10_6_2/src/; eval `scramv1 runtime -sh`; cd -; cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening; python analyzer.py --chunkid %s %s %s " % (homedir, i_iFiles, " ".join(iFiles), extraargs)
                     cmd = "HOME=%s; cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening; python analyzer.py --chunkid %s %s %s " % (homedir, i_iFiles, " ".join(iFiles), extraargs)
+
+                    #cmd = "cd /nfs/dust/cms/user/kutznerv/shorttrack/track-shortening/CMSSW_10_6_2/src/; eval `scramv1 runtime -sh`; cd -; " + cmd
 
                     outfilename = "%s/histograms%s_%s_%s_%s.root" % (histofolder, suffix, period, i_iFiles, i)
                     if os.path.exists(outfilename) and not overwrite:
@@ -303,11 +299,11 @@ if __name__ == "__main__":
                             for rwperiod in [
                                             "Run2016B",
                                             "Run2016C",
-                                            #"Run2016D",
+                                            "Run2016D",
                                             "Run2016E",
                                             "Run2016F",
                                             "Run2016G",
-                                            #"Run2016H",
+                                            "Run2016H",
                                             ]:
                                 commands.append(cmd + " --reweightmc " + rwperiod)
                         if "Fall17" in period:
@@ -386,8 +382,11 @@ if __name__ == "__main__":
                 os.system("./plot-reweighting-scalefactors-and-efficiencies.py --histofolder %s &" % (histofolder))
             else:
                 #os.system("./plot-reweighting-scalefactors-and-efficiencies.py --histofolder %s --suffix %s &" % (histofolder, suffix))
-                os.system("./plot-reweighting-scalefactors-and-efficiencies-combined.py --suffix %s &" % suffix)
-                os.system("./plot-trackvariables-years.py --suffix %s &" % suffix)
-                os.system("./plot-trackvariables-years.py --suffix %s --tagged tagged &" % suffix)
+                ##os.system("./plot-reweighting-scalefactors-and-efficiencies-combined.py --suffix %s &" % suffix)
+                os.system("./plot-reweighting-scalefactors-and-efficiencies-combined.py --lumiweighted --suffix %s &" % suffix)
+                #os.system("./plot-reweighting-scalefactors-and-efficiencies-combined.py --reweighted --suffix %s &" % suffix)
+                ##os.system("./plot-trackvariables-years.py --suffix %s &" % suffix)
+                #os.system("./plot-trackvariables-years.py --reweighted --suffix %s &" % suffix)
+                #os.system("./plot-trackvariables-years.py --suffix %s --tagged tagged &" % suffix)
                 
 

@@ -75,4 +75,4 @@ for label in ["fit_sf_short", "fit_sfreco_short", "fit_sftag_short"]:
     
     legend.Draw()
     
-    canvas.SaveAs("bdt_same_bg_eff_with_%s.pdf" % label)
+    canvas.SaveAs("plots/bdt_same_bg_eff_with_%s.pdf" % label)

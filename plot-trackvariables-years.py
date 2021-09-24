@@ -21,13 +21,6 @@ def fill_num_denom(i_finaleff, i_year, i_category, i_value):
 
 if __name__ == "__main__":
 
-    #./plot-trackvariables-years.py --suffix ShortsBaselineV5 &        
-    #./plot-trackvariables-years.py --suffix ShortsBaselineV5noRelIso & 
-    #./plot-trackvariables-years.py --suffix ShortsBaselineV5noDeltaPt &
-    #./plot-trackvariables-years.py --suffix ShortsBaselineV5noPixelHits &
-    #./plot-trackvariables-years.py --suffix ShortsBaselineV5noDeltaPt &
-    #./plot-trackvariables-years.py --suffix ShortsBaselineV5TighterDxy &
-
     parser = OptionParser()
     parser.add_option("--suffix", dest = "suffix", default = "ShortsBaselineV5")
     parser.add_option("--mcsuffix", dest = "mcsuffix", default = "")
@@ -40,16 +33,14 @@ if __name__ == "__main__":
     histofolder = options.histofolder
     suffix = options.suffix
     
-    plotfolder = "plots%s_new2" % options.suffix
-    if options.mcsuffix != "":
-        plotfolder = plotfolder.replace("_new2", "_%s_new2" % options.mcsuffix)
+    plotfolder = "plots_%s" % options.suffix
     
     os.system("mkdir -p %s" % plotfolder)
 
     periods = [
                 "Run2016B",
                 "Run2016C",
-                #"Run2016D",
+                "Run2016D",
                 "Run2016E",
                 "Run2016F",
                 "Run2016G",
@@ -89,11 +80,20 @@ if __name__ == "__main__":
                 "Summer16",
                 "Fall17",
                 "Autumn18",
-                   ]
-                   
-    
-    #for AfterTagged in ["", "tagged"]:
-    
+                  ]           
+
+    categories = [
+                    "",
+                    #"_short",
+                    #"_long",
+                    ]
+
+    years = [
+                     "2016",
+                     "2017",
+                     "2018"
+                    ] 
+ 
     AfterTagged = options.tagged 
     
     variables = {
@@ -122,8 +122,10 @@ if __name__ == "__main__":
                   "track%s_nMissingOuterHits" % AfterTagged            : [10, 0, 10  , "track%s_nMissingOuterHits" % AfterTagged],
                   "track%s_matchedCaloEnergy" % AfterTagged            : [25, 0, 50  , "track%s_matchedCaloEnergy" % AfterTagged],
                   "track%s_p" % AfterTagged                            : [20, 0, 200 , "track%s_p" % AfterTagged],
-                  "h_muonPt"                                           : [20, 0, 200 , "h_muonPt"],
-                  "cutflow"                                            : [25, 0, 25  , ""],
+                  "h_muonPt"                                           : [20, 0, 1000 , "h_muonPt"],
+                  #"h_muonPtCand"                                       : [20, 0, 1000 , "h_muonPtCand"],
+                  #"h_muonPt2Cand"                                       : [20, 0, 1000 , "h_muonPt2Cand"],
+                  #"cutflow"                                            : [25, 0, 25  , ""],
                   #"h_tracks_algo"                                     : [50, 0, 50, "h_tracks_algo"],
                  }
     
@@ -131,18 +133,15 @@ if __name__ == "__main__":
     hists = {}
     for period in periods:
         hists[period] = {}
-        for category in [
-                        "",
-                        "_short",
-                        "_long",
-                        ]:
+        for category in categories:
                 
             for label in variables:
 
-                if category == "" and label != "h_muonPt": continue
-                if label == "h_muonPt" and category != "": continue
+                if category == "" and "h_muon" not in label: continue
+                if "h_muon" in label and category != "": continue
 
                 print period, category, label
+                print "%s/histograms%s_%s.root" % (histofolder, suffix, period)
                 fin = TFile("%s/histograms%s_%s.root" % (histofolder, suffix, period), "open")                       
                 hists[period][label + category] = fin.Get(label + category)
                 hists[period][label + category].SetDirectory(0)
@@ -150,8 +149,6 @@ if __name__ == "__main__":
                 shared_utils.histoStyler(hists[period][label + category])
                 fin.Close()
 
-    print "hists", hists["Run2016"]
-    #quit()
 
     # add years lumiweighted:
 
@@ -175,39 +172,76 @@ if __name__ == "__main__":
         "Run2018D": 31.93,
     }
     
-    for category in [
-                    "_short",
-                    "_long",
-                    ]:
-        for year in ["2016", "2017", "2018"]:
+    for category in categories:
+        for year in years:
             if not "Run%s" % year in hists:
                 hists["Run%s" % year] = {}
             for label in variables:
 
-                if category == "" and label != "h_muonPt": continue
-                if label == "h_muonPt" and category != "": continue
+                if category == "" and "h_muon" not in label: continue
+                if "h_muon" in label and category != "": continue
 
                 hists["Run%s" % year][label + category] = 0
                 for i_period in periods:
                     if year in i_period and "rw" not in i_period:
                         scaledhisto = hists[i_period][label + category].Clone()
                         if "Run201" in i_period:
-                            scaledhisto.Scale(official_lumis[i_period])
+                            
+                            if scaledhisto.Integral() > 0:
+                                integral = scaledhisto.Integral()
+                            else:
+                                integral = 1.0
+
+                            scaledhisto.Scale(official_lumis[i_period] / integral )
                         if not hists["Run%s" % year][label + category]:
                             hists["Run%s" % year][label + category] = scaledhisto.Clone()
                         else:
                             hists["Run%s" % year][label + category].Add(scaledhisto)
-                        
-    for category in [
-                    "",
-                    "_short",
-                    "_long",
-                    ]:
+
+
+    # produce Summer16, Fall17 and Autumn18 for reweighted MC:
+    if options.mc_reweighted:
+        for category in categories:
+            for year in years:
+
+                if year == "2016":
+                    mcperiod = "Summer16"
+                elif year == "2017":
+                    mcperiod = "Fall17"
+                elif year == "2018":
+                    mcperiod = "Autumn18"
+
+                if not mcperiod in hists:
+                    hists[mcperiod] = {}
+                for label in variables:
+
+                    if category == "" and "h_muon" not in label: continue
+                    if "h_muon" in label and category != "": continue
+
+                    hists[mcperiod][label + category] = 0
+                    for i_period in periods:
+                        if mcperiod in i_period:
+                            scaledhisto = hists[i_period][label + category].Clone()
+                            dataperiod = i_period.split("rw")[-1]
+
+                            if scaledhisto.Integral() > 0:
+                                integral = scaledhisto.Integral()
+                            else:
+                                integral = 1.0
+
+                            scaledhisto.Scale(official_lumis[dataperiod] / integral)
+                            if not hists[mcperiod][label + category]:
+                                hists[mcperiod][label + category] = scaledhisto.Clone()
+                            else:
+                                hists[mcperiod][label + category].Add(scaledhisto)
+                      
+
+    for category in categories:
         
         for label in variables:
         
-            if category == "" and label != "h_muonPt": continue
-            if label == "h_muonPt" and category != "": continue
+            if category == "" and "h_muon" not in label: continue
+            if "h_muon" in label and category != "": continue
 
             canvas = shared_utils.mkcanvas()
             legend = shared_utils.mklegend(x1=0.6, y1=0.55, x2=0.85, y2=0.85)
@@ -226,7 +260,7 @@ if __name__ == "__main__":
             pad2.Draw()
             pad1.cd()
             
-            for i_year, year in enumerate(["2016", "2017", "2018"]):
+            for i_year, year in enumerate(years):
                 
                 if i_year == 0:
                     drawoption = "hist e same"
@@ -251,9 +285,12 @@ if __name__ == "__main__":
                     mcperiod = "Autumn18"
                     color = kGreen
                 
+
+
+
                 period = "Run%s" % year
-                print "X", year, period, mcperiod, label, category
-                print hists[period]
+                #print "X", year, period, mcperiod, label, category
+                #print hists[period]
 
                 pad1.cd()
                 pad1.SetLogy()
@@ -372,4 +409,8 @@ if __name__ == "__main__":
             shared_utils.stamp()
             legend.Draw()
             pdfname = "%s/trackvar%s_%s.pdf" % (plotfolder, category, label)
+
+            if options.mc_reweighted:
+                pdfname = pdfname.replace(".pdf", "_reweighted.pdf")
+
             canvas.SaveAs(pdfname)

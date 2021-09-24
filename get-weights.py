@@ -11,7 +11,7 @@ gROOT.SetBatch(True)
 gStyle.SetOptStat(0)
 TH1D.SetDefaultSumw2()
 
-def get_reweighting_factor(histofolder, plotfolder, suffix):
+def get_reweighting_factor(histofolder, suffix):
     
     periods = [
                 "Summer16",
@@ -19,11 +19,11 @@ def get_reweighting_factor(histofolder, plotfolder, suffix):
                 "Autumn18",
                 "Run2016B",
                 "Run2016C",
-                #"Run2016D",
+                "Run2016D",
                 "Run2016E",
                 "Run2016F",
                 "Run2016G",
-                #"Run2016H",
+                "Run2016H",
                 "Run2017B",
                 "Run2017C",
                 "Run2017D",
@@ -36,13 +36,15 @@ def get_reweighting_factor(histofolder, plotfolder, suffix):
               ]
     
     histolabels = [
-                "track_nValidPixelHits",
-                "track_nValidPixelHits_short",
-                "track_nValidPixelHits_long",
+                #"track_nValidPixelHits",
+                #"track_nValidPixelHits_short",
+                #"track_nValidPixelHits_long",
                 "h_muonPtCand",
-                "track_pt",
+                "h_muonPt2Cand",
+                "h_muonPt",
+                #"track_pt",
                 "track_pt_short",
-                "track_pt_long",
+                #"track_pt_long",
               ]
     
     hists = {}
@@ -110,17 +112,25 @@ def get_reweighting_factor(histofolder, plotfolder, suffix):
                 #hweight[label][period].SetTitle(";number of pixel hits;weight")
                 hweight[label][period].SetTitle(";track p_{T} (GeV);weight")
             
+                #hweight[label][period].GetXaxis().SetRangeUser(0, 250)
+            
                 if i==0:
                     hweight[label][period].Draw("hist e")
                 else:
                     hweight[label][period].Draw("hist e same")
-                
+
+                # Draw overflow:
+                last_bin = hweight[label][period].GetNbinsX()+1
+                overflow = hweight[label][period].GetBinContent(last_bin)
+                print overflow
+                hweight[label][period].AddBinContent((last_bin-1), overflow)
+
                 legend.SetTextSize(0.035)
                 legend.AddEntry(hweight[label][period], period)
             
             legend.Draw()
             shared_utils.stamp()
-            canvas.SaveAs("hweights_%s_%s.pdf" % (label, year))
+            canvas.SaveAs("plots/hweights_%s_%s.pdf" % (label, year))
 
     # save weights:
     fout = TFile("hweights.root", "recreate")
@@ -133,10 +143,9 @@ def get_reweighting_factor(histofolder, plotfolder, suffix):
 if __name__ == "__main__":
 
     parser = OptionParser()
-    parser.add_option("--suffix", dest = "suffix", default = "sep21v3-baseline1")
+    parser.add_option("--suffix", dest = "suffix", default = "test3")
     parser.add_option("--histofolder", dest = "histofolder", default = "histograms")
 
     (options, args) = parser.parse_args()
     
-    plotfolder = "plots%s" % options.suffix
-    get_reweighting_factor(options.histofolder, plotfolder, options.suffix)
+    get_reweighting_factor(options.histofolder, options.suffix)

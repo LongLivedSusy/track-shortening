@@ -240,5 +240,5 @@ if step_reco:
     #if len(invalid_files)>0:
     #    print "invalid_files: %s" % invalid_files
 
-    if len(glob.glob("%s_RERECO/*root" % period)) > 20:
-        os.system("rm %s_HITREMOVER/*root" % period)
+    #if len(glob.glob("%s_RERECO/*root" % period)) > 20:
+    #    os.system("rm %s_HITREMOVER/*root" % period)
