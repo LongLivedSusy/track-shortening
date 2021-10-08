@@ -40,11 +40,11 @@ def get_reweighting_factor(histofolder, suffix):
                 #"track_nValidPixelHits_short",
                 #"track_nValidPixelHits_long",
                 "h_muonPtCand",
-                "h_muonPt2Cand",
+                #"h_muonPt2Cand",
                 "h_muonPt",
                 #"track_pt",
                 "track_pt_short",
-                #"track_pt_long",
+                "track_pt_long",
               ]
     
     hists = {}
@@ -52,10 +52,8 @@ def get_reweighting_factor(histofolder, suffix):
         hists[period] = {}
         for label in histolabels:
             fin = TFile("%s/histograms%s_%s.root" % (histofolder, suffix, period), "open")                       
-
             print label, histofolder, suffix, period
-
-            hists[period][label] = fin.Get(label)
+            hists[period][label] = fin.Get("Histograms/" + label)
             hists[period][label].SetDirectory(0)
             hists[period][label].SetLineWidth(2)
             shared_utils.histoStyler(hists[period][label])
@@ -112,7 +110,7 @@ def get_reweighting_factor(histofolder, suffix):
                 #hweight[label][period].SetTitle(";number of pixel hits;weight")
                 hweight[label][period].SetTitle(";track p_{T} (GeV);weight")
             
-                #hweight[label][period].GetXaxis().SetRangeUser(0, 250)
+                hweight[label][period].GetXaxis().SetRangeUser(0, 200)
             
                 if i==0:
                     hweight[label][period].Draw("hist e")
@@ -143,7 +141,7 @@ def get_reweighting_factor(histofolder, suffix):
 if __name__ == "__main__":
 
     parser = OptionParser()
-    parser.add_option("--suffix", dest = "suffix", default = "test3")
+    parser.add_option("--suffix", dest = "suffix", default = "run13")
     parser.add_option("--histofolder", dest = "histofolder", default = "histograms")
 
     (options, args) = parser.parse_args()

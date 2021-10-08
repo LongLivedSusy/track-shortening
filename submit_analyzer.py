@@ -189,33 +189,46 @@ suffixes = OrderedDict()
 #suffixes["test3-rw2"] = " --onlyshorts --bdt sep21v1-baseline --shortCut 'track_pt>=25' --muonMinPt 25 --reweightfile hweights.root --reweightvariable h_muonPt"
 #suffixes["test4"] =     " --bdt sep21v1-baseline --shortCut 'track_pt>=25' --longCut 'track_pt>=40' --muonMinPt 25 "
 #suffixes["test5"] =     " --bdt sep21v1-baseline --shortCut 'track_pt>=25' --longCut 'track_pt>=40' --muonMinPt 40 "
-suffixes["test6"] =                                         " --bdt nov20-noEdep "
+#suffixes["test6"] =                                         " --bdt nov20-noEdep "
 
+#suffixes["test7"] =                                       " --bdt sep21v1-baseline --muonMinPt 25"
+#suffixes["test8"] =                                       " --bdt sep21v1-baseline --muonMinPt 40"
+#suffixes["test9"] =                                       " --bdt nov20-noEdep --muonMinPt 25"
+#suffixes["test10"] =                                      " --bdt nov20-noEdep --muonMinPt 40"
+#suffixes["exo1"] =                                        " --notree --ignorePreselection --useCustomTag --shortCut 'abs(track_dxyVtx)<0.02 and abs(track_dzVtx)<0.5 and track_nMissingInnerHits==0 and track_nMissingMiddleHits==0 and track_nMissingOuterHits>=3 and track_trkRelIso<0.05 and track_pt>55 and abs(track_eta)<2.1 and track_nValidPixelHits>=3 and track_matchedCaloEnergy<10'"
+#suffixes["exo2"] =                                        " --notree --ignorePreselection --useCustomTag --shortCut 'abs(track_dxyVtx)<0.02 and abs(track_dzVtx)<0.5 and track_nMissingInnerHits==0 and track_nMissingMiddleHits==0 and track_nMissingOuterHits>=3 and track_trkRelIso<0.05 and track_pt>25 and abs(track_eta)<2.1 and track_nValidPixelHits>=3 and track_matchedCaloEnergy<10'"
+#suffixes["exo3"] =                                        " --notree --ignorePreselection --useCustomTag --shortCut 'abs(track_dxyVtx)<0.02 and abs(track_dzVtx)<0.5 and track_nMissingInnerHits==0 and track_nMissingMiddleHits==0 and track_nMissingOuterHits>=3 and track_trkRelIso<0.05 and track_pt>40 and abs(track_eta)<2.1 and track_nValidPixelHits>=3 and track_matchedCaloEnergy<10'"
 
+#suffixes["test11"] =                                   " --onlyshorts --bdt sep21v1-baseline --muonMinPt 25"
+#suffixes["test12"] =                                   " --onlyshorts --bdt nov20-noEdep --muonMinPt 25"
+#suffixes["exo0"] =                                     " --onlyshorts --notree --ignorePreselection --useCustomTag --shortCut 'track_nValidPixelHits>=3'"
+#suffixes["exo4b"] =                                     " --onlyshorts --notree --ignorePreselection --useCustomTag --shortsMinPt 55 --shortCut 'abs(track_dxyVtx)<0.02 and abs(track_dzVtx)<0.5 and track_nMissingInnerHits==0 and track_nMissingMiddleHits==0 and track_nMissingOuterHits>=3 and track_trkRelIso<0.05 and track_pt>55 and abs(track_eta)<2.1 and track_nValidPixelHits>=3 and track_matchedCaloEnergy<10'"
+#suffixes["exo5b"] =                                     " --onlyshorts --notree --ignorePreselection --useCustomTag --shortsMinPt 50 --shortCut 'abs(track_dxyVtx)<0.02 and abs(track_dzVtx)<0.5 and track_nMissingInnerHits==0 and track_nMissingMiddleHits==0 and track_nMissingOuterHits>=3 and track_trkRelIso<0.05 and track_pt>50 and abs(track_eta)<2.1 and track_nValidPixelHits>=3 and track_matchedCaloEnergy<10'"
+#suffixes["exo6b"] =                                     " --onlyshorts --notree --ignorePreselection --useCustomTag --shortsMinPt 45 --shortCut 'abs(track_dxyVtx)<0.02 and abs(track_dzVtx)<0.5 and track_nMissingInnerHits==0 and track_nMissingMiddleHits==0 and track_nMissingOuterHits>=3 and track_trkRelIso<0.05 and track_pt>45 and abs(track_eta)<2.1 and track_nValidPixelHits>=3 and track_matchedCaloEnergy<10'"
+#suffixes["exo7"] =                                     " --onlyshorts --notree --ignorePreselection --useCustomTag --shortsMinPt 25 --shortCut 'abs(track_dxyVtx)<0.02 and abs(track_dzVtx)<0.5 and track_nMissingInnerHits==0 and track_nMissingMiddleHits==0 and track_nMissingOuterHits>=3 and track_trkRelIso<0.05 and track_pt>25 and abs(track_eta)<2.1 and track_nValidPixelHits>=3 and track_matchedCaloEnergy<10'"
 
+#suffixes["run13"] =                                    " --bdt sep21v1-baseline "
+#suffixes["run13rw1"] =                                 " --bdt sep21v1-baseline --reweightfile hweights.root --reweightvariable h_muonPt "
+#suffixes["run13rw2"] =                                 " --bdt sep21v1-baseline --reweightfile hweights.root --reweightvariable track_pt_short "
 
-                            #if options_.useCustomTag:
-                            #                        
-                            #    if (
-                            #        abs(track_dxyVtx)<0.02 and \
-                            #        abs(track_dzVtx)<0.5 and \
-                            #        track_nMissingInnerHits==0 and \
-                            #        track_nMissingMiddleHits==0 and \
-                            #        track_nMissingOuterHits>=3 and \
-                            #        track_trkRelIso<0.05 and \
-                            #        track_pt>55 and \
-                            #        #(abs(track_eta)<0.15 and abs(track_eta)>0.35) and \
-                            #        #(abs(track_eta)<1.42 and abs(track_eta)>1.65) and \
-                            #        #(abs(track_eta)<1.55 and abs(track_eta)>1.85) and \
-                            #        abs(track_eta)<2.1 and \
-                            #        track_nValidPixelHits>=3 and \
-                            #        track_matchedCaloEnergy<10
-                            #       ):
-                            #        cutflow_counter += 1
-                            #        is_tagged = True
-                            #        histos["h_shortbdt2D"].Fill(track_mva, track_trackerLayersWithMeasurement)
-                            #
-                            #else:
+#suffixes["run15AllShorts"] =                           " --bdt sep21v1-baseline --ignorePreselection"
+#suffixes["run16AllShorts"] =                           " --bdt sep21v1-baseline --ignorePreselection"
+#suffixes["run17AllShorts"] =                           " --bdt sep21v1-baseline --ignorePreselection"
+suffixes["run17AllShortsrw2"] =                         " --bdt sep21v1-baseline --ignorePreselection --reweightfile hweights.root --reweightvariable h_muonPt "
+
+# abs(track_dxyVtx)<0.02 and \
+# abs(track_dzVtx)<0.5 and \
+# track_nMissingInnerHits==0 and \
+# track_nMissingMiddleHits==0 and \
+# track_nMissingOuterHits>=3 and \
+# track_trkRelIso<0.05 and \
+# track_pt>55 and \
+# #(abs(track_eta)<0.15 and abs(track_eta)>0.35) and \
+# #(abs(track_eta)<1.42 and abs(track_eta)>1.65) and \
+# #(abs(track_eta)<1.55 and abs(track_eta)>1.85) and \
+# abs(track_eta)<2.1 and \
+# track_nValidPixelHits>=3 and \
+# track_matchedCaloEnergy<10
 
 
 
@@ -251,7 +264,7 @@ if __name__ == "__main__":
     overwrite = True
     lowstat = False
     runmode = "grid"
-    files_per_job = 4
+    files_per_job = 10
     njobs_divide_by = 1
 
     histofolder = "histograms"
@@ -385,6 +398,7 @@ if __name__ == "__main__":
                 ##os.system("./plot-reweighting-scalefactors-and-efficiencies-combined.py --suffix %s &" % suffix)
                 os.system("./plot-reweighting-scalefactors-and-efficiencies-combined.py --lumiweighted --suffix %s &" % suffix)
                 #os.system("./plot-reweighting-scalefactors-and-efficiencies-combined.py --reweighted --suffix %s &" % suffix)
+                #os.system("./plot-reweighting-scalefactors-and-efficiencies-combined2.py --lumiweighted --suffix %s &" % suffix)
                 ##os.system("./plot-trackvariables-years.py --suffix %s &" % suffix)
                 #os.system("./plot-trackvariables-years.py --reweighted --suffix %s &" % suffix)
                 #os.system("./plot-trackvariables-years.py --suffix %s --tagged tagged &" % suffix)
