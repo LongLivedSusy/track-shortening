@@ -5,7 +5,6 @@ from DataFormats.FWLite import Events, Handle
 from optparse import OptionParser
 import array as pyarray
 from array import array
-#import shared_utils
 
 # inspect RECO and reRECO collections
 # comments @ Viktor Kutzner
@@ -41,7 +40,7 @@ parser.add_option("--useCustomTag", dest = "useCustomTag", action="store_true")
 parser.add_option("--ignorePreselection", dest = "ignorePreselection", action="store_true")
 parser.add_option("--notree", dest = "notree", action="store_true")
 parser.add_option("--nohist", dest = "nohist", action="store_true")
-parser.add_option("--debug", dest = "debug", action="store_true")
+parser.add_option("--samcorrections", dest = "samcorrections", action="store_true")
 
 (options_, args) = parser.parse_args()
 first_filename = args[0].split(".root")[0]
@@ -116,6 +115,13 @@ else:
 
 print "reweighting:", reweighting
 
+# get Sam's dxy and dz corrections:
+if options_.samcorrections:
+    infile = TFile("../analysis/disappearing-track-tag/dxydzcalibration.root")
+    g_calibratedxy = infile.Get("g_calibratedxy")
+    g_calibratedz = infile.Get("g_calibratedz")
+    infile.Close()
+
 print "outfilename", outfilename
 os.system("mkdir -p %s" % options_.outputfolder)
 if os.path.exists(outfilename) and not overwrite:
@@ -189,6 +195,8 @@ for AfterTagged in ["", "tagged"]:
     histos["track%s_is_pixel_track" % AfterTagged]               = TH1F("track%s_is_pixel_track" % AfterTagged, "", 2, 0, 2)
     histos["track%s_dxyVtx" % AfterTagged]                       = TH1F("track%s_dxyVtx" % AfterTagged, "", 20, 0, 0.1)
     histos["track%s_dzVtx" % AfterTagged]                        = TH1F("track%s_dzVtx" % AfterTagged, "", 20, 0, 0.1)
+    #histos["track%s_dxyVtxCorrected" % AfterTagged]             = TH1F("track%s_dxyVtxCorrected" % AfterTagged, "", 20, 0, 0.1)
+    #histos["track%s_dzVtxCorrected" % AfterTagged]              = TH1F("track%s_dzVtxCorrected" % AfterTagged, "", 20, 0, 0.1)
     histos["track%s_trkRelIso" % AfterTagged]                    = TH1F("track%s_trkRelIso" % AfterTagged, "", 20, 0, 0.2)
     histos["track%s_nValidPixelHits" % AfterTagged]              = TH1F("track%s_nValidPixelHits" % AfterTagged, "", 10, 0, 10)
     histos["track%s_nValidTrackerHits" % AfterTagged]            = TH1F("track%s_nValidTrackerHits" % AfterTagged, "", 20, 0, 20)
@@ -243,6 +251,7 @@ if write_tree:
     floatlabels = [
                    "weight_ptreweighting",
                    "weight_lumiPerYear",
+                   "weight_lumi",
                    "weight_kinematicMLP1",
                    "weight_kinematicMLP2",
                    "weight_kinematicMLP3",
@@ -323,7 +332,7 @@ if not options_.onlyshorts:
     reader_long.BookMVA("BDT", weights_long)
 
 # load BDTs for weights:
-#######################
+########################
 reader_weightsCatA = TMVA.Reader( "!Color:!Silent" )
 var_pt_short = pyarray.array('f',[0]) ; reader_weightsCatA.AddVariable("track_pt", var_pt_short)
 reader_weightsCatA.AddVariable("track_ptErrOverPt2", var_ptErrOverPt2_short)
@@ -385,17 +394,16 @@ official_lumis = {
 }
 
 total_lumi_per_year = 0.0
+total_lumi = 0.0
 for i_period in official_lumis:
+    total_lumi += official_lumis[i_period]
     for year in ["2016", "2017", "2018"]:
         if year in period and year in i_period:
             total_lumi_per_year += official_lumis[i_period]
 
 # loop over events:
 for i_event, event in enumerate(events):
-    
-    if options_.debug:
-        if i_event>500: break
-   
+     
     if (i_event+1) % 100 == 0:
         print "%s, event %s / %s (layers_remaining=%s)" % (period, i_event+1, events.size(), layers_remaining)
         if int(options_.nev)>0 and i_event>int(options_.nev): break
@@ -680,7 +688,12 @@ for i_event, event in enumerate(events):
 
         is_tagged = False
         is_preselected = False
-        
+
+        # corrections:
+        if options_.samcorrections and phase == 1 and "Run201" not in period and track_is_pixel_track:
+            track_dxyVtx = g_calibratedxy.Eval(track_dxyVtx)
+            track_dzVtx = g_calibratedxy.Eval(track_dzVtx)
+
         if track_trackQualityHighPurity==1:
             cutflow_counter += 1
             if abs(track_eta)<options_.high_eta_threshold:
@@ -751,7 +764,6 @@ for i_event, event in enumerate(events):
                 if not "noChi2perNdof" in options_.bdt:
                     var_chi2perNdof_short[0] = track_chi2perNdof
             track_mva = reader_short.EvaluateMVA("BDT")
-            print "@@@", track_mva
 
             weight_kinematicMLP1 = reader_weightsCatA.EvaluateMVA("MLP1_A")
             weight_kinematicMLP2 = reader_weightsCatA.EvaluateMVA("MLP2_A")
@@ -855,8 +867,6 @@ for i_event, event in enumerate(events):
                         else:
                             fill_value_into_tree = 0
 
-                    if "mva" in label:
-                        print "@@@", track_mva, fill_value_into_tree
                     tree_branch_values[label.replace("_long", "")][0] = fill_value_into_tree
 
         if write_tree:
@@ -902,20 +912,19 @@ for i_event, event in enumerate(events):
                 histos["h_tracks_preselected_short"].Fill(layers_remaining, weight)
             else:
                 histos["h_tracks_preselected_long"].Fill(layers_remaining, weight)
-                                
-        # exit shortened track loop
-        #break
-        
+
+        if write_tree:
+            if "Run201" in args[0]:
+                tree_branch_values["weight_lumiPerYear"][0] = official_lumis[period] / total_lumi_per_year
+                tree_branch_values["weight_lumi"][0] = official_lumis[period] / total_lumi
+            else:
+                tree_branch_values["weight_lumiPerYear"][0] = 1.0
+                tree_branch_values["weight_lumi"][0] = 1.0
+            tree_branch_values["weight_ptreweighting"][0] = weight
+            tout.Fill()
+
         # exit muon loop to only process a single muon per event:
         break
-
-    if write_tree:
-        if "Run201" in args[0]:
-            tree_branch_values["weight_lumiPerYear"][0] = official_lumis[period] / total_lumi_per_year
-        else:
-            tree_branch_values["weight_lumiPerYear"][0] = 1.0
-        tree_branch_values["weight_ptreweighting"][0] = weight
-        tout.Fill()
 
 if write_tree:
     fout.cd()

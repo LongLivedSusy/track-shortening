@@ -85,13 +85,21 @@ def main(options):
                              "taggedextra":  "",
                              "legendheader": "baseline",
                            },
-               "lowdxydz": {
-                             "base_cuts":    "layers_remaining>=3 && ",
-                             "taggedextra":  "track_dxyVtx<0.01 && track_dzVtx<0.01 && ",
-                             "legendheader": "lowdxydz",
-                           },
+               #"lowdxydz": {
+               #              "base_cuts":    "layers_remaining>=3 && ",
+               #              "taggedextra":  "track_dxyVtx<0.01 && track_dzVtx<0.01 && ",
+               #              "legendheader": "lowdxydz",
+               #            },
            }
 
+    if not options.get_from_tree:
+        cuts = {
+               "baseline": {
+                             "base_cuts":    "",
+                             "taggedextra":  "",
+                             "legendheader": "baseline",
+                           },
+               }
 
     for cut_label in cuts:
 
@@ -104,8 +112,10 @@ def main(options):
                     "h_tracks_reco":            ["track_reco", cuts[cut_label]["base_cuts"] + "track_reco==1", 1, 1, 2],
                     "h_tracks_rereco_short":    ["track_reco", cuts[cut_label]["base_cuts"] + cuts[cut_label]["taggedextra"] + exact + " track_rereco==1 && track_is_pixel_track==1", 1, 1, 2],
                     "h_tracks_rereco_long":     ["track_reco", cuts[cut_label]["base_cuts"] + cuts[cut_label]["taggedextra"] + exact + " track_rereco==1 && track_is_pixel_track==0", 1, 1, 2],
-                    "h_tracks_tagged_short":    ["track_reco", cuts[cut_label]["base_cuts"] + cuts[cut_label]["taggedextra"] + exact + " track_preselected==1 && track_mva>0.1 && track_pt>25 && track_is_pixel_track==1", 1, 1, 2],
-                    "h_tracks_tagged_long":     ["track_reco", cuts[cut_label]["base_cuts"] + cuts[cut_label]["taggedextra"] + exact + " track_preselected==1 && track_mva>0.1 && track_pt>40 && track_tagged==1 && track_is_pixel_track==0", 1, 1, 2],
+                    "h_tracks_tagged_short":    ["track_reco", cuts[cut_label]["base_cuts"] + cuts[cut_label]["taggedextra"] + exact + " track_preselected==1 && track_mva>0.1 && track_pt>25 && track_is_pixel_track==1 && (track_matchedCaloEnergy<15 || track_matchedCaloEnergy/track_p<0.15)", 1, 1, 2],
+                    "h_tracks_tagged_long":     ["track_reco", cuts[cut_label]["base_cuts"] + cuts[cut_label]["taggedextra"] + exact + " track_preselected==1 && track_mva>0.1 && track_pt>40 && track_is_pixel_track==0 && (track_matchedCaloEnergy<15 || track_matchedCaloEnergy/track_p<0.15)", 1, 1, 2],
+                    #"h_tracks_tagged_short":    ["track_reco", cuts[cut_label]["base_cuts"] + cuts[cut_label]["taggedextra"] + exact + " track_preselected==1 && track_tagged==1 && track_is_pixel_track==1", 1, 1, 2],
+                    #"h_tracks_tagged_long":     ["track_reco", cuts[cut_label]["base_cuts"] + cuts[cut_label]["taggedextra"] + exact + " track_preselected==1 && track_tagged==1 && track_is_pixel_track==0", 1, 1, 2],
                     #h_tracks_tagged_short":    ["track_reco", base_cutstagged + "track_tagged==1 && track_is_pixel_track==1", 1, 1, 2],
                     #"h_tracks_tagged_short":   ["track_reco", base_cutstagged + "track_is_pixel_track==1", 1, 1, 2],
                     #"h_tracks_tagged_short":   ["track_reco", base_cuts + exact + " abs(track_dxyVtx)<0.005 && abs(track_dzVtx)<0.005 && track_tagged==1 && track_pt>25 && track_is_pixel_track==1", 1, 1, 2],
@@ -492,14 +502,16 @@ def main(options):
                 for i, i_binlabel in enumerate(binlabels_long):
                     h_sf_long[label].GetXaxis().SetBinLabel(i + 1, i_binlabel)    
                 
-                if "lumi" not in label:
-                    #h_sf_short[label].GetXaxis().SetTitleSize(0.04)
-                    #h_sf_short[label].GetXaxis().SetLabelSize(0.04)   
-                    h_sf_short[label].GetXaxis().SetTitleSize(0.09)
-                    h_sf_short[label].GetXaxis().SetLabelSize(0.09)   
-                else:
+                if options.lumiweighted:
                     h_sf_short[label].GetXaxis().SetLabelSize(0.09)
-
+                    h_sf_short[label].GetXaxis().SetTitleSize(0.09)
+                    h_sf_long[label].GetXaxis().SetLabelSize(0.09)
+                    h_sf_long[label].GetXaxis().SetTitleSize(0.09)
+                else:
+                    h_sf_short[label].GetXaxis().SetTitleSize(0.045)
+                    h_sf_short[label].GetXaxis().SetLabelSize(0.045)
+                    h_sf_long[label].GetXaxis().SetTitleSize(0.045)
+                    h_sf_long[label].GetXaxis().SetLabelSize(0.045)
 
                 
             legend.Draw()
@@ -648,8 +660,8 @@ def main(options):
                                 pdfname = pdfname.replace(".pdf", "_mcreweighted.pdf")
                             if options.lumiweighted:
                                 pdfname = pdfname.replace(".pdf", "_lumiweighted.pdf")
-                            if not plot_sf:
-                                pdfname = pdfname.replace(".pdf", "_numdenom.pdf")
+                            #if not plot_sf:
+                            #    pdfname = pdfname.replace(".pdf", "_numdenom.pdf")
                             
                             canvas.SaveAs(pdfname)
                     
