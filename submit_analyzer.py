@@ -12,6 +12,7 @@ def chunks(lst, n):
         yield lst[i:i + n]
 
 periods = [
+            "Run2016",
             "Summer16",
             "Run2016B",
             "Run2016C",
@@ -20,6 +21,7 @@ periods = [
             "Run2016F",
             "Run2016G",
             "Run2016H",
+            "Run2017",
             "Fall17",
             "Run2017B",
             "Run2017C",
@@ -27,6 +29,7 @@ periods = [
             "Run2017E",
             "Run2017F",
             "Autumn18",
+            "Run2018",
             "Run2018A",
             "Run2018B",
             "Run2018C",
@@ -212,7 +215,13 @@ suffixes = OrderedDict()
 #suffixes["run20"] =                                                        " --bdt sep21v1-baseline --ignorePreselection"
 #suffixes["run20corr"] =                                                    " --onlyshorts --bdt sep21v1-baseline --ignorePreselection --samcorrections"
 #suffixes["run21"] =                                                        " --bdt nov20-noEdep --ignorePreselection"
-suffixes["run22"] =                                                         " --bdt nov20-noEdep --ignorePreselection"
+#suffixes["run22"] =                                                        " --bdt nov20-noEdep --ignorePreselection"
+#suffixes["run23"] =                                                        " --bdt sep21v1-baseline "
+#suffixes["run23corr"] =                                                    " --onlyshorts --bdt sep21v1-baseline --samcorrections"
+#suffixes["run24"] =                                                        " --bdt sep21v1-baseline "
+#suffixes["run24corr"] =                                                    " --onlyshorts --bdt sep21v1-baseline --samcorrections"
+suffixes["run26"] =                                                         " --bdt sep21v1-baseline "
+suffixes["run26corr"] =                                                     " --onlyshorts --bdt sep21v1-baseline --samcorrections"
 
 
 if False:

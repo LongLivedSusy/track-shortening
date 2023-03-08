@@ -21,6 +21,7 @@ parser.add_option("--low_eta", dest = "low_eta_threshold", default = 0)
 parser.add_option("--high_eta", dest = "high_eta_threshold", default = 2.0)
 parser.add_option("--muonMinPt", dest = "muonMinPt", default = 25)
 parser.add_option("--bdt", dest = "bdt", default = "may21-equSgXsec3")
+parser.add_option("--bdtcorrected", dest = "bdtcorrected", action = "store_true")
 parser.add_option("--shortCut", dest = "shortCut", default = "")
 parser.add_option("--longCut", dest = "longCut", default = "")
 parser.add_option("--bdtShortP0", dest = "bdtShortP0", default = 0.1)
@@ -195,8 +196,6 @@ for AfterTagged in ["", "tagged"]:
     histos["track%s_is_pixel_track" % AfterTagged]               = TH1F("track%s_is_pixel_track" % AfterTagged, "", 2, 0, 2)
     histos["track%s_dxyVtx" % AfterTagged]                       = TH1F("track%s_dxyVtx" % AfterTagged, "", 20, 0, 0.1)
     histos["track%s_dzVtx" % AfterTagged]                        = TH1F("track%s_dzVtx" % AfterTagged, "", 20, 0, 0.1)
-    #histos["track%s_dxyVtxCorrected" % AfterTagged]             = TH1F("track%s_dxyVtxCorrected" % AfterTagged, "", 20, 0, 0.1)
-    #histos["track%s_dzVtxCorrected" % AfterTagged]              = TH1F("track%s_dzVtxCorrected" % AfterTagged, "", 20, 0, 0.1)
     histos["track%s_trkRelIso" % AfterTagged]                    = TH1F("track%s_trkRelIso" % AfterTagged, "", 20, 0, 0.2)
     histos["track%s_nValidPixelHits" % AfterTagged]              = TH1F("track%s_nValidPixelHits" % AfterTagged, "", 10, 0, 10)
     histos["track%s_nValidTrackerHits" % AfterTagged]            = TH1F("track%s_nValidTrackerHits" % AfterTagged, "", 20, 0, 20)
@@ -293,9 +292,15 @@ reader_short = TMVA.Reader( "!Color:!Silent" )
 
 if "-with" in options_.bdt:
     if "withDxy" in options_.bdt:
-        var_dxyVtx_short = pyarray.array('f',[0]) ; reader_short.AddVariable("tracks_dxyVtx", var_dxyVtx_short)
+        if not options_.bdtcorrected:
+            var_dxyVtx_short = pyarray.array('f',[0]) ; reader_short.AddVariable("tracks_dxyVtx", var_dxyVtx_short)
+        else:
+            var_dxyVtx_short = pyarray.array('f',[0]) ; reader_short.AddVariable("tracks_dxyVtxCorrected", var_dxyVtx_short)
     if "withDz" in options_.bdt:
-        var_dzVtx_short = pyarray.array('f',[0]) ; reader_short.AddVariable("tracks_dzVtx", var_dzVtx_short)
+        if not options_.bdtcorrected:
+            var_dzVtx_short = pyarray.array('f',[0]) ; reader_short.AddVariable("tracks_dzVtx", var_dzVtx_short)
+        else:
+            var_dzVtx_short = pyarray.array('f',[0]) ; reader_short.AddVariable("tracks_dzVtxCorrected", var_dzVtx_short)
     if "withRIso" in options_.bdt:
         var_trkRelIso_short = pyarray.array('f',[0]) ; reader_short.AddVariable("tracks_trkRelIso", var_trkRelIso_short)
     if "withPHits" in options_.bdt:
@@ -306,9 +311,15 @@ if "-with" in options_.bdt:
         var_chi2perNdof_short = pyarray.array('f',[0]) ; reader_short.AddVariable("tracks_chi2perNdof", var_chi2perNdof_short)
 else:
     if not "noDxy" in options_.bdt:
-        var_dxyVtx_short = pyarray.array('f',[0]) ; reader_short.AddVariable("tracks_dxyVtx", var_dxyVtx_short)
+        if not options_.bdtcorrected:
+            var_dxyVtx_short = pyarray.array('f',[0]) ; reader_short.AddVariable("tracks_dxyVtx", var_dxyVtx_short)
+        else:
+            var_dxyVtx_short = pyarray.array('f',[0]) ; reader_short.AddVariable("tracks_dxyVtxCorrected", var_dxyVtx_short)
     if not "noDz" in options_.bdt:
-        var_dzVtx_short = pyarray.array('f',[0]) ; reader_short.AddVariable("tracks_dzVtx", var_dzVtx_short)
+        if not options_.bdtcorrected:
+            var_dzVtx_short = pyarray.array('f',[0]) ; reader_short.AddVariable("tracks_dzVtx", var_dzVtx_short)
+        else:
+            var_dzVtx_short = pyarray.array('f',[0]) ; reader_short.AddVariable("tracks_dzVtxCorrected", var_dzVtx_short)
     if not "noRelIso" in options_.bdt:
         var_trkRelIso_short = pyarray.array('f',[0]) ; reader_short.AddVariable("tracks_trkRelIso", var_trkRelIso_short)
     if not "noPixelHits" in options_.bdt:
@@ -544,7 +555,7 @@ for i_event, event in enumerate(events):
         histos["h_muonPt"].Fill(muon.pt(), weight)
         histos["h_muonEta"].Fill(abs(muon.eta()), weight)
         
-        # get minimal deltaR w.r.t. closest track:
+        # get minimal deltaR w.r.t. closest RERECO track:
         minDeltaR = 999999
         miniTrack = -1
         for iTrack, track_rereco in enumerate(tracks_rereco):
@@ -556,6 +567,10 @@ for i_event, event in enumerate(events):
                 miniTrack = iTrack
         if write_tree:
             tree_branch_values["track_minDeltaR"][0] = minDeltaR
+
+        # Matching criterion for shortened tracks
+        if minDeltaR > 0.01:
+            continue
 
         track_rereco = tracks_rereco[miniTrack]
 
@@ -700,7 +715,7 @@ for i_event, event in enumerate(events):
                 cutflow_counter += 1
                 if track_ptErrOverPt2<10:
                     cutflow_counter += 1
-                    if abs(track_dzVtx)<0.1:
+                    if abs(track_dxyVtx)<0.1 and abs(track_dzVtx)<0.1:
                         cutflow_counter += 1
                         if track_trkRelIso<0.2:
                             cutflow_counter += 1
@@ -827,10 +842,14 @@ for i_event, event in enumerate(events):
             if not options_.useCustomTag:
                 if is_preselected and ((phase==0 and track_mva>options_.bdtLongP0) or (phase==1 and track_mva>options_.bdtLongP1)):
                     cutflow_counter += 1
-                    if (track_matchedCaloEnergy<15 or track_matchedCaloEnergy/track_p<0.15):
-                        cutflow_counter += 1
-                        is_tagged = True
-                        histos["h_longbdt2D"].Fill(track_mva, track_trackerLayersWithMeasurement)
+                    if track_is_pixel_track and track_matchedCaloEnergy<20:
+                            cutflow_counter += 1
+                            is_tagged = True
+                            histos["h_longbdt2D"].Fill(track_mva, track_trackerLayersWithMeasurement)
+                    elif not track_is_pixel_track and (track_matchedCaloEnergy<20 or track_matchedCaloEnergy/track_p<0.20):
+                            cutflow_counter += 1
+                            is_tagged = True
+                            histos["h_longbdt2D"].Fill(track_mva, track_trackerLayersWithMeasurement)
     
         cutflow_fill(layers_remaining, track_is_pixel_track)      
 

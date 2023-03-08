@@ -72,6 +72,9 @@ def main(options):
                 "Run2018B",
                 "Run2018C",
                 "Run2018D",
+                "Run2016",
+                "Run2017",
+                "Run2018",
                 "Summer16",
                 "Fall17",
                 "Autumn18",
@@ -82,7 +85,7 @@ def main(options):
     cuts = {
                "baseline": {
                              "base_cuts":    "layers_remaining>=3 && ",
-                             "taggedextra":  "",
+                             "taggedextra":  "track_minDeltaR>1 && ",
                              "legendheader": "baseline",
                            },
                #"lowdxydz": {
@@ -109,11 +112,13 @@ def main(options):
             cuts[cut_label]["base_cuts"] += " weight_trackpropMLP2>0 && "        
 
         histolabels = {
-                    "h_tracks_reco":            ["track_reco", cuts[cut_label]["base_cuts"] + "track_reco==1", 1, 1, 2],
-                    "h_tracks_rereco_short":    ["track_reco", cuts[cut_label]["base_cuts"] + cuts[cut_label]["taggedextra"] + exact + " track_rereco==1 && track_is_pixel_track==1", 1, 1, 2],
-                    "h_tracks_rereco_long":     ["track_reco", cuts[cut_label]["base_cuts"] + cuts[cut_label]["taggedextra"] + exact + " track_rereco==1 && track_is_pixel_track==0", 1, 1, 2],
-                    "h_tracks_tagged_short":    ["track_reco", cuts[cut_label]["base_cuts"] + cuts[cut_label]["taggedextra"] + exact + " track_preselected==1 && track_mva>0.1 && track_pt>25 && track_is_pixel_track==1 && (track_matchedCaloEnergy<15 || track_matchedCaloEnergy/track_p<0.15)", 1, 1, 2],
-                    "h_tracks_tagged_long":     ["track_reco", cuts[cut_label]["base_cuts"] + cuts[cut_label]["taggedextra"] + exact + " track_preselected==1 && track_mva>0.1 && track_pt>40 && track_is_pixel_track==0 && (track_matchedCaloEnergy<15 || track_matchedCaloEnergy/track_p<0.15)", 1, 1, 2],
+                    "h_tracks_reco":            ["h_tracks_reco", cuts[cut_label]["base_cuts"] + "track_reco==1", 1, 1, 2],
+                    "h_tracks_rereco":          ["h_tracks_rereco_exact", cuts[cut_label]["base_cuts"] + cuts[cut_label]["taggedextra"] + exact + " track_rereco==1 && track_is_pixel_track==1", 1, 1, 2],
+                    "h_tracks_rereco_short":    ["h_tracks_rereco_exact_short", cuts[cut_label]["base_cuts"] + cuts[cut_label]["taggedextra"] + exact + " track_rereco==1 && track_is_pixel_track==1", 1, 1, 2],
+                    "h_tracks_rereco_long":     ["h_tracks_rereco_exact_long", cuts[cut_label]["base_cuts"] + cuts[cut_label]["taggedextra"] + exact + " track_rereco==1 && track_is_pixel_track==0", 1, 1, 2],
+                    "h_tracks_tagged":          ["h_tracks_tagged_exact", cuts[cut_label]["base_cuts"] + cuts[cut_label]["taggedextra"] + exact + " track_preselected==1 && track_mva>0.1 && track_pt>25 && track_is_pixel_track==1 && (track_matchedCaloEnergy<15 || track_matchedCaloEnergy/track_p<0.15)", 1, 1, 2],
+                    "h_tracks_tagged_short":    ["h_tracks_tagged_exact_short", cuts[cut_label]["base_cuts"] + cuts[cut_label]["taggedextra"] + exact + " track_preselected==1 && track_mva>0.1 && track_pt>25 && track_is_pixel_track==1 && (track_matchedCaloEnergy<15 || track_matchedCaloEnergy/track_p<0.15)", 1, 1, 2],
+                    "h_tracks_tagged_long":     ["h_tracks_tagged_exact_long", cuts[cut_label]["base_cuts"] + cuts[cut_label]["taggedextra"] + exact + " track_preselected==1 && track_mva>0.1 && track_pt>40 && track_is_pixel_track==0 && (track_matchedCaloEnergy<15 || track_matchedCaloEnergy/track_p<0.15)", 1, 1, 2],
                     #"h_tracks_tagged_short":    ["track_reco", cuts[cut_label]["base_cuts"] + cuts[cut_label]["taggedextra"] + exact + " track_preselected==1 && track_tagged==1 && track_is_pixel_track==1", 1, 1, 2],
                     #"h_tracks_tagged_long":     ["track_reco", cuts[cut_label]["base_cuts"] + cuts[cut_label]["taggedextra"] + exact + " track_preselected==1 && track_tagged==1 && track_is_pixel_track==0", 1, 1, 2],
                     #h_tracks_tagged_short":    ["track_reco", base_cutstagged + "track_tagged==1 && track_is_pixel_track==1", 1, 1, 2],
@@ -126,8 +131,9 @@ def main(options):
                       }
         
         categories = [
+                      "_long",
                       "_short",
-                      "_long"
+                      "",
                      ]
 
         # get all histos:
@@ -208,7 +214,7 @@ def main(options):
         for category in categories:
 
             # first, get efficiencies:
-                
+            
             finaleff_global[category] = {}
             finaleff_reco[category] = {}
             finaleff_tag[category] = {}
@@ -274,7 +280,7 @@ def main(options):
                     g1_global[category][period] = TF1( 'g1_global', '[0]',  3,  20 )
                     h_sf_global[category][period] = finaleff_global[category][period].Clone()
                     h_sf_global[category][period].Divide(finaleff_global[category][mcperiod])
-                    fit = h_sf_global[category][period].Fit(g1_global[category][period], "", "same", 3, 20)
+                    fit = h_sf_global[category][period].Clone().Fit(g1_global[category][period], "", "same", 3, 20)
                     fitresults["fit_sf"][period + category] = g1_global[category][period].GetParameter(0)
                     if "short" in category:
                         fitresults["fit_uncert"][period + category] = h_sf_global[category][period].GetBinError(4)
@@ -285,7 +291,7 @@ def main(options):
                     g1_reco[category][period] = TF1( 'g1_reco', '[0]',  3,  20 )
                     h_sf_reco[category][period] = finaleff_reco[category][period].Clone()
                     h_sf_reco[category][period].Divide(finaleff_reco[category][mcperiod])
-                    fit = h_sf_reco[category][period].Fit(g1_reco[category][period], "", "same", 3, 20)
+                    fit = h_sf_reco[category][period].Clone().Fit(g1_reco[category][period], "", "same", 3, 20)
                     fitresults["fit_sfreco"][period + category] = g1_reco[category][period].GetParameter(0)
                     if "short" in category:
                         fitresults["fit_uncertreco"][period + category] = h_sf_reco[category][period].GetBinError(4)
@@ -296,7 +302,7 @@ def main(options):
                     g1_tag[category][period] = TF1( 'g1_tag', '[0]',  3,  20 )
                     h_sf_tag[category][period] = finaleff_tag[category][period].Clone()
                     h_sf_tag[category][period].Divide(finaleff_tag[category][mcperiod])
-                    fit = h_sf_tag[category][period].Fit(g1_tag[category][period], "", "same", 3, 20)
+                    fit = h_sf_tag[category][period].Clone().Fit(g1_tag[category][period], "", "same", 3, 20)
                     fitresults["fit_sftag"][period + category] = g1_tag[category][period].GetParameter(0)
                     if "short" in category:
                         fitresults["fit_uncerttag"][period + category] = h_sf_tag[category][period].GetBinError(4)
@@ -354,6 +360,9 @@ def main(options):
                     fitresults["fit_uncertreco"][runyear + category] = 0
                     fitresults["fit_sftag"][runyear + category] = 0
                     fitresults["fit_uncerttag"][runyear + category] = 0
+                    h_sf_global[category][runyear] = 0
+                    h_sf_reco[category][runyear] = 0
+                    h_sf_tag[category][runyear] = 0
 
                     sum_lumi = 0.0
             
@@ -369,6 +378,29 @@ def main(options):
                             fitresults["fit_sftag"][runyear + category] += fitresults["fit_sftag"][lumiyear + category] * official_lumis[lumiyear]
                             fitresults["fit_uncerttag"][runyear + category] += fitresults["fit_uncerttag"][lumiyear + category] * official_lumis[lumiyear]
 
+                            #canvas = shared_utils.mkcanvas()
+                            #h_sf_global[category][lumiyear].Draw("hist")
+                            #canvas.Print("hi.pdf")
+                            #quit()
+
+                            h_tmp_global = h_sf_global[category][lumiyear].Clone()
+                            h_tmp_global.Scale(official_lumis[lumiyear])
+                            h_tmp_reco = h_sf_reco[category][lumiyear].Clone()
+                            h_tmp_reco.Scale(official_lumis[lumiyear])
+                            h_tmp_tag = h_sf_tag[category][lumiyear].Clone()
+                            h_tmp_tag.Scale(official_lumis[lumiyear])
+
+                            if not h_sf_global[category][runyear]:
+                                print category, "adding", lumiyear, "to", runyear
+                                h_sf_global[category][runyear] = h_tmp_global.Clone()
+                                h_sf_reco[category][runyear] = h_tmp_reco.Clone()
+                                h_sf_tag[category][runyear] = h_tmp_tag.Clone()
+                            else:
+                                print category, "adding", lumiyear, "to", runyear
+                                h_sf_global[category][runyear].Add(h_tmp_global)
+                                h_sf_reco[category][runyear].Add(h_tmp_reco)
+                                h_sf_tag[category][runyear].Add(h_tmp_tag)
+
                     print runyear, sum_lumi
 
                     fitresults["fit_sf"][runyear + category] /= sum_lumi
@@ -377,6 +409,12 @@ def main(options):
                     fitresults["fit_uncertreco"][runyear + category] /= sum_lumi
                     fitresults["fit_sftag"][runyear + category] /= sum_lumi
                     fitresults["fit_uncerttag"][runyear + category] /= sum_lumi
+                    
+                    h_sf_global[category][runyear].Scale(1.0/sum_lumi)
+                    h_sf_reco[category][runyear].Scale(1.0/sum_lumi)
+                    h_sf_tag[category][runyear].Scale(1.0/sum_lumi)
+
+                    print "*** SF ", runyear, category, fitresults["fit_sf"][runyear + category], "+-", fitresults["fit_uncert"][runyear + category]
 
         # efficiencies:
 
@@ -384,7 +422,11 @@ def main(options):
         
         output_rootfile = TFile("%s/allperiods_sf_combined.root" % (plotfolder), "recreate")
 
-        for category in ["short", "long"]:
+        for category in [
+                    "short",
+                    "long",
+                    "",
+                    ]:
 
             canvas = shared_utils.mkcanvas()
             legend = shared_utils.mklegend(x1=0.47, y1=0.65, x2=0.85, y2=0.85)
@@ -442,10 +484,11 @@ def main(options):
                     else:
                         h_sf_short[label].Draw("hist e same")
 
-                    outhist = h_sf_short[label].Clone()
-                    outhist.SetDirectory(0)
-                    outhist.SetName(label + "_" + category)
-                    outhist.Write()
+                    if "corr" in suffix:
+                        outhist = h_sf_short[label].Clone()
+                        outhist.SetDirectory(0)
+                        outhist.SetName(label + "_" + category)
+                        outhist.Write()
                     
                     if "reco" in label:
                         h_sf_short[label].SetTitle(";;fitted track reconstruction scale factor")
@@ -460,10 +503,11 @@ def main(options):
                     else:
                         h_sf_long[label].Draw("hist e same")
                     
-                    outhist = h_sf_long[label].Clone()
-                    outhist.SetDirectory(0)
-                    outhist.SetName(label + "_" + category)
-                    outhist.Write()
+                    if "corr" not in suffix and category == "long":
+                        outhist = h_sf_long[label].Clone()
+                        outhist.SetDirectory(0)
+                        outhist.SetName(label + "_" + category)
+                        outhist.Write()
                     
                     if "reco" in label:
                         h_sf_long[label].SetTitle(";;fitted track reconstruction scale factor")
@@ -516,7 +560,7 @@ def main(options):
                 
             legend.Draw()
             
-            shared_utils.stamp()
+            shared_utils.stamp(WorkInProgress = True)
             
             pdfname = "%s/allperiods_sf_combined_%s_%s.pdf" % (plotfolder, category, cut_label)
             
@@ -555,14 +599,11 @@ def main(options):
         else:
             this_periods = periods
         
-        # plot underlying efficiencies and SFs:
+        # plot underlying efficiencies:
 
         if not options.lumiweighted and not options.get_from_tree:
-
                 for i_finaleff, finaleff in enumerate([finaleff_global, finaleff_reco, finaleff_tag]):
-                 
                     for year in ["2016", "2017", "2018"]:
-                    
                         for category in categories:
                             
                             canvas = shared_utils.mkcanvas()
@@ -584,16 +625,12 @@ def main(options):
                                     mcperiod = "Autumn18"
                                 
                                 if period == mcperiod or year in period:
-                                
+                    
                                     color = colors.pop(0)
-
                                     if i_period == 0:
                                         drawoption = "p e"
                                     else:
                                         drawoption = "hist e same"
-
-                                    print finaleff[category].keys()
-
                                     if period != mcperiod:
                                         finaleff[category][period].SetMarkerStyle(20)
                                         finaleff[category][period].SetMarkerColor(color)
@@ -601,51 +638,18 @@ def main(options):
                                     finaleff[category][period].Draw(drawoption)
                                     finaleff[category][period].SetLineColor(color)
                                     finaleff[category][period].SetLineStyle(1)
-                                    finaleff[category][period].SetTitle(";number of remaining tracker layers;efficiency, scale factor")
+                                    if i_finaleff == 0:
+                                        finaleff[category][period].SetTitle(";number of remaining tracker layers;efficiency")
+                                    elif i_finaleff == 1:
+                                        finaleff[category][period].SetTitle(";number of remaining tracker layers;reconstruction efficiency")
+                                    elif i_finaleff == 2:
+                                        finaleff[category][period].SetTitle(";number of remaining tracker layers;tagging efficiency")
                                     finaleff[category][period].GetXaxis().SetRangeUser(0, 20)
-                                    finaleff[category][period].GetYaxis().SetRangeUser(0.4, 1.6)
-                                    
+                                    finaleff[category][period].GetYaxis().SetRangeUser(0.0, 1.1)
                                     legend.AddEntry(finaleff[category][period], period)
-
-                                    # include scale factor with fit result...:
-                                        
-                                    if "Run" in period and "rw" not in period:
-                                                                            
-                                        if i_finaleff == 0: 
-                                            h_sf_global[category][period].Draw("e same")
-                                            h_sf_global[category][period].SetLineColor(color)
-                                            h_sf_global[category][period].SetLineWidth(2)
-                                            g1_global[category][period].Draw("same")
-                                            g1_global[category][period].SetLineColor(color)
-                                            g1_global[category][period].SetLineWidth(2)
-                                            #legend.AddEntry(g1_global[category][period], "scale factor")
-                                        elif i_finaleff == 1: 
-                                            h_sf_reco[category][period].Draw("e same")
-                                            h_sf_reco[category][period].SetLineColor(color)
-                                            h_sf_reco[category][period].SetLineWidth(2)
-                                            g1_reco[category][period].Draw("same")
-                                            g1_reco[category][period].SetLineColor(color)
-                                            g1_reco[category][period].SetLineWidth(2)
-                                            #legend.AddEntry(g1_reco[category][period], "scale factor")
-                                        elif i_finaleff == 2: 
-                                            h_sf_tag[category][period].Draw("e same")
-                                            h_sf_tag[category][period].SetLineColor(color)
-                                            h_sf_tag[category][period].SetLineWidth(2)
-                                            g1_tag[category][period].Draw("same")
-                                            g1_tag[category][period].SetLineColor(color)
-                                            g1_tag[category][period].SetLineWidth(2)
-                                            #legend.AddEntry(g1_tag[category][period], "scale factor")
-                                                
-                                        #finaleff_global_num[category][period].Draw("e same")
-                                        #finaleff_global_num[category][period].SetLineColor(color)
-                                        #finaleff_global_num[category][period].SetLineWidth(2)
-                                        #finaleff_global_denom[category][period].Draw("e same")
-                                        #finaleff_global_denom[category][period].SetLineColor(color)
-                                        #finaleff_global_denom[category][period].SetLineWidth(2)
-                                        #finaleff_global_denom[category][period].SetLineStyle(2)
                                 
                             legend.Draw()
-                            shared_utils.stamp()
+                            shared_utils.stamp(WorkInProgress = True)
                     
                             if i_finaleff == 0:        
                                 pdfname = "%s/underlying%s%s.pdf" % (plotfolder, category, year)
@@ -660,11 +664,120 @@ def main(options):
                                 pdfname = pdfname.replace(".pdf", "_mcreweighted.pdf")
                             if options.lumiweighted:
                                 pdfname = pdfname.replace(".pdf", "_lumiweighted.pdf")
-                            #if not plot_sf:
-                            #    pdfname = pdfname.replace(".pdf", "_numdenom.pdf")
                             
                             canvas.SaveAs(pdfname)
                     
+                    
+        # plot underlying SF:
+
+        #if not options.lumiweighted and not options.get_from_tree:
+        if not options.get_from_tree:
+                for i_finaleff, finaleff in enumerate([finaleff_global, finaleff_reco, finaleff_tag]):
+
+                    for category in categories:
+
+                        if options.lumiweighted:
+                            canvas = shared_utils.mkcanvas()
+                            legend = shared_utils.mklegend(x1=0.7, y1=0.6, x2=0.85, y2=0.85)
+                            legend.SetTextSize(0.035)
+                            if category != "":
+                                legend.SetHeader("%s tracks only" % category.replace("_", ""))
+                            colors = [61, 97, 210]
+
+
+                        for year in ["2016", "2017", "2018"]:
+
+                            if not options.lumiweighted:
+                                canvas = shared_utils.mkcanvas()
+                                legend = shared_utils.mklegend(x1=0.6, y1=0.6, x2=0.85, y2=0.85)
+                                legend.SetHeader("%s tracks (%s)" % (category.replace("_", ""), year))
+                                legend.SetTextSize(0.035)                           
+                                colors = [kBlack, 97, 94, 91, 86, 81, 70, 65, 61, 51]
+                            
+                            for i_period, period in enumerate(this_periods):
+                                                        
+                                if "rw" in period: continue
+                                
+                                if year == "2016":
+                                    mcperiod = "Summer16"
+                                elif year == "2017":
+                                    mcperiod = "Fall17"
+                                elif year == "2018":
+                                    mcperiod = "Autumn18"
+                                
+                                if period == mcperiod or year in period:
+                                
+                                    color = colors.pop(0)
+                                    if "Run" in period and "rw" not in period:
+                                        if i_finaleff == 0: 
+                                            h_sf_global[category][period].Draw("hist e same")
+                                            h_sf_global[category][period].GetXaxis().SetRangeUser(0, 20)
+                                            h_sf_global[category][period].GetYaxis().SetRangeUser(0.4, 1.6)
+                                            h_sf_global[category][period].SetTitle(";number of remaining tracker layers;scale factor")
+                                            h_sf_global[category][period].SetLineColor(color)
+                                            h_sf_global[category][period].SetLineWidth(2)
+                                            legend.AddEntry(h_sf_global[category][period], period)
+                                            if period in g1_global[category] and not options.lumiweighted:
+                                                g1_global[category][period].Draw("same")
+                                                g1_global[category][period].SetLineColor(color)
+                                                g1_global[category][period].SetLineWidth(2)
+                                                legend.AddEntry(g1_global[category][period], period)
+                                        elif i_finaleff == 1: 
+                                            h_sf_reco[category][period].Draw("hist e same")
+                                            h_sf_reco[category][period].GetXaxis().SetRangeUser(0, 20)
+                                            h_sf_reco[category][period].GetYaxis().SetRangeUser(0.4, 1.6)
+                                            h_sf_reco[category][period].SetTitle(";number of remaining tracker layers;reconstruction scale factor")
+                                            h_sf_reco[category][period].SetLineColor(color)
+                                            h_sf_reco[category][period].SetLineWidth(2)
+                                            legend.AddEntry(h_sf_reco[category][period], period)
+                                            if "period" in g1_reco[category] and not options.lumiweighted:
+                                                g1_reco[category][period].Draw("hist same")
+                                                g1_reco[category][period].SetLineColor(color)
+                                                g1_reco[category][period].SetLineWidth(2)
+                                                legend.AddEntry(g1_reco[category][period], period)
+                                        elif i_finaleff == 2: 
+                                            h_sf_tag[category][period].Draw("hist e same")
+                                            h_sf_tag[category][period].GetXaxis().SetRangeUser(0, 20)
+                                            h_sf_tag[category][period].GetYaxis().SetRangeUser(0.4, 1.6)
+                                            h_sf_tag[category][period].SetTitle(";number of remaining tracker layers;tagging scale factor")
+                                            h_sf_tag[category][period].SetLineColor(color)
+                                            h_sf_tag[category][period].SetLineWidth(2)
+                                            legend.AddEntry(h_sf_tag[category][period], period)
+                                            if "period" in g1_tag[category] and not options.lumiweighted:
+                                                g1_tag[category][period].Draw("same")
+                                                g1_tag[category][period].SetLineColor(color)
+                                                g1_tag[category][period].SetLineWidth(2)
+                                                legend.AddEntry(g1_tag[category][period], period)
+                                                                                
+                            legend.Draw()
+                            shared_utils.stamp(WorkInProgress = True)
+                    
+                            if i_finaleff == 0:        
+                                pdfname = "%s/underlying_SF%s%s.pdf" % (plotfolder, category, year)
+                            elif i_finaleff == 1:        
+                                pdfname = "%s/underlying_SF_reco%s%s.pdf" % (plotfolder, category, year)
+                            elif i_finaleff == 2:        
+                                pdfname = "%s/underlying_SF_tag%s%s.pdf" % (plotfolder, category, year)
+
+                            if options.get_from_tree:
+                                pdfname = pdfname.replace(".pdf", "_tree.pdf")                       
+                            if options.mc_reweighted:
+                                pdfname = pdfname.replace(".pdf", "_mcreweighted.pdf")
+                            if options.lumiweighted:
+                                pdfname = pdfname.replace(".pdf", "_lumiweighted.pdf")
+
+                            if not options.lumiweighted:                            
+                                canvas.SaveAs(pdfname)
+
+                        if options.lumiweighted:  
+                            if i_finaleff == 0:        
+                                pdfname = "%s/pooled_SF%s.pdf" % (plotfolder, category)
+                            elif i_finaleff == 1:        
+                                pdfname = "%s/pooled_SF_reco%s.pdf" % (plotfolder, category)
+                            elif i_finaleff == 2:        
+                                pdfname = "%s/pooled_SF_tag%s.pdf" % (plotfolder, category)                          
+                            canvas.SaveAs(pdfname)
+
             
 if __name__ == "__main__":
 
